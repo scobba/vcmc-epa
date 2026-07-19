@@ -840,7 +840,9 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 // Get it from: Supabase → Settings → API → service_role → Reveal
 // If left as-is, the dashboard falls back to the anon key (works fine
 // since the SELECT policy on epa_submissions allows anon read access).
-const SUPABASE_SERVICE_KEY = 'PASTE_YOUR_SUPABASE_SERVICE_ROLE_KEY_HERE';
+// ── Access control ─────────────────────────────────────────────────
+// Authentication handled by SharePoint/GitHub permissions.
+// Share this URL only with core faculty and coordinators.
 
 // ── Shared data (milestone defs needed for admin functions) ────────
 const MILESTONE_DEFS = {
@@ -968,26 +970,18 @@ const SCALE_LABELS = {
 // ── State ──────────────────────────────────────────────────────────
 let allSubmissions = [];
 
-// ── Storage — load from Power Automate ────────────────────────────
+// ── Storage — load from Supabase ──────────────────────────────────
 async function loadSubmissions() {
-async function loadSubmissions() {
-  const useServiceKey = !SUPABASE_SERVICE_KEY.includes('PASTE_YOUR');
-  console.log('Loading submissions. Using service key:', useServiceKey);
-  console.log('SUPABASE_URL:', SUPABASE_URL);
   try {
     const url = `${SUPABASE_URL}/rest/v1/epa_submissions?select=*&order=created_at.desc&limit=10000`;
-    console.log('Fetching:', url);
     const response = await fetch(url, {
       headers: {
         'apikey':        SUPABASE_ANON,
-        'Authorization': `Bearer ${useServiceKey ? SUPABASE_SERVICE_KEY : SUPABASE_ANON}`,
+        'Authorization': `Bearer ${SUPABASE_ANON}`,
       },
     });
-    console.log('Response status:', response.status);
-    const text = await response.text();
-    console.log('Response body:', text);
-    if (!response.ok) throw new Error(`HTTP ${response.status}: ${text}`);
-    const rows = JSON.parse(text);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const rows = await response.json();
     console.log('Rows returned:', rows.length);
     return rows.map(row => ({
       id:              row.id,
