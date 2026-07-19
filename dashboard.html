@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Program Dashboard — VCMC FM Residency</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --navy: #1A2744;
+    --navy-mid: #253660;
+    --navy-light: #344878;
+    --gold: #B8901E;
+    --gold-bright: #D4A820;
+    --gold-pale: #FBF6E9;
+    --gold-border: #E8D08A;
+    --slate: #4A5568;
+    --slate-light: #8896A8;
+    --border: #E2E6ED;
+    --border-light: #EEF1F5;
+    --bg: #FFFFFF;
+    --bg-soft: #F8F9FB;
+    --white: #FFFFFF;
+    --teal: #1A5C8A;
+    --teal-light: #2275AD;
+    --teal-pale: #EBF4FA;
+    --amber: #B8901E;
+    --amber-pale: #FBF6E9;
+    --scale-1: #B91C1C;
+    --scale-2: #C05621;
+    --scale-3: #92600A;
+    --scale-4: #15803D;
+    --scale-5: #1A2744;
+    --scale-na: #6B7280;
+    --radius: 4px;
+    --radius-lg: 6px;
+    --shadow: 0 1px 4px rgba(26,39,68,0.08);
+    --shadow-lg: 0 4px 24px rgba(26,39,68,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: var(--white);
+    color: var(--navy);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── Header: white, sticky, matching venturafamilymed.org ── */
+  .app-header {
+    background: var(--white);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 68px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--border);
+  }
+  .app-header .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .app-header .logo-icon {
+    height: 40px;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
+  }
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .logo-text .line1 {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--navy);
+    line-height: 1.2;
+  }
+  .logo-text .line2 {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--navy);
+    line-height: 1.2;
+  }
+  .header-nav {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .nav-divider { width: 1px; height: 14px; background: var(--border); margin: 0 4px; }
+  .nav-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--slate);
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: color 0.15s;
+    font-family: inherit;
+    height: 68px;
+  }
+  .nav-btn:hover { color: var(--navy); }
+  .nav-btn.active { color: var(--navy); border-bottom-color: var(--navy); }
+
+  /* ── Views ── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── Landing ── */
+  .landing {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 64px 24px 80px;
+    text-align: center;
+  }
+  .landing-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--slate-light);
+    margin-bottom: 16px;
+  }
+  .landing h1 {
+    font-size: 34px;
+    font-weight: 300;
+    color: var(--navy);
+    line-height: 1.2;
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+  }
+  .landing h1 strong { font-weight: 700; }
+  .landing-sub {
+    color: var(--slate);
+    font-size: 15px;
+    line-height: 1.7;
+    margin-bottom: 16px;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .landing-divider {
+    width: 36px; height: 2px;
+    background: var(--navy);
+    margin: 0 auto 48px;
+  }
+  .landing-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    text-align: left;
+  }
+  .landing-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    padding: 28px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .landing-card:hover { border-color: var(--navy); box-shadow: var(--shadow); }
+  .card-icon {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+  .card-icon.teal { background: var(--teal-pale); }
+  .card-icon.amber { background: var(--gold-pale); }
+  .landing-card h3 {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    color: var(--navy);
+  }
+  .landing-card p { font-size: 13px; color: var(--slate); line-height: 1.65; margin: 0; }
+
+  /* ── Form View ── */
+  .form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  .form-header {
+    text-align: center;
+    padding: 36px 0 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .form-header .rotation-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--slate-light);
+    margin-bottom: 10px;
+  }
+  .form-header h2 {
+    font-size: 24px;
+    font-weight: 300;
+    color: var(--navy);
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+  }
+  .form-header h2 strong { font-weight: 700; }
+  .form-header p {
+    font-size: 13px;
+    color: var(--slate);
+    line-height: 1.65;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  /* Evaluator info */
+  .evaluator-card {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .evaluator-card h3 {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--slate-light);
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--navy);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { border-color: var(--navy); outline: 2px solid rgba(26,39,68,0.12); outline-offset: 0; }
+
+  /* Scale legend */
+  .scale-legend {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .scale-legend h4 {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--navy);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* EPA Questions */
+  .epa-question {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-left: 3px solid transparent;
+    padding: 22px 24px;
+    margin-bottom: 10px;
+    transition: border-left-color 0.15s;
+  }
+  .epa-question:focus-within { border-left-color: var(--navy); }
+
+  .question-header { display: flex; gap: 12px; margin-bottom: 8px; }
+  .question-num {
+    width: 22px; height: 22px;
+    background: var(--navy);
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 3px;
+    letter-spacing: 0;
+  }
+  .question-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy);
+    line-height: 1.5;
+  }
+  .question-context {
+    font-size: 12px;
+    color: var(--slate);
+    line-height: 1.65;
+    margin-bottom: 16px;
+    padding-left: 34px;
+  }
+
+  /* Radio scale */
+  .scale-options {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    padding-left: 34px;
+  }
+  .scale-option { position: relative; }
+  .scale-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .scale-option label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 9px 4px 8px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.12s;
+    text-align: center;
+    background: var(--white);
+  }
+  .scale-option label:hover { border-color: var(--navy); background: var(--bg-soft); }
+  .scale-option input:checked + label { border-color: var(--navy); background: var(--navy); }
+  .scale-option input:checked + label .scale-pip { background: rgba(255,255,255,0.85); }
+  .scale-option input:checked + label .scale-label { color: rgba(255,255,255,0.85); }
+
+  .scale-option[data-val="1"] input:checked + label { background: #9B1C1C; border-color: #9B1C1C; }
+  .scale-option[data-val="2"] input:checked + label { background: #C05621; border-color: #C05621; }
+  .scale-option[data-val="3"] input:checked + label { background: #92600A; border-color: #92600A; }
+  .scale-option[data-val="4"] input:checked + label { background: #15803D; border-color: #15803D; }
+  .scale-option[data-val="5"] input:checked + label { background: var(--navy); border-color: var(--navy); }
+  .scale-option[data-val="na"] input:checked + label { background: #4B5563; border-color: #4B5563; }
+
+  .scale-pip {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.12s;
+    flex-shrink: 0;
+  }
+  .scale-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--slate);
+    line-height: 1.3;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* Narrative */
+  .narrative-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    padding: 22px 24px;
+    margin-bottom: 24px;
+  }
+  .narrative-card h3 {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--navy);
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .narrative-card textarea {
+    width: 100%;
+    min-height: 130px;
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 12px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--navy);
+    resize: vertical;
+    outline: none;
+  }
+  .narrative-card textarea:focus { border-color: var(--navy); }
+
+  .submit-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 4px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .btn {
+    padding: 11px 28px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s;
+    font-family: inherit;
+    border-radius: 0;
+  }
+  .btn-primary { background: var(--navy); color: white; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-secondary { background: var(--white); color: var(--navy); border: 1px solid var(--navy); }
+  .btn-secondary:hover { background: var(--bg-soft); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Rotation selector */
+  .rotation-selector {
+    background: var(--white);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .rotation-selector h3 {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--navy);
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rotation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+  }
+  .rotation-btn {
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--navy);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s;
+    text-align: left;
+    font-family: inherit;
+    border-radius: 0;
+  }
+  .rotation-btn:hover { border-color: var(--navy); background: var(--bg-soft); }
+  .rotation-btn.selected { border-color: var(--navy); background: var(--navy); color: white; }
+
+  /* ── Admin View ── */
+  .admin-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+  .admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .admin-header h2 { font-size: 22px; font-weight: 300; letter-spacing: -0.01em; color: var(--navy); }
+  .admin-header h2 strong { font-weight: 700; }
+  .admin-header p { font-size: 12px; color: var(--slate); margin-top: 4px; }
+
+  .admin-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .admin-tab {
+    padding: 12px 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--slate-light);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: none;
+    border-top: none; border-left: none; border-right: none;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .admin-tab:hover { color: var(--navy); }
+  .admin-tab.active { color: var(--navy); border-bottom-color: var(--navy); }
+
+  /* Filters */
+  .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-bar select, .filter-bar input {
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--navy);
+    background: var(--white);
+    outline: none;
+    min-width: 160px;
+    font-family: inherit;
+  }
+  .filter-bar select:focus, .filter-bar input:focus { border-color: var(--navy); }
+
+  /* Table */
+  .table-wrap { background: var(--white); border: 1px solid var(--border); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    background: var(--navy);
+    color: rgba(255,255,255,0.85);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 12px 16px;
+    text-align: left;
+  }
+  td {
+    padding: 12px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--slate);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg-soft); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .badge-teal { background: var(--teal-pale); color: var(--teal); }
+  .badge-amber { background: var(--gold-pale); color: var(--gold); }
+  .badge-navy { background: var(--bg-soft); color: var(--navy); border: 1px solid var(--border); }
+
+  /* Milestone grid */
+  .milestone-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .milestone-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    padding: 16px 18px;
+  }
+  .milestone-card .mc-code {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+  .milestone-card .mc-desc {
+    font-size: 12px;
+    color: var(--slate);
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+  .mc-bar-bg { height: 2px; background: var(--border); overflow: hidden; margin-bottom: 10px; }
+  .mc-bar-fill { height: 100%; background: var(--navy); transition: width 0.5s ease; }
+  .mc-score { font-size: 20px; font-weight: 700; color: var(--navy); letter-spacing: -0.02em; }
+  .mc-score span { font-size: 12px; font-weight: 400; color: var(--slate-light); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,39,68,0.4);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white);
+    max-width: 720px;
+    width: 90%;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    padding: 32px;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-header h3 { font-size: 15px; font-weight: 700; color: var(--navy); }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--slate-light); padding: 4px; line-height: 1; }
+  .modal-section { margin-bottom: 24px; }
+  .modal-section h4 {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--slate-light);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .modal-epa-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .modal-epa-row:last-child { border-bottom: none; }
+  .modal-epa-text { font-size: 13px; color: var(--navy); flex: 1; }
+  .score-chip {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .score-1 { background: #FEF2F2; color: var(--scale-1); }
+  .score-2 { background: #FFF8F0; color: var(--scale-2); }
+  .score-3 { background: #FEFCE8; color: var(--scale-3); }
+  .score-4 { background: #F0FBF4; color: var(--scale-4); }
+  .score-5 { background: var(--teal-pale); color: var(--scale-5); }
+  .score-na { background: var(--bg-soft); color: var(--scale-na); }
+
+  .narrative-box {
+    background: var(--bg-soft);
+    border-left: 3px solid var(--navy);
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--slate);
+    line-height: 1.7;
+    font-style: italic;
+  }
+
+  /* Success */
+  .success-screen {
+    max-width: 420px;
+    margin: 80px auto;
+    padding: 0 24px;
+    text-align: center;
+  }
+  .success-icon {
+    width: 60px; height: 60px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    margin: 0 auto 24px;
+  }
+  .success-screen h2 { font-size: 22px; font-weight: 300; margin-bottom: 10px; color: var(--navy); }
+  .success-screen h2 strong { font-weight: 700; }
+  .success-screen p { color: var(--slate); font-size: 14px; line-height: 1.7; margin-bottom: 28px; }
+
+  /* Loading */
+  .loading-state { text-align: center; padding: 48px 24px; color: var(--slate-light); font-size: 13px; }
+  .spinner {
+    width: 26px; height: 26px;
+    border: 2px solid var(--border);
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 14px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--slate-light); font-size: 13px; }
+  .empty-state .empty-icon { font-size: 28px; margin-bottom: 10px; }
+
+  /* Footer */
+  .app-footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.45);
+    text-align: center;
+    padding: 28px 40px;
+    font-size: 11px;
+    line-height: 2;
+    letter-spacing: 0.04em;
+    margin-top: 60px;
+  }
+  .app-footer a { color: rgba(255,255,255,0.65); text-decoration: none; }
+  .app-footer a:hover { color: white; }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .app-header { padding: 0 16px; height: 56px; }
+    .app-header .logo-icon { height: 30px; }
+    .logo-text .line1, .logo-text .line2 { font-size: 8px; letter-spacing: 0.1em; }
+    .nav-btn { padding: 8px 10px; font-size: 9px; height: 56px; }
+    .landing { padding: 40px 16px 60px; }
+    .landing h1 { font-size: 24px; }
+    .landing-cards { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid.three { grid-template-columns: 1fr; }
+    .scale-options { grid-template-columns: repeat(3, 1fr); }
+    .admin-container, .form-container { padding: 0 16px 60px; }
+    .admin-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="app-header">
+  <a class="logo" href="https://www.venturafamilymed.org" target="_blank">
+    <img class="logo-icon" src="https://static.wixstatic.com/media/48ea68_21770b96de134293966db6558bd3d23a~mv2.png/v1/fill/w_75,h_79,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/vcmc-fmr-icon.png" alt="VCMC FM Residency Logo">
+    <div class="logo-text">
+      <span class="line1">Ventura County Medical Center</span>
+      <span class="line2">Family Medicine Residency Program</span>
+    </div>
+  </a>
+  <nav class="header-nav">
+    <button class="nav-btn active" style="pointer-events:none">Program Dashboard</button>
+
+  </nav>
+</header>
+
+<!-- ── Admin Dashboard ── -->
+<div class="admin-container">
+  <div class="admin-header">
+    <div>
+      <h2><strong>Program</strong> Dashboard</h2>
+      <p>Aggregate milestone data and evaluation submissions</p>
+    </div>
+    <button class="btn btn-secondary" onclick="exportCSV()" style="font-size:10px; letter-spacing:0.1em">⬇ Export CSV</button>
+  </div>
+
+  <div class="admin-tabs">
+    <button class="admin-tab active" onclick="switchAdminTab('milestones', this)">Milestone Summary</button>
+    <button class="admin-tab" onclick="switchAdminTab('submissions', this)">All Submissions</button>
+    <button class="admin-tab" onclick="switchAdminTab('residents', this)">By Resident</button>
+  </div>
+
+  <div id="admin-tab-milestones" class="admin-tab-content">
+    <div class="filter-bar">
+      <select id="filter-resident-milestones" onchange="renderMilestones()">
+        <option value="">All Residents</option>
+      </select>
+      <select id="filter-rotation-milestones" onchange="renderMilestones()">
+        <option value="">All Rotations</option>
+      </select>
+    </div>
+    <div id="milestone-grid-container"></div>
+  </div>
+
+  <div id="admin-tab-submissions" class="admin-tab-content" style="display:none">
+    <div class="filter-bar">
+      <input id="search-submissions" type="text" placeholder="Search by resident or evaluator…" oninput="renderSubmissions()">
+      <select id="filter-rotation-submissions" onchange="renderSubmissions()">
+        <option value="">All Rotations</option>
+      </select>
+      <select id="filter-resident-submissions" onchange="renderSubmissions()">
+        <option value="">All Residents</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th><th>Resident</th><th>Rotation</th>
+            <th>Evaluator</th><th>Avg Score</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="submissions-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="admin-tab-residents" class="admin-tab-content" style="display:none">
+    <div class="filter-bar">
+      <select id="filter-resident-detail" onchange="renderResidentDetail()">
+        <option value="">Select a Resident…</option>
+      </select>
+    </div>
+    <div id="resident-detail-container"></div>
+  </div>
+</div>
+
+<!-- ── Submission Detail Modal ── -->
+<div class="modal-overlay" id="detail-modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Evaluation Detail</h3>
+      <button class="modal-close" onclick="document.getElementById('detail-modal').classList.remove('open')">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<footer class="app-footer">
+  <div>Ventura County Medical Center · Family Medicine Residency Program</div>
+  <div>300 Hillmont Ave, Building 340, Ventura, CA 93003 · (805) 652-6228</div>
+  <div><a href="https://www.venturafamilymed.org" target="_blank">venturafamilymed.org</a></div>
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════
+// CONFIGURATION — Supabase
+// ══════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://ubqecdyhgejqoweltagl.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
+
+// ── Service role key (optional but more secure) ────────────────────
+// Paste your service role key here to use elevated read access.
+// Get it from: Supabase → Settings → API → service_role → Reveal
+// If left as-is, the dashboard falls back to the anon key (works fine
+// since the SELECT policy on epa_submissions allows anon read access).
+const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDM4MDIzMCwiZXhwIjoyMDk5OTU2MjMwfQ.yptnELb0AoHKYwEqExy7U5J6fDEIEpVnom81Fi9K2eg';
+
+// ── Shared data (milestone defs needed for admin functions) ────────
+const MILESTONE_DEFS = {
+  PC1: 'Care of the Acutely Ill Patient',
+  PC2: 'Care of Patients with Chronic Illness',
+  PC3: 'Health Promotion and Wellness',
+  PC4: 'Ongoing Care — Undifferentiated Symptoms',
+  PC5: 'Management of Procedural Care',
+  MK1: 'Medical Knowledge — Breadth and Depth',
+  MK2: 'Critical Thinking and Decision Making',
+  SBP1: 'Patient Safety and Quality Improvement',
+  SBP2: 'System Navigation for Patient-Centered Care',
+  SBP3: 'Physician Role in Health Care Systems',
+  SBP4: 'Advocacy',
+  PBLI1: 'Evidence-Based and Informed Practice',
+  PBLI2: 'Reflective Practice and Personal Growth',
+  PROF1: 'Professional Behavior and Ethical Principles',
+  PROF2: 'Accountability/Conscientiousness',
+  PROF3: 'Self-Awareness and Help-Seeking',
+  ICS1: 'Patient- and Family-Centered Communication',
+  ICS2: 'Interprofessional and Team Communication',
+  ICS3: 'Communication within Health Care Systems'
+};
+
+const ROTATIONS = {
+  'Inpatient Medicine': { epas: [
+    { id:'med1', text:'Evaluate and manage an adult patient admitted with an acute medical illness', milestones:['PC1','MK2'] },
+    { id:'med2', text:'Perform safe and effective transitions of care', milestones:['SBP2','ICS3'] },
+    { id:'med3', text:'Coordinate multidisciplinary inpatient care', milestones:['ICS2','SBP2'] },
+    { id:'med4', text:'Identify and respond to patient safety events on the inpatient service', milestones:['SBP1'] },
+    { id:'med5', text:'Communicate with patients and families about diagnosis, prognosis, and goals of care', milestones:['ICS1','PROF1'] },
+    { id:'med6', text:'Document clinical reasoning in inpatient notes', milestones:['ICS3'] },
+    { id:'med7', text:'Perform procedures', milestones:['PC5'] },
+  ]},
+  'Continuity Care Clinic': { epas: [
+    { id:'afmc1', text:'Manage patients with multiple chronic conditions longitudinally', milestones:['PC2','MK1'] },
+    { id:'afmc2', text:'Conduct age- and risk-appropriate preventive care', milestones:['PC3'] },
+    { id:'afmc3', text:'Evaluate and manage undifferentiated symptoms over time', milestones:['PC4'] },
+    { id:'afmc4', text:'Perform common office procedures', milestones:['PC5'] },
+    { id:'afmc5', text:'Apply evidence-based medicine to clinical decision-making in the office', milestones:['PBLI1','MK2'] },
+    { id:'afmc6', text:'Coordinate care across settings and disciplines for continuity patients', milestones:['SBP2','SBP3'] },
+    { id:'afmc7', text:'Engage in panel management and population health', milestones:['PC3','SBP1'] },
+    { id:'afmc8', text:'Demonstrate patient-centered communication across diverse encounters', milestones:['ICS1','PROF1'] },
+  ]},
+  'Outpatient Pediatrics': { epas: [
+    { id:'opeds1', text:'Conduct well-child visits across developmental stages', milestones:['PC3','MK1'] },
+    { id:'opeds2', text:'Evaluate and manage common pediatric outpatient conditions', milestones:['PC2','PC4','MK1'] },
+    { id:'opeds3', text:'Identify and respond to child abuse and neglect', milestones:['PROF1','SBP2'] },
+    { id:'opeds4', text:'Provide adolescent-specific care', milestones:['ICS1','PC3','PROF1'] },
+    { id:'opeds5', text:"Communicate with families about vaccine hesitancy and preventive care", milestones:['ICS1','MK1'] },
+    { id:'opeds6', text:'Evaluate and manage the newborn in the outpatient setting', milestones:['PC1','MK1','PC3'] },
+    { id:'opeds7', text:'Coordinate care for children with special health care needs', milestones:['SBP2','PC2','SBP3'] },
+  ]},
+  'Emergency Department': { epas: [
+    { id:'er1', text:'Triage and initiate evaluation of undifferentiated acute presentations', milestones:['PC1','MK2'] },
+    { id:'er2', text:'Manage multiple patients simultaneously in the ED', milestones:['PC1','PROF2'] },
+    { id:'er3', text:'Assess, resuscitate and stabilize an acute trauma or acutely ill patient', milestones:['PC1','PC5','MK2','ICS2'] },
+    { id:'er4', text:'Perform common ED procedures', milestones:['PC5'] },
+    { id:'er5', text:'Determine appropriate disposition from the ED', milestones:['SBP2','SBP3'] },
+    { id:'er6', text:'Communicate effectively with patients and families in high-acuity, time-pressured situations', milestones:['ICS1','PROF1'] },
+    { id:'er7', text:'Request and coordinate consultations in the ED', milestones:['ICS2'] },
+  ]},
+  'ICU': { epas: [
+    { id:'icu1', text:'Recognize and initiate stabilization of a critically ill patient', milestones:['PC1','MK2'] },
+    { id:'icu2', text:'Manage mechanical ventilation', milestones:['PC1','MK1'] },
+    { id:'icu3', text:'Manage hemodynamic support', milestones:['PC1','MK1'] },
+    { id:'icu4', text:'Perform ICU procedures', milestones:['PC5'] },
+    { id:'icu5', text:'Lead goals-of-care and end-of-life discussions in the ICU', milestones:['ICS1','PROF1'] },
+    { id:'icu6', text:'Coordinate care of a critically ill patient with multiple organ system involvement', milestones:['SBP2','ICS2','PC1'] },
+    { id:'icu7', text:'Perform structured ICU handoffs', milestones:['SBP2','ICS3'] },
+  ]},
+  'Inpatient Pediatrics': { epas: [
+    { id:'ipeds1', text:'Evaluate and manage common pediatric inpatient conditions', milestones:['PC1','MK1'] },
+    { id:'ipeds2', text:'Recognize and initiate management of the acutely ill child', milestones:['PC1','MK2'] },
+    { id:'ipeds3', text:"Communicate with parents and caregivers about their child's illness", milestones:['ICS1'] },
+    { id:'ipeds4', text:'Perform pediatric procedures', milestones:['PC5'] },
+    { id:'ipeds5', text:'Coordinate discharge planning for pediatric patients', milestones:['SBP2','ICS3'] },
+    { id:'ipeds6', text:'Coordinate multidisciplinary care for hospitalized children', milestones:['ICS2','SBP2'] },
+    { id:'ipeds7', text:'Perform structured pediatric handoffs', milestones:['SBP2','ICS3'] },
+  ]},
+  'Labor & Delivery': { epas: [
+    { id:'ld1', text:'Manage normal labor and perform spontaneous vaginal delivery', milestones:['PC1','PC5','MK1'] },
+    { id:'ld2', text:'Recognize and respond to obstetric emergencies', milestones:['PC1','MK2'] },
+    { id:'ld3', text:'Perform procedures', milestones:['PC5'] },
+    { id:'ld4', text:'Provide immediate newborn care', milestones:['PC1','MK1'] },
+    { id:'ld5', text:'Communicate with laboring patients and families about labor progress, interventions, and complications', milestones:['ICS1'] },
+    { id:'ld6', text:'Perform structured handoffs', milestones:['SBP2','ICS3'] },
+  ]},
+  'Professionalism': { epas: [
+    { id:'prof1', text:'Demonstrate professional behavior appropriate to the clinical setting', milestones:['PROF1','PROF2','PROF3'] },
+    { id:'prof2', text:'Seek and incorporate feedback to improve performance', milestones:['PBLI2','PROF3'] },
+    { id:'prof3', text:'Demonstrate effective interprofessional teamwork', milestones:['ICS2'] },
+    { id:'prof4', text:"Advocate for individual patients' needs within the health care system", milestones:['SBP3','SBP4'] },
+  ]},
+  'Inpatient Surgery': { epas: [
+    { id:'surg1', text:'Evaluate and manage common surgical conditions', milestones:['PC1','MK1'] },
+    { id:'surg2', text:'Provide perioperative care', milestones:['PC1','MK1'] },
+    { id:'surg3', text:'Assist in the operating room', milestones:['PC5'] },
+    { id:'surg4', text:'Counsel patients about surgical procedures and alternatives', milestones:['PC5','ICS1'] },
+    { id:'surg5', text:'Assess, resuscitate and stabilize an acute trauma patient', milestones:['PC1','PC5','MK2','ICS2'] },
+    { id:'surg6', text:'Coordinate postoperative transitions of care', milestones:['SBP2','ICS3'] },
+  ]},
+  'Urgent Care': { epas: [
+    { id:'uc1', text:'Evaluate and manage acute, undifferentiated presentations in the urgent care setting', milestones:['PC1','PC4','MK2'] },
+    { id:'uc2', text:'Perform common urgent care procedures', milestones:['PC5'] },
+    { id:'uc3', text:'Provide appropriate follow-up planning and safety-netting', milestones:['SBP2','ICS1'] },
+    { id:'uc4', text:'Manage patient flow and prioritize among multiple simultaneous patients', milestones:['PC1','PROF2'] },
+  ]},
+  "Women\'s Health Clinic": { epas: [
+    { id:'wh1', text:'Provide comprehensive well-woman care', milestones:['PC3','PC5'] },
+    { id:'wh2', text:'Evaluate and manage common gynecologic complaints', milestones:['PC2','MK1'] },
+    { id:'wh3', text:'Provide contraceptive management including LARC procedures', milestones:['PC5','ICS1'] },
+    { id:'wh4', text:'Perform colposcopy and manage abnormal cervical cancer screening results', milestones:['PC5','PBLI1'] },
+    { id:'wh5', text:'Provide routine prenatal care', milestones:['PC3','PC2','MK1'] },
+    { id:'wh6', text:'Evaluate and manage early pregnancy complications', milestones:['PC1','ICS1','MK1'] },
+    { id:'wh7', text:'Counsel patients on menopause management and hormone therapy', milestones:['PC2','PBLI1','ICS1'] },
+  ]},
+};
+
+const SCALE_LABELS = {
+  1:'Complete Supervision', 2:'Partial Supervision', 3:'Minimal Supervision',
+  4:'As if Independent', 5:'Aspirational', na:'N/A'
+};
+
+// ── State ──────────────────────────────────────────────────────────
+let allSubmissions = [];
+
+// ── Storage — load from Power Automate ────────────────────────────
+async function loadSubmissions() {
+async function loadSubmissions() {
+  const useServiceKey = !SUPABASE_SERVICE_KEY.includes('PASTE_YOUR');
+  console.log('Loading submissions. Using service key:', useServiceKey);
+  console.log('SUPABASE_URL:', SUPABASE_URL);
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/epa_submissions?select=*&order=created_at.desc&limit=10000`;
+    console.log('Fetching:', url);
+    const response = await fetch(url, {
+      headers: {
+        'apikey':        SUPABASE_ANON,
+        'Authorization': `Bearer ${useServiceKey ? SUPABASE_SERVICE_KEY : SUPABASE_ANON}`,
+      },
+    });
+    console.log('Response status:', response.status);
+    const text = await response.text();
+    console.log('Response body:', text);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${text}`);
+    const rows = JSON.parse(text);
+    console.log('Rows returned:', rows.length);
+    return rows.map(row => ({
+      id:              row.id,
+      timestamp:       row.created_at,
+      resident:        row.resident,
+      rotation:        row.rotation,
+      evaluatorName:   row.evaluator_name,
+      credential:      row.credential,
+      dates:           `${row.date_start || ''} – ${row.date_end || ''}`,
+      dateStart:       row.date_start,
+      dateEnd:         row.date_end,
+      scores:          row.scores          || {},
+      milestoneScores: row.milestone_scores || {},
+      narrative:       row.narrative        || '',
+    }));
+  } catch(e) {
+    console.error('Failed to load submissions:', e.message);
+    return [];
+  }
+}
+
+// ADMIN — Load & Render
+// ══════════════════════════════════════════════════
+async function loadAdminData() {
+  const container = document.getElementById('milestone-grid-container');
+  if (container) container.innerHTML = '<div class="loading-state"><div class="spinner"></div>Loading evaluation data…</div>';
+  allSubmissions = await loadSubmissions();
+  populateFilterDropdowns();
+  renderMilestones();
+}
+
+function populateFilterDropdowns() {
+  const residents = [...new Set(allSubmissions.map(s => s.resident))].sort();
+  const rotations = [...new Set(allSubmissions.map(s => s.rotation))].sort();
+
+  const residentSelects = ['filter-resident-milestones', 'filter-resident-submissions', 'filter-resident-detail'];
+  const rotationSelects = ['filter-rotation-milestones', 'filter-rotation-submissions'];
+
+  residentSelects.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value;
+    const placeholder = el.options[0].text;
+    el.innerHTML = `<option value="">${placeholder}</option>` +
+      residents.map(r => `<option value="${r}" ${r === cur ? 'selected' : ''}>${r}</option>`).join('');
+  });
+
+  rotationSelects.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value;
+    el.innerHTML = `<option value="">All Rotations</option>` +
+      rotations.map(r => `<option value="${r}" ${r === cur ? 'selected' : ''}>${r}</option>`).join('');
+  });
+}
+
+function switchAdminTab(name, btn) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-tab-content').forEach(c => c.style.display = 'none');
+  btn.classList.add('active');
+  document.getElementById('admin-tab-' + name).style.display = 'block';
+  if (name === 'submissions') renderSubmissions();
+  if (name === 'residents') renderResidentDetail();
+}
+
+// ── Milestones Tab ──
+function renderMilestones() {
+  const residentFilter = document.getElementById('filter-resident-milestones')?.value || '';
+  const rotationFilter = document.getElementById('filter-rotation-milestones')?.value || '';
+
+  let subs = allSubmissions;
+  if (residentFilter) subs = subs.filter(s => s.resident === residentFilter);
+  if (rotationFilter) subs = subs.filter(s => s.rotation === rotationFilter);
+
+  // Aggregate milestone scores
+  const milestoneAccum = {};
+  for (const sub of subs) {
+    for (const [m, score] of Object.entries(sub.milestoneScores || {})) {
+      if (!milestoneAccum[m]) milestoneAccum[m] = [];
+      milestoneAccum[m].push(score);
+    }
+  }
+
+  const container = document.getElementById('milestone-grid-container');
+  if (subs.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>No evaluations submitted yet. Submit evaluations to see milestone data here.</p></div>`;
+    return;
+  }
+
+  const milestoneOrder = Object.keys(MILESTONE_DEFS);
+  container.innerHTML = `
+    <div class="milestone-grid">
+      ${milestoneOrder.map(code => {
+        const vals = milestoneAccum[code] || [];
+        const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+        const pct = avg ? ((avg - 1) / 4) * 100 : 0;
+        const barColor = avg === null ? 'var(--border)' :
+          avg < 2 ? 'var(--scale-1)' : avg < 3 ? 'var(--scale-2)' :
+          avg < 4 ? 'var(--scale-4)' : 'var(--navy)';
+        return `
+          <div class="milestone-card">
+            <div class="mc-code">${code}</div>
+            <div class="mc-desc">${MILESTONE_DEFS[code]}</div>
+            <div class="mc-bar-bg"><div class="mc-bar-fill" style="width:${pct}%; background:${barColor}"></div></div>
+            <div style="display:flex; align-items:baseline; gap:6px">
+              <div class="mc-score">${avg !== null ? avg.toFixed(2) : '—'} <span>/ 5.00</span></div>
+              ${vals.length ? `<span style="font-size:11px; color:var(--slate-light)">(${vals.length} eval${vals.length !== 1 ? 's' : ''})</span>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <p style="font-size:12px; color:var(--slate-light); margin-top:4px">Showing data from ${subs.length} submission${subs.length !== 1 ? 's' : ''}.${residentFilter ? ` Filtered to: ${residentFilter}.` : ''} N/A responses are excluded from averages.</p>
+  `;
+}
+
+// ── Submissions Tab ──
+function renderSubmissions() {
+  const search = (document.getElementById('search-submissions')?.value || '').toLowerCase();
+  const rotFilter = document.getElementById('filter-rotation-submissions')?.value || '';
+  const resFilter = document.getElementById('filter-resident-submissions')?.value || '';
+
+  let subs = allSubmissions;
+  if (search) subs = subs.filter(s =>
+    s.resident.toLowerCase().includes(search) ||
+    s.evaluatorName.toLowerCase().includes(search));
+  if (rotFilter) subs = subs.filter(s => s.rotation === rotFilter);
+  if (resFilter) subs = subs.filter(s => s.resident === resFilter);
+
+  subs = [...subs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  const tbody = document.getElementById('submissions-tbody');
+  if (subs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--slate-light); padding:32px">No submissions found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = subs.map(s => {
+    const numericScores = Object.values(s.scores).filter(v => v !== 'na');
+    const avg = numericScores.length
+      ? (numericScores.reduce((a, b) => a + b, 0) / numericScores.length).toFixed(2)
+      : '—';
+    const date = new Date(s.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const scoreClass = avg === '—' ? '' : avg >= 4 ? 'badge-teal' : avg >= 3 ? 'badge-navy' : 'badge-amber';
+    return `
+      <tr>
+        <td>${date}</td>
+        <td style="font-weight:600; color:var(--navy)">${s.resident}</td>
+        <td><span class="badge badge-navy">${s.rotation}</span></td>
+        <td>${s.evaluatorName}${s.credential ? ` <span style="color:var(--slate-light); font-size:11px">(${s.credential})</span>` : ''}</td>
+        <td><span class="badge ${scoreClass}">${avg}</span></td>
+        <td><button class="btn btn-secondary" style="padding:6px 14px; font-size:12px" onclick='openModal(${JSON.stringify(s).replace(/'/g, "&#39;")})'>View</button></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ── Resident Detail Tab ──
+function renderResidentDetail() {
+  const resFilter = document.getElementById('filter-resident-detail')?.value || '';
+  const container = document.getElementById('resident-detail-container');
+
+  if (!resFilter) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">👤</div><p>Select a resident above to view their milestone summary and evaluation history.</p></div>`;
+    return;
+  }
+
+  const subs = allSubmissions.filter(s => s.resident === resFilter);
+  if (subs.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>No evaluations found for ${resFilter}.</p></div>`;
+    return;
+  }
+
+  // Build milestone averages across all rotations for this resident
+  const milestoneAccum = {};
+  for (const sub of subs) {
+    for (const [m, score] of Object.entries(sub.milestoneScores || {})) {
+      if (!milestoneAccum[m]) milestoneAccum[m] = [];
+      milestoneAccum[m].push(score);
+    }
+  }
+
+  const rotationBreakdown = [...new Set(subs.map(s => s.rotation))].map(rot => {
+    const rotSubs = subs.filter(s => s.rotation === rot);
+    const all = rotSubs.flatMap(s => Object.values(s.scores).filter(v => v !== 'na'));
+    const avg = all.length ? (all.reduce((a, b) => a + b, 0) / all.length).toFixed(2) : '—';
+    return { rot, count: rotSubs.length, avg };
+  });
+
+  const milestoneOrder = Object.keys(MILESTONE_DEFS);
+  container.innerHTML = `
+    <div style="margin-bottom:24px">
+      <h3 style="font-size:18px; font-weight:700; color:var(--navy); margin-bottom:4px">${resFilter}</h3>
+      <p style="font-size:13px; color:var(--slate)">${subs.length} evaluation${subs.length !== 1 ? 's' : ''} across ${rotationBreakdown.length} rotation${rotationBreakdown.length !== 1 ? 's' : ''}</p>
+    </div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:24px">
+      ${rotationBreakdown.map(r => `
+        <div style="background:var(--white); border:1px solid var(--border); border-radius:8px; padding:12px 18px; box-shadow:var(--shadow)">
+          <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--slate-light); margin-bottom:4px">${r.rot}</div>
+          <div style="font-size:20px; font-weight:700; color:var(--navy)">${r.avg}</div>
+          <div style="font-size:11px; color:var(--slate-light)">${r.count} eval${r.count !== 1 ? 's' : ''}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <h4 style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--slate-light); margin-bottom:14px; padding-top:4px">Milestone Averages</h4>
+    <div class="milestone-grid" style="margin-bottom:28px">
+      ${milestoneOrder.map(code => {
+        const vals = milestoneAccum[code] || [];
+        const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+        const pct = avg ? ((avg - 1) / 4) * 100 : 0;
+        const barColor = avg === null ? 'var(--border)' :
+          avg < 2 ? 'var(--scale-1)' : avg < 3 ? 'var(--scale-2)' :
+          avg < 4 ? 'var(--scale-4)' : 'var(--navy)';
+        return `
+          <div class="milestone-card">
+            <div class="mc-code">${code}</div>
+            <div class="mc-desc">${MILESTONE_DEFS[code]}</div>
+            <div class="mc-bar-bg"><div class="mc-bar-fill" style="width:${pct}%; background:${barColor}"></div></div>
+            <div class="mc-score">${avg !== null ? avg.toFixed(2) : '—'} <span>/ 5.00 ${vals.length ? `(${vals.length})` : ''}</span></div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+
+    <h4 style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--slate-light); margin-bottom:14px">Evaluation History</h4>
+    <div class="table-wrap" style="margin-bottom:28px">
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Rotation</th><th>Evaluator</th><th>Avg Score</th><th></th></tr>
+        </thead>
+        <tbody>
+          ${[...subs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(s => {
+            const numericScores = Object.values(s.scores).filter(v => v !== 'na');
+            const avg = numericScores.length
+              ? (numericScores.reduce((a, b) => a + b, 0) / numericScores.length).toFixed(2) : '—';
+            const date = new Date(s.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            return `
+              <tr>
+                <td>${date}</td>
+                <td><span class="badge badge-navy">${s.rotation}</span></td>
+                <td>${s.evaluatorName} <span style="color:var(--slate-light); font-size:11px">(${s.credential})</span></td>
+                <td><span class="badge badge-teal">${avg}</span></td>
+                <td><button class="btn btn-secondary" style="padding:6px 14px; font-size:12px" onclick='openModal(${JSON.stringify(s).replace(/'/g, "&#39;")})'>View</button></td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--slate-light); margin-bottom:14px">All Narrative Comments</h4>
+    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:40px">
+      ${[...subs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        .filter(s => s.narrative && s.narrative.trim())
+        .map(s => {
+          const date = new Date(s.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          return `
+            <div style="background:var(--white); border:1px solid var(--border); border-left:4px solid var(--gold); border-radius:var(--radius); padding:16px 20px; box-shadow:var(--shadow)">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px">
+                <div style="display:flex; align-items:center; gap:10px">
+                  <span class="badge badge-navy">${s.rotation}</span>
+                  <span style="font-size:13px; font-weight:600; color:var(--navy)">${s.evaluatorName}</span>
+                  <span style="font-size:11px; color:var(--slate-light)">(${s.credential})</span>
+                </div>
+                <span style="font-size:12px; color:var(--slate-light)">${date} · ${s.dates}</span>
+              </div>
+              <div style="font-size:13px; color:var(--slate); line-height:1.7; font-style:italic">"${s.narrative}"</div>
+            </div>
+          `;
+        }).join('') || '<div style="color:var(--slate-light); font-size:13px; font-style:italic">No narrative comments on file.</div>'}
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════
+// MODAL — Submission Detail
+// ══════════════════════════════════════════════════
+function openModal(sub) {
+  const rotation = ROTATIONS[sub.rotation];
+  const date = new Date(sub.timestamp).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  document.getElementById('modal-title').textContent = `${sub.resident} — ${sub.rotation}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-section">
+      <h4>Submission Info</h4>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:13px">
+        <div><span style="color:var(--slate-light)">Evaluator:</span><br><strong>${sub.evaluatorName} (${sub.credential})</strong></div>
+        <div><span style="color:var(--slate-light)">Submitted:</span><br><strong>${date}</strong></div>
+        <div><span style="color:var(--slate-light)">Dates Supervised:</span><br><strong>${sub.dates}</strong></div>
+        <div><span style="color:var(--slate-light)">Rotation:</span><br><strong>${sub.rotation}</strong></div>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <h4>EPA Ratings</h4>
+      ${(rotation?.epas || []).map((epa, i) => {
+        const val = sub.scores[epa.id];
+        const chipClass = val === 'na' ? 'score-na' : `score-${val}`;
+        const label = val === 'na' ? 'N/A' : SCALE_LABELS[val] || val;
+        return `
+          <div class="modal-epa-row">
+            <div style="color:var(--slate-light); font-size:12px; width:20px; flex-shrink:0">${i+1}</div>
+            <div class="modal-epa-text">${epa.text}</div>
+            <div>
+              <div class="score-chip ${chipClass}">${val === 'na' ? 'N/A' : val}</div>
+              <div style="font-size:10px; color:var(--slate-light); text-align:center; margin-top:2px; white-space:nowrap">${label}</div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+
+    <div class="modal-section">
+      <h4>Narrative Comments</h4>
+      <div class="narrative-box">${sub.narrative || '<em>No narrative provided.</em>'}</div>
+    </div>
+
+    <div class="modal-section">
+      <h4>Milestone Scores (this evaluation)</h4>
+      <div style="display:flex; flex-wrap:wrap; gap:8px">
+        ${Object.entries(sub.milestoneScores || {}).map(([m, score]) => `
+          <div style="background:var(--teal-pale); border-radius:6px; padding:6px 12px; font-size:12px">
+            <span style="font-weight:700; color:var(--teal)">${m}</span>
+            <span style="color:var(--slate); margin-left:6px">${score.toFixed(2)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('detail-modal')) {
+    document.getElementById('detail-modal').classList.remove('open');
+  }
+}
+
+// ══════════════════════════════════════════════════
+// EXPORT CSV
+// ══════════════════════════════════════════════════
+function exportCSV() {
+  if (allSubmissions.length === 0) { alert('No submissions to export.'); return; }
+
+  const milestones = Object.keys(MILESTONE_DEFS);
+  const headers = ['Date', 'Resident', 'Rotation', 'Evaluator', 'Credential', 'Dates Supervised', 'Avg Score', 'Narrative', ...milestones];
+
+  const rows = allSubmissions.map(s => {
+    const numericScores = Object.values(s.scores).filter(v => v !== 'na');
+    const avg = numericScores.length
+      ? (numericScores.reduce((a, b) => a + b, 0) / numericScores.length).toFixed(2) : '';
+    const date = new Date(s.timestamp).toLocaleDateString('en-US');
+    const milestoneVals = milestones.map(m =>
+      s.milestoneScores[m] !== undefined ? s.milestoneScores[m].toFixed(2) : '');
+    const narrative = `"${(s.narrative || '').replace(/"/g, '""')}"`;
+    return [date, s.resident, s.rotation, s.evaluatorName, s.credential, s.dates, avg, narrative, ...milestoneVals].join(',');
+  });
+
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'EPA_Evaluations_Export.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+
+// Dashboard connected to Supabase
+function checkConfiguration() {}
+
+// Load dashboard data on page open
+loadAdminData();
+</script>
+
+</body>
+</html>
