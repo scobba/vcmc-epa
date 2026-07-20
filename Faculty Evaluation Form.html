@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faculty Evaluation — VCMC Family Medicine Residency</title>
+<style>
+  :root {
+    --navy: #1A2744;
+    --navy-mid: #253660;
+    --navy-light: #344878;
+    --gold: #B8901E;
+    --gold-bright: #D4A820;
+    --gold-pale: #FBF6E9;
+    --gold-border: #E8D08A;
+    --slate: #4A5568;
+    --slate-light: #8896A8;
+    --border: #E2E6ED;
+    --border-light: #EEF1F5;
+    --bg: #FFFFFF;
+    --bg-soft: #F8F9FB;
+    --white: #FFFFFF;
+    --teal: #1A5C8A;
+    --teal-light: #2275AD;
+    --teal-pale: #EBF4FA;
+    --amber: #B8901E;
+    --amber-pale: #FBF6E9;
+    --scale-1: #9B1C1C;
+    --scale-2: #C2410C;
+    --scale-3: #B45309;
+    --scale-4: #A16207;
+    --scale-5: #4D7C0F;
+    --scale-6: #15803D;
+    --scale-7: #1A2744;
+    --scale-na: #6B7280;
+    --radius: 4px;
+    --radius-lg: 6px;
+    --shadow: 0 1px 4px rgba(26,39,68,0.08);
+    --shadow-lg: 0 4px 24px rgba(26,39,68,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: var(--white);
+    color: var(--navy);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── Header: white, sticky, matching venturafamilymed.org ── */
+  .app-header {
+    background: var(--white);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 68px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--border);
+  }
+  .app-header .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .app-header .logo-icon {
+    height: 40px;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
+  }
+  .logo-text { display: flex; flex-direction: column; gap: 2px; }
+  .logo-text .line1, .logo-text .line2 {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--navy);
+    line-height: 1.2;
+  }
+  .nav-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--slate);
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-family: inherit;
+    height: 68px;
+  }
+  .nav-btn.active { color: var(--navy); border-bottom-color: var(--navy); pointer-events: none; }
+
+  /* ── Form ── */
+  .form-container { max-width: 800px; margin: 0 auto; padding: 0 24px 80px; }
+
+  .form-header {
+    text-align: center;
+    padding: 36px 0 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .form-header .rotation-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--slate-light); margin-bottom: 10px;
+  }
+  .form-header h2 { font-size: 24px; font-weight: 300; color: var(--navy); margin-bottom: 10px; letter-spacing: -0.01em; }
+  .form-header h2 strong { font-weight: 700; }
+  .form-header p { font-size: 13px; color: var(--slate); line-height: 1.65; max-width: 560px; margin: 0 auto; }
+
+  .anon-banner {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 16px;
+    background: var(--teal-pale); border: 1px solid #C7DEEC; color: var(--teal);
+    padding: 7px 14px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+
+  .evaluator-card {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .evaluator-card h3 {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--slate-light); margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 560px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label {
+    font-size: 10px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 0.1em;
+  }
+  .form-group input, .form-group select {
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--navy);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  .form-group input:focus, .form-group select:focus {
+    border-color: var(--navy); outline: 2px solid rgba(26,39,68,0.12); outline-offset: 0;
+  }
+  .roster-status { font-size: 11px; color: var(--slate-light); letter-spacing: 0.04em; margin-top: 4px; }
+
+  /* Scale legend */
+  .scale-legend { background: var(--bg-soft); border: 1px solid var(--border); padding: 18px 24px; margin-bottom: 24px; }
+  .scale-legend h4 {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--navy);
+    margin-bottom: 4px;
+  }
+  .scale-legend p { font-size: 12px; color: var(--slate); }
+
+  /* Questions */
+  .eval-question {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-left: 3px solid transparent;
+    padding: 22px 24px;
+    margin-bottom: 10px;
+    transition: border-left-color 0.15s;
+  }
+  .eval-question:focus-within { border-left-color: var(--navy); }
+  .question-header { display: flex; gap: 12px; margin-bottom: 14px; }
+  .question-num {
+    width: 22px; height: 22px; background: var(--navy); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+  .question-text { font-size: 14px; font-weight: 600; color: var(--navy); line-height: 1.5; }
+
+  .scale-options {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    padding-left: 34px;
+  }
+  .scale-option { position: relative; }
+  .scale-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .scale-option label {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    padding: 9px 4px 8px; border: 1px solid var(--border); cursor: pointer;
+    transition: all 0.12s; text-align: center; background: var(--white);
+  }
+  .scale-option label:hover { border-color: var(--navy); background: var(--bg-soft); }
+  .scale-option input:checked + label .scale-pip { background: rgba(255,255,255,0.85); }
+  .scale-option input:checked + label .scale-label { color: rgba(255,255,255,0.85); }
+  .scale-option[data-val="1"] input:checked + label { background: var(--scale-1); border-color: var(--scale-1); }
+  .scale-option[data-val="2"] input:checked + label { background: var(--scale-2); border-color: var(--scale-2); }
+  .scale-option[data-val="3"] input:checked + label { background: var(--scale-3); border-color: var(--scale-3); }
+  .scale-option[data-val="4"] input:checked + label { background: var(--scale-4); border-color: var(--scale-4); }
+  .scale-option[data-val="5"] input:checked + label { background: var(--scale-5); border-color: var(--scale-5); }
+  .scale-option[data-val="6"] input:checked + label { background: var(--scale-6); border-color: var(--scale-6); }
+  .scale-option[data-val="7"] input:checked + label { background: var(--scale-7); border-color: var(--scale-7); }
+  .scale-option[data-val="na"] input:checked + label { background: var(--scale-na); border-color: var(--scale-na); }
+  .scale-pip { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background 0.12s; flex-shrink: 0; }
+  .scale-label { font-size: 9px; font-weight: 700; color: var(--slate); line-height: 1.3; letter-spacing: 0.02em; }
+  .scale-endcaps {
+    display: flex; justify-content: space-between; padding-left: 34px; padding-right: 0; margin-top: 6px;
+    font-size: 10px; color: var(--slate-light); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+    max-width: calc(100% - 34px - 13%);
+  }
+
+  .comment-toggle {
+    margin-left: 34px; margin-top: 14px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--teal); background: none; border: none; cursor: pointer; padding: 0;
+  }
+  .comment-box { margin-left: 34px; margin-top: 10px; display: none; }
+  .comment-box.open { display: block; }
+  .comment-box textarea {
+    width: 100%; min-height: 60px; border: 1px solid var(--border); border-radius: 0; padding: 10px 12px;
+    font-size: 13px; font-family: inherit; color: var(--navy); resize: vertical; outline: none;
+  }
+  .comment-box textarea:focus { border-color: var(--navy); }
+
+  .narrative-card { background: var(--white); border: 1px solid var(--border); padding: 22px 24px; margin-bottom: 24px; }
+  .narrative-card h3 {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--navy);
+    margin-bottom: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  .narrative-card .hint { font-size: 12px; color: var(--slate-light); margin: -2px 0 12px; }
+  .narrative-card textarea {
+    width: 100%; min-height: 130px; border: 1px solid var(--border); border-radius: 0; padding: 12px;
+    font-size: 14px; font-family: inherit; color: var(--navy); resize: vertical; outline: none;
+  }
+  .narrative-card textarea:focus { border-color: var(--navy); }
+
+  .overall-card { background: var(--bg-soft); border: 1px solid var(--border); padding: 22px 24px; margin-bottom: 24px; }
+  .overall-card h3 {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--navy);
+    margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .overall-options { display: flex; gap: 8px; flex-wrap: wrap; }
+  .overall-option { position: relative; flex: 1; min-width: 110px; }
+  .overall-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .overall-option label {
+    display: block; text-align: center; padding: 14px 8px; border: 1px solid var(--border);
+    cursor: pointer; background: var(--white); transition: all 0.12s;
+  }
+  .overall-option label:hover { border-color: var(--navy); }
+  .overall-option input:checked + label { background: var(--navy); border-color: var(--navy); color: white; }
+  .overall-num { display: block; font-size: 20px; font-weight: 700; margin-bottom: 3px; }
+  .overall-label { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  .submit-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 4px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .progress-text { font-size: 12px; color: var(--slate-light); }
+  .btn {
+    padding: 11px 28px; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    cursor: pointer; border: none; transition: opacity 0.15s; font-family: inherit; border-radius: 0;
+  }
+  .btn-primary { background: var(--navy); color: white; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .warn-text { font-size: 11.5px; color: var(--scale-2); margin-top: 10px; text-align: right; }
+
+  .success-screen { max-width: 440px; margin: 80px auto; padding: 0 24px; text-align: center; }
+  .success-icon {
+    width: 60px; height: 60px; background: var(--bg-soft); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 24px;
+  }
+  .success-screen h2 { font-size: 22px; font-weight: 300; margin-bottom: 10px; color: var(--navy); }
+  .success-screen h2 strong { font-weight: 700; }
+  .success-screen p { color: var(--slate); font-size: 14px; line-height: 1.7; margin-bottom: 28px; }
+
+  .app-footer {
+    background: var(--navy); color: rgba(255,255,255,0.45); text-align: center; padding: 28px 40px;
+    font-size: 11px; line-height: 2; letter-spacing: 0.04em; margin-top: 60px;
+  }
+  .app-footer a { color: rgba(255,255,255,0.65); text-decoration: none; }
+  .app-footer a:hover { color: white; }
+
+  @media (max-width: 640px) {
+    .app-header { padding: 0 16px; height: 56px; }
+    .app-header .logo-icon { height: 30px; }
+    .logo-text .line1, .logo-text .line2 { font-size: 8px; letter-spacing: 0.1em; }
+    .nav-btn { padding: 8px 10px; font-size: 9px; height: 56px; }
+    .form-container { padding: 0 16px 60px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .scale-options { grid-template-columns: repeat(4, 1fr); }
+    .scale-endcaps { display: none; }
+    .overall-options { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <a class="logo" href="https://www.venturafamilymed.org" target="_blank">
+    <img class="logo-icon" src="https://static.wixstatic.com/media/48ea68_21770b96de134293966db6558bd3d23a~mv2.png/v1/fill/w_75,h_79,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/vcmc-fmr-icon.png" alt="VCMC FM Residency Logo">
+    <div class="logo-text">
+      <span class="line1">Ventura County Medical Center</span>
+      <span class="line2">Family Medicine Residency Program</span>
+    </div>
+  </a>
+  <nav>
+    <button class="nav-btn active">Faculty Evaluation</button>
+  </nav>
+</header>
+
+<div class="form-container" id="form-content"></div>
+
+<footer class="app-footer">
+  <div>Ventura County Medical Center &middot; Family Medicine Residency Program</div>
+  <div>300 Hillmont Ave, Building 340, Ventura, CA 93003 &middot; (805) 652-6228</div>
+  <div><a href="https://www.venturafamilymed.org" target="_blank">venturafamilymed.org</a></div>
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════
+// CONFIGURATION — Supabase (must be first)
+// ══════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://ubqecdyhgejqoweltagl.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
+
+// ══════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════
+const QUESTIONS = [
+  "Encourages residents to participate actively in discussions",
+  "Is respectful toward residents",
+  "Is easily approachable",
+  "Is easily available/reachable",
+  "Displays enthusiasm for teaching",
+  "Provides appropriate balance of supervision and autonomy",
+  "Gives specific, actionable feedback",
+  "Solicits/is open to feedback",
+  "Demonstrates diagnostic proficiency and explains clinical reasoning",
+  "Finds ways to effectively balance education and patient care"
+];
+
+const SCALE_OPTS = [
+  { val: 1, label: 'Totally Disagree' },
+  { val: 2, label: '' },
+  { val: 3, label: '' },
+  { val: 4, label: 'Neutral' },
+  { val: 5, label: '' },
+  { val: 6, label: '' },
+  { val: 7, label: 'Totally Agree' },
+  { val: 'na', label: 'N/A' },
+];
+
+const OVERALL_OPTS = [
+  { val: 1, label: 'Poor' },
+  { val: 2, label: 'Below Average' },
+  { val: 3, label: 'Average' },
+  { val: 4, label: 'Above Average' },
+  { val: 5, label: 'Excellent' },
+];
+
+// Faculty roster loaded dynamically from Supabase `faculty` table
+let FACULTY = [];          // [{name, department}]
+let facultyLoaded = false;
+
+async function loadFaculty() {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/faculty?select=name,department&active=eq.true&order=sort_order.asc,name.asc`,
+      { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
+    );
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const rows = await response.json();
+    FACULTY = rows.filter(r => r.name && r.name.trim());
+    if (FACULTY.length === 0) FACULTY = [{ name: '[No faculty found — check Supabase faculty table]', department: '' }];
+  } catch (e) {
+    console.error('Failed to load faculty:', e);
+    FACULTY = [{ name: '[Could not load faculty — check Supabase connection]', department: '' }];
+  }
+  facultyLoaded = true;
+}
+
+function normalize(name) {
+  return (name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+function findFacultyMatch(name) {
+  const n = normalize(name);
+  if (!n) return null;
+  return FACULTY.find(f => normalize(f.name) === n) || null;
+}
+
+function departmentOptions() {
+  const depts = [...new Set(FACULTY.map(f => f.department).filter(d => d && d.trim()))].sort();
+  return depts;
+}
+
+// Adds a newly-typed faculty name to the roster so it appears for the
+// next resident immediately — no admin action required. Best-effort:
+// failures are logged but never block the evaluation submission.
+async function registerNewFaculty(name, department) {
+  if (findFacultyMatch(name)) return; // already on the roster
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/faculty`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SUPABASE_ANON,
+        'Authorization': `Bearer ${SUPABASE_ANON}`,
+        'Prefer':        'return=minimal',
+      },
+      body: JSON.stringify({
+        name: name.trim(),
+        department: department === 'Unknown' ? null : department,
+        active: true,
+        sort_order: 0,
+      }),
+    });
+    if (!response.ok) console.error('Could not register new faculty:', await response.text());
+    else FACULTY.push({ name: name.trim(), department: department === 'Unknown' ? null : department });
+  } catch (e) {
+    console.error('Could not register new faculty:', e);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+let ratings = {};      // index -> "1".."7" | "na"
+let comments = {};     // index -> string
+let overall = null;    // 1-5
+let overallFeedback = "";
+
+// ══════════════════════════════════════════════════
+// RENDER — FORM
+// ══════════════════════════════════════════════════
+function renderForm() {
+  const el = document.getElementById('form-content');
+
+  const facultyStatus = !facultyLoaded
+    ? `<div class="roster-status">Loading faculty roster&hellip;</div>`
+    : `<div class="roster-status">${FACULTY.filter(f => !f.name.startsWith('[')).length} faculty loaded</div>`;
+
+  el.innerHTML = `
+    <div class="form-header">
+      <div class="rotation-label">Resident Evaluation of Attending Teaching</div>
+      <h2><strong>Faculty Evaluation</strong></h2>
+      <p>SETQ Smart / ACGME short form. Rate your attending on each item below, and add a comment wherever it's useful.</p>
+      <div class="anon-banner">100% Anonymous &mdash; No Name or Rotation Collected</div>
+    </div>
+
+    <div class="evaluator-card">
+      <h3>Faculty Being Evaluated</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Attending Name *</label>
+          <input type="text" id="field-faculty" list="facultyList" autocomplete="off"
+            placeholder="Start typing a name&hellip;" required
+            oninput="onFacultyInput(this.value)">
+          <datalist id="facultyList">
+            ${FACULTY.filter(f => !f.name.startsWith('[')).map(f => `<option value="${f.name}">`).join('')}
+          </datalist>
+          ${facultyStatus}
+        </div>
+        <div class="form-group">
+          <label>Department *</label>
+          <select id="field-department" required onchange="onDepartmentChange()">
+            <option value="">&mdash; Select Department &mdash;</option>
+            ${departmentOptions().map(d => `<option value="${d}">${d}</option>`).join('')}
+            <option value="Unknown">Unknown / Not Sure</option>
+          </select>
+          <div class="roster-status">Don't see this attending's department? Choose "Unknown" — core faculty can correct it later.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scale-legend">
+      <h4>Rating Scale</h4>
+      <p>1 = Totally Disagree &nbsp;&middot;&nbsp; 7 = Totally Agree &nbsp;&middot;&nbsp; N/A = Not Observed</p>
+    </div>
+
+    ${QUESTIONS.map((q, i) => `
+      <div class="eval-question">
+        <div class="question-header">
+          <div class="question-num">${i + 1}</div>
+          <div class="question-text">${q}</div>
+        </div>
+        <div class="scale-options">
+          ${SCALE_OPTS.map(o => `
+            <div class="scale-option" data-val="${o.val}">
+              <input type="radio" name="q-${i}" id="q-${i}-${o.val}" value="${o.val}" onchange="setRating(${i}, '${o.val}')">
+              <label for="q-${i}-${o.val}">
+                <div class="scale-pip"></div>
+                <div class="scale-label">${o.val === 'na' ? 'N/A' : o.val}</div>
+              </label>
+            </div>
+          `).join('')}
+        </div>
+        <div class="scale-endcaps"><span>Totally Disagree</span><span>Totally Agree</span></div>
+        <button type="button" class="comment-toggle" onclick="toggleComment(${i})">
+          ${comments[i] !== undefined ? '&minus; Remove Comment' : '+ Add a Comment on This Item'}
+        </button>
+        <div class="comment-box ${comments[i] !== undefined ? 'open' : ''}">
+          <textarea placeholder="Optional: specific example or context for this item..." oninput="comments[${i}]=this.value">${comments[i] || ''}</textarea>
+        </div>
+      </div>
+    `).join('')}
+
+    <div class="overall-card">
+      <h3>Overall Rating</h3>
+      <div class="overall-options">
+        ${OVERALL_OPTS.map(o => `
+          <div class="overall-option">
+            <input type="radio" name="overall" id="overall-${o.val}" value="${o.val}" onchange="overall=${o.val}; updateSubmitState();">
+            <label for="overall-${o.val}">
+              <span class="overall-num">${o.val}</span>
+              <span class="overall-label">${o.label}</span>
+            </label>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="narrative-card">
+      <h3>Narrative Comments</h3>
+      <p class="hint">Consider one specific, observable strength and one specific suggestion for growth.</p>
+      <textarea id="field-narrative" placeholder="Your narrative feedback..." oninput="overallFeedback=this.value">${overallFeedback}</textarea>
+    </div>
+
+    <div class="submit-bar">
+      <div class="progress-text" id="progress-text"></div>
+      <button class="btn btn-primary" id="submit-btn" onclick="submitForm()" disabled>Submit Evaluation</button>
+    </div>
+    <div class="warn-text" id="warn-text"></div>
+  `;
+  updateSubmitState();
+}
+
+// Tracks whether the current department selection came from auto-fill
+// (roster lookup) vs. the resident manually picking one themselves.
+let deptAutoFilled = false;
+
+function onFacultyInput(name) {
+  window.__facultyName = name;
+  const deptSel = document.getElementById('field-department');
+  const match = findFacultyMatch(name);
+
+  if (deptSel) {
+    if (match && match.department) {
+      // Known name with a known department — apply it as long as the
+      // resident hasn't manually chosen a department themselves.
+      if (deptSel.value === "" || deptAutoFilled) {
+        deptSel.value = match.department;
+        deptAutoFilled = true;
+      }
+    } else if (deptAutoFilled) {
+      // The name no longer matches what produced the auto-fill (e.g. the
+      // resident is correcting a typo, or matched someone with no
+      // department on file yet) — clear it so they choose fresh rather
+      // than submit a stale department for the wrong person.
+      deptSel.value = "";
+      deptAutoFilled = false;
+    }
+  }
+  updateSubmitState();
+}
+
+function onDepartmentChange() {
+  deptAutoFilled = false; // resident took over — stop auto-following the roster
+  updateSubmitState();
+}
+
+function setRating(i, v) {
+  ratings[i] = v;
+  updateSubmitState();
+}
+
+function toggleComment(i) {
+  if (comments[i] !== undefined) delete comments[i];
+  else comments[i] = "";
+  renderForm();
+  // restore ratings/selections visually after re-render
+  restoreSelections();
+}
+
+function restoreSelections() {
+  Object.entries(ratings).forEach(([i, v]) => {
+    const input = document.getElementById(`q-${i}-${v}`);
+    if (input) input.checked = true;
+  });
+  if (overall) {
+    const input = document.getElementById(`overall-${overall}`);
+    if (input) input.checked = true;
+  }
+  const facultyInput = document.getElementById('field-faculty');
+  if (facultyInput && window.__facultyName) facultyInput.value = window.__facultyName;
+  const deptSel = document.getElementById('field-department');
+  if (deptSel && window.__department) deptSel.value = window.__department;
+}
+
+function updateSubmitState() {
+  const facultyInput = document.getElementById('field-faculty');
+  const deptSel = document.getElementById('field-department');
+  window.__facultyName = facultyInput ? facultyInput.value.trim() : "";
+  window.__department = deptSel ? deptSel.value : "";
+  const answered = Object.keys(ratings).length;
+  const can = !!(window.__facultyName && window.__department && answered === QUESTIONS.length && overall);
+  const btn = document.getElementById('submit-btn');
+  const progress = document.getElementById('progress-text');
+  const warn = document.getElementById('warn-text');
+  if (btn) btn.disabled = !can;
+  if (progress) progress.textContent = `${answered}/${QUESTIONS.length} items rated${overall ? ' \u00b7 overall rating set' : ''}`;
+  if (warn) warn.textContent = can ? '' : "Enter the faculty member's name, select a department, rate all 10 items, and give an overall rating to submit.";
+}
+
+// ══════════════════════════════════════════════════
+// STORAGE — Supabase (INSERT only — anon key)
+// ══════════════════════════════════════════════════
+async function submitForm() {
+  const facultyInput = document.getElementById('field-faculty');
+  const deptSel = document.getElementById('field-department');
+  const facultyName = facultyInput.value.trim();
+  const department = deptSel.value;
+
+  const payload = {
+    faculty_name:     facultyName,
+    department:       department,
+    ratings:          QUESTIONS.map((q, i) => ({ item: q, rating: ratings[i] })),
+    comments:         QUESTIONS.map((q, i) => ({ item: q, comment: comments[i] || '' })).filter(c => c.comment.trim() !== ''),
+    overall_rating:   overall,
+    overall_feedback: overallFeedback || '',
+  };
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/faculty_submissions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SUPABASE_ANON,
+        'Authorization': `Bearer ${SUPABASE_ANON}`,
+        'Prefer':        'return=minimal',
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`Submission failed: ${response.status} ${err}`);
+    }
+    await registerNewFaculty(facultyName, department);
+    showSuccess();
+  } catch (e) {
+    console.error(e);
+    alert('There was a problem submitting your evaluation. Please try again in a moment.');
+    btn.disabled = false;
+    btn.textContent = 'Submit Evaluation';
+  }
+}
+
+function showSuccess() {
+  ratings = {}; comments = {}; overall = null; overallFeedback = "";
+  window.__facultyName = ""; window.__department = ""; deptAutoFilled = false;
+  const el = document.getElementById('form-content');
+  el.innerHTML = `
+    <div class="success-screen">
+      <div class="success-icon">&#10003;</div>
+      <h2>Evaluation <strong>Submitted</strong></h2>
+      <p>Your evaluation has been recorded anonymously and will be aggregated with other responses to support faculty teaching development.</p>
+      <button class="btn btn-primary" onclick="renderForm()">Submit Another</button>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════
+async function init() {
+  renderForm();
+  await loadFaculty();
+  renderForm();
+  restoreSelections();
+}
+init();
+</script>
+
+</body>
+</html>

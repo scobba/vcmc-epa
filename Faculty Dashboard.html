@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faculty Dashboard — VCMC FM Residency</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --navy: #1A2744;
+    --navy-mid: #253660;
+    --navy-light: #344878;
+    --gold: #B8901E;
+    --gold-bright: #D4A820;
+    --gold-pale: #FBF6E9;
+    --gold-border: #E8D08A;
+    --slate: #4A5568;
+    --slate-light: #8896A8;
+    --border: #E2E6ED;
+    --border-light: #EEF1F5;
+    --bg: #FFFFFF;
+    --bg-soft: #F8F9FB;
+    --white: #FFFFFF;
+    --teal: #1A5C8A;
+    --teal-light: #2275AD;
+    --teal-pale: #EBF4FA;
+    --amber: #B8901E;
+    --amber-pale: #FBF6E9;
+    --scale-1: #9B1C1C;
+    --scale-2: #C2410C;
+    --scale-3: #B45309;
+    --scale-4: #A16207;
+    --scale-5: #4D7C0F;
+    --scale-6: #15803D;
+    --scale-7: #1A2744;
+    --scale-na: #6B7280;
+    --radius: 4px;
+    --radius-lg: 6px;
+    --shadow: 0 1px 4px rgba(26,39,68,0.08);
+    --shadow-lg: 0 4px 24px rgba(26,39,68,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: var(--white); color: var(--navy); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+
+  .app-header {
+    background: var(--white); padding: 0 40px; display: flex; align-items: center; justify-content: space-between;
+    height: 68px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border);
+  }
+  .app-header .logo { display: flex; align-items: center; gap: 14px; text-decoration: none; cursor: pointer; }
+  .app-header .logo-icon { height: 40px; width: auto; display: block; flex-shrink: 0; }
+  .logo-text { display: flex; flex-direction: column; gap: 2px; }
+  .logo-text .line1, .logo-text .line2 { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--navy); line-height: 1.2; }
+  .nav-btn { background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--slate); padding: 8px 16px; cursor: pointer; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-family: inherit; height: 68px; }
+  .nav-btn.active { color: var(--navy); border-bottom-color: var(--navy); pointer-events: none; }
+
+  .admin-container { max-width: 1140px; margin: 0 auto; padding: 0 24px 80px; }
+  .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding: 32px 0 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
+  .admin-header h2 { font-size: 22px; font-weight: 300; letter-spacing: -0.01em; color: var(--navy); }
+  .admin-header h2 strong { font-weight: 700; }
+  .admin-header p { font-size: 12px; color: var(--slate); margin-top: 4px; }
+  .admin-header-actions { display: flex; gap: 10px; }
+
+  .admin-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 24px; flex-wrap: wrap; }
+  .admin-tab { padding: 12px 20px; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--slate-light); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; border-top: none; border-left: none; border-right: none; transition: all 0.15s; font-family: inherit; }
+  .admin-tab:hover { color: var(--navy); }
+  .admin-tab.active { color: var(--navy); border-bottom-color: var(--navy); }
+  .admin-tab-content { display: none; }
+
+  .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-bar select, .filter-bar input { border: 1px solid var(--border); border-radius: 0; padding: 8px 12px; font-size: 13px; color: var(--navy); background: var(--white); outline: none; min-width: 170px; font-family: inherit; }
+  .filter-bar select:focus, .filter-bar input:focus { border-color: var(--navy); }
+
+  .table-wrap { background: var(--white); border: 1px solid var(--border); overflow: hidden; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: var(--navy); color: rgba(255,255,255,0.85); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; padding: 12px 16px; text-align: left; white-space: nowrap; }
+  td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--border-light); color: var(--slate); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg-soft); }
+
+  .badge { display: inline-block; padding: 2px 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .badge-teal { background: var(--teal-pale); color: var(--teal); }
+  .badge-amber { background: var(--gold-pale); color: var(--gold); }
+  .badge-navy { background: var(--bg-soft); color: var(--navy); border: 1px solid var(--border); }
+
+  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+  .stat-card { background: var(--white); border: 1px solid var(--border); padding: 16px 18px; }
+  .stat-card .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate-light); margin-bottom: 6px; }
+  .stat-card .stat-value { font-size: 24px; font-weight: 700; color: var(--navy); letter-spacing: -0.01em; }
+
+  .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-bottom: 28px; }
+  .item-card { background: var(--white); border: 1px solid var(--border); padding: 16px 18px; }
+  .item-card .ic-num { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--navy); margin-bottom: 4px; }
+  .item-card .ic-desc { font-size: 12px; color: var(--slate); margin-bottom: 12px; line-height: 1.4; min-height: 32px; }
+  .ic-bar-bg { height: 2px; background: var(--border); overflow: hidden; margin-bottom: 10px; }
+  .ic-bar-fill { height: 100%; background: var(--navy); transition: width 0.5s ease; }
+  .ic-score { font-size: 20px; font-weight: 700; color: var(--navy); letter-spacing: -0.02em; }
+  .ic-score span { font-size: 12px; font-weight: 400; color: var(--slate-light); }
+
+  .dept-card { background: var(--white); border: 1px solid var(--border); margin-bottom: 16px; }
+  .dept-card-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: var(--bg-soft); border-bottom: 1px solid var(--border); }
+  .dept-card-header h4 { font-size: 13px; font-weight: 700; color: var(--navy); letter-spacing: -0.01em; }
+  .dept-card-header .dept-meta { font-size: 11px; color: var(--slate-light); }
+
+  .comment-feed { display: flex; flex-direction: column; gap: 10px; }
+  .comment-item { background: var(--white); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 14px 18px; }
+  .comment-item .ci-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--slate-light); margin-bottom: 6px; }
+  .comment-item .ci-txt { font-size: 13px; color: var(--navy); line-height: 1.6; font-style: italic; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,39,68,0.4); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--white); max-width: 720px; width: 90%; max-height: 88vh; overflow-y: auto; box-shadow: var(--shadow-lg); padding: 32px; }
+  .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .modal-header h3 { font-size: 15px; font-weight: 700; color: var(--navy); }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--slate-light); padding: 4px; line-height: 1; }
+  .modal-section { margin-bottom: 24px; }
+  .modal-section h4 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--slate-light); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-light); }
+  .modal-item-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+  .modal-item-row:last-child { border-bottom: none; }
+  .modal-item-text { font-size: 13px; color: var(--navy); flex: 1; }
+  .score-chip { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .score-1 { background: #FEF2F2; color: var(--scale-1); } .score-2 { background: #FFF7ED; color: var(--scale-2); }
+  .score-3 { background: #FFFBEB; color: var(--scale-3); } .score-4 { background: #FEFCE8; color: var(--scale-4); }
+  .score-5 { background: #F7FEE7; color: var(--scale-5); } .score-6 { background: #F0FBF4; color: var(--scale-6); }
+  .score-7 { background: var(--teal-pale); color: var(--scale-7); } .score-na { background: var(--bg-soft); color: var(--scale-na); }
+  .narrative-box { background: var(--bg-soft); border-left: 3px solid var(--navy); padding: 14px 16px; font-size: 13px; color: var(--slate); line-height: 1.7; font-style: italic; }
+
+  .btn { padding: 10px 22px; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; border: none; transition: opacity 0.15s; font-family: inherit; border-radius: 0; }
+  .btn-primary { background: var(--navy); color: white; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-secondary { background: var(--white); color: var(--navy); border: 1px solid var(--navy); }
+  .btn-secondary:hover { background: var(--bg-soft); }
+
+  .loading-state { text-align: center; padding: 48px 24px; color: var(--slate-light); font-size: 13px; }
+  .spinner { width: 26px; height: 26px; border: 2px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--slate-light); font-size: 13px; }
+  .empty-state .empty-icon { font-size: 28px; margin-bottom: 10px; }
+
+  .app-footer { background: var(--navy); color: rgba(255,255,255,0.45); text-align: center; padding: 28px 40px; font-size: 11px; line-height: 2; letter-spacing: 0.04em; margin-top: 60px; }
+  .app-footer a { color: rgba(255,255,255,0.65); text-decoration: none; }
+  .app-footer a:hover { color: white; }
+
+  @media print {
+    .app-header, .app-footer, .admin-tabs, .filter-bar, .admin-header-actions, .btn { display: none !important; }
+    .admin-tab-content { display: block !important; }
+    .admin-container { padding: 0; max-width: 100%; }
+    body { font-size: 12px; }
+  }
+
+  @media (max-width: 640px) {
+    .app-header { padding: 0 16px; height: 56px; }
+    .app-header .logo-icon { height: 30px; }
+    .logo-text .line1, .logo-text .line2 { font-size: 8px; letter-spacing: 0.1em; }
+    .nav-btn { padding: 8px 10px; font-size: 9px; height: 56px; }
+    .admin-container { padding: 0 16px 60px; }
+    .admin-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .stat-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <a class="logo" href="https://www.venturafamilymed.org" target="_blank">
+    <img class="logo-icon" src="https://static.wixstatic.com/media/48ea68_21770b96de134293966db6558bd3d23a~mv2.png/v1/fill/w_75,h_79,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/vcmc-fmr-icon.png" alt="VCMC FM Residency Logo">
+    <div class="logo-text">
+      <span class="line1">Ventura County Medical Center</span>
+      <span class="line2">Family Medicine Residency Program</span>
+    </div>
+  </a>
+  <nav>
+    <button class="nav-btn active">Faculty Dashboard</button>
+  </nav>
+</header>
+
+<div class="admin-container">
+  <div class="admin-header">
+    <div>
+      <h2><strong>Faculty</strong> Evaluation Dashboard</h2>
+      <p>Aggregate SETQ data and evaluation submissions &middot; anonymized resident feedback</p>
+    </div>
+    <div class="admin-header-actions">
+      <button class="btn btn-secondary" onclick="window.print()">&#128438; Print</button>
+      <button class="btn btn-secondary" onclick="exportCSV()">&#8681; Export CSV</button>
+    </div>
+  </div>
+
+  <div class="admin-tabs">
+    <button class="admin-tab active" onclick="switchAdminTab('summary', this)">Summary</button>
+    <button class="admin-tab" onclick="switchAdminTab('submissions', this)">All Submissions</button>
+    <button class="admin-tab" onclick="switchAdminTab('faculty', this)">By Faculty</button>
+    <button class="admin-tab" onclick="switchAdminTab('department', this)">By Department</button>
+  </div>
+
+  <div id="admin-tab-summary" class="admin-tab-content" style="display:block">
+    <div class="filter-bar">
+      <select id="filter-faculty-summary" onchange="renderSummary()">
+        <option value="">All Faculty</option>
+      </select>
+      <select id="filter-department-summary" onchange="renderSummary()">
+        <option value="">All Departments</option>
+      </select>
+    </div>
+    <div id="summary-stats"></div>
+    <div id="summary-grid-container"></div>
+    <h4 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:14px">Free-Text Feedback</h4>
+    <div id="summary-comments" class="comment-feed"></div>
+  </div>
+
+  <div id="admin-tab-submissions" class="admin-tab-content">
+    <div class="filter-bar">
+      <input id="search-submissions" type="text" placeholder="Search by faculty name&hellip;" oninput="renderSubmissions()">
+      <select id="filter-faculty-submissions" onchange="renderSubmissions()">
+        <option value="">All Faculty</option>
+      </select>
+      <select id="filter-department-submissions" onchange="renderSubmissions()">
+        <option value="">All Departments</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Faculty</th><th>Department</th><th>Overall</th><th></th></tr></thead>
+        <tbody id="submissions-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="admin-tab-faculty" class="admin-tab-content">
+    <div class="filter-bar">
+      <select id="filter-faculty-detail" onchange="renderFacultyDetail()">
+        <option value="">Select a Faculty Member&hellip;</option>
+      </select>
+    </div>
+    <div id="faculty-detail-container"></div>
+  </div>
+
+  <div id="admin-tab-department" class="admin-tab-content">
+    <div class="filter-bar">
+      <select id="filter-department-detail" onchange="renderDepartmentDetail()">
+        <option value="">All Departments</option>
+      </select>
+    </div>
+    <div id="department-detail-container"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detail-modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Evaluation Detail</h3>
+      <button class="modal-close" onclick="document.getElementById('detail-modal').classList.remove('open')">&#10005;</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<footer class="app-footer">
+  <div>Ventura County Medical Center &middot; Family Medicine Residency Program</div>
+  <div>300 Hillmont Ave, Building 340, Ventura, CA 93003 &middot; (805) 652-6228</div>
+  <div><a href="https://www.venturafamilymed.org" target="_blank">venturafamilymed.org</a></div>
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════
+// CONFIGURATION — Supabase
+// ══════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://ubqecdyhgejqoweltagl.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
+// Access control: share this URL only with core faculty, program leadership, and department heads.
+
+const QUESTIONS = [
+  "Encourages residents to participate actively in discussions",
+  "Is respectful toward residents",
+  "Is easily approachable",
+  "Is easily available/reachable",
+  "Displays enthusiasm for teaching",
+  "Provides appropriate balance of supervision and autonomy",
+  "Gives specific, actionable feedback",
+  "Solicits/is open to feedback",
+  "Demonstrates diagnostic proficiency and explains clinical reasoning",
+  "Finds ways to effectively balance education and patient care"
+];
+
+// ── State ──────────────────────────────────────────────────────────
+let allSubmissions = [];   // faculty_submissions rows, normalized
+let facultyRoster = [];    // faculty rows, normalized
+
+// ── Storage — load from Supabase ──────────────────────────────────
+async function loadSubmissions() {
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/faculty_submissions?select=*&order=created_at.desc&limit=10000`;
+    const response = await fetch(url, { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const rows = await response.json();
+    return rows.map(row => ({
+      id: row.id,
+      timestamp: row.created_at,
+      facultyName: row.faculty_name,
+      department: row.department || 'Unknown',
+      ratings: row.ratings || [],
+      comments: row.comments || [],
+      overallRating: row.overall_rating,
+      overallFeedback: row.overall_feedback || '',
+    }));
+  } catch (e) {
+    console.error('Failed to load submissions:', e.message);
+    return [];
+  }
+}
+
+async function loadFacultyRoster() {
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/faculty?select=name,department,active&order=sort_order.asc,name.asc`;
+    const response = await fetch(url, { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const rows = await response.json();
+    return rows.map(r => ({ name: r.name, department: r.department || 'Unknown', active: r.active }));
+  } catch (e) {
+    console.error('Failed to load faculty roster:', e.message);
+    return [];
+  }
+}
+
+async function loadAdminData() {
+  const container = document.getElementById('summary-grid-container');
+  if (container) container.innerHTML = '<div class="loading-state"><div class="spinner"></div>Loading evaluation data&hellip;</div>';
+  [allSubmissions, facultyRoster] = await Promise.all([loadSubmissions(), loadFacultyRoster()]);
+  populateFilterDropdowns();
+  renderSummary();
+}
+
+function populateFilterDropdowns() {
+  const facultyNames = [...new Set(allSubmissions.map(s => s.facultyName))].sort();
+  const departments = [...new Set(allSubmissions.map(s => s.department))].sort();
+
+  const facultySelects = ['filter-faculty-summary', 'filter-faculty-submissions', 'filter-faculty-detail'];
+  const departmentSelects = ['filter-department-summary', 'filter-department-submissions', 'filter-department-detail'];
+
+  facultySelects.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value, placeholder = el.options[0].text;
+    el.innerHTML = `<option value="">${placeholder}</option>` + facultyNames.map(f => `<option value="${f}" ${f===cur?'selected':''}>${f}</option>`).join('');
+  });
+
+  departmentSelects.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value, placeholder = el.options[0].text;
+    el.innerHTML = `<option value="">${placeholder}</option>` + departments.map(d => `<option value="${d}" ${d===cur?'selected':''}>${d}</option>`).join('');
+  });
+}
+
+function switchAdminTab(name, btn) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-tab-content').forEach(c => c.style.display = 'none');
+  btn.classList.add('active');
+  document.getElementById('admin-tab-' + name).style.display = 'block';
+  if (name === 'submissions') renderSubmissions();
+  if (name === 'faculty') renderFacultyDetail();
+  if (name === 'department') renderDepartmentDetail();
+}
+
+function avgOf(vals) { return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null; }
+
+function itemAveragesFor(subs) {
+  return QUESTIONS.map((q, i) => {
+    const vals = subs.map(s => (s.ratings[i] && s.ratings[i].rating !== 'na') ? Number(s.ratings[i].rating) : null).filter(v => v !== null && !isNaN(v));
+    return { item: q, avg: avgOf(vals), count: vals.length };
+  });
+}
+
+function commentsFor(subs) {
+  const out = [];
+  subs.forEach(s => {
+    (s.comments || []).forEach(c => { if (c.comment && c.comment.trim()) out.push({ tag: c.item, txt: c.comment, faculty: s.facultyName }); });
+    if (s.overallFeedback && s.overallFeedback.trim()) out.push({ tag: 'Overall narrative feedback', txt: s.overallFeedback, faculty: s.facultyName });
+  });
+  return out;
+}
+
+// ── Summary Tab ──
+function renderSummary() {
+  const facultyFilter = document.getElementById('filter-faculty-summary')?.value || '';
+  const deptFilter = document.getElementById('filter-department-summary')?.value || '';
+
+  let subs = allSubmissions;
+  if (facultyFilter) subs = subs.filter(s => s.facultyName === facultyFilter);
+  if (deptFilter) subs = subs.filter(s => s.department === deptFilter);
+
+  const statsEl = document.getElementById('summary-stats');
+  const overallVals = subs.map(s => s.overallRating).filter(Boolean);
+  const overallAvg = avgOf(overallVals);
+  statsEl.innerHTML = `
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">Responses</div><div class="stat-value">${subs.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Overall Rating (avg / 5)</div><div class="stat-value">${overallAvg ? overallAvg.toFixed(2) : '&mdash;'}</div></div>
+      <div class="stat-card"><div class="stat-label">Faculty Represented</div><div class="stat-value">${new Set(subs.map(s=>s.facultyName)).size}</div></div>
+    </div>`;
+
+  const container = document.getElementById('summary-grid-container');
+  if (subs.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">&#128203;</div><p>No evaluations submitted yet.</p></div>`;
+    document.getElementById('summary-comments').innerHTML = '';
+    return;
+  }
+
+  const items = itemAveragesFor(subs);
+  container.innerHTML = `
+    <div class="item-grid">
+      ${items.map((it, i) => {
+        const pct = it.avg ? ((it.avg - 1) / 6) * 100 : 0;
+        const barColor = it.avg === null ? 'var(--border)' : it.avg < 3 ? 'var(--scale-1)' : it.avg < 5 ? 'var(--scale-3)' : it.avg < 6 ? 'var(--scale-5)' : 'var(--navy)';
+        return `
+        <div class="item-card">
+          <div class="ic-num">Item ${i+1}</div>
+          <div class="ic-desc">${it.item}</div>
+          <div class="ic-bar-bg"><div class="ic-bar-fill" style="width:${pct}%; background:${barColor}"></div></div>
+          <div class="ic-score">${it.avg !== null ? it.avg.toFixed(2) : '&mdash;'} <span>/ 7.00 ${it.count ? `(${it.count})` : ''}</span></div>
+        </div>`;
+      }).join('')}
+    </div>
+    <p style="font-size:12px; color:var(--slate-light); margin-top:-14px; margin-bottom:28px">Showing data from ${subs.length} submission${subs.length!==1?'s':''}. N/A responses are excluded from averages.</p>
+  `;
+
+  const comments = commentsFor(subs);
+  document.getElementById('summary-comments').innerHTML = comments.length === 0
+    ? '<div class="empty-state"><div class="empty-icon">&#128172;</div><p>No written comments yet.</p></div>'
+    : comments.map(c => `
+      <div class="comment-item">
+        <div class="ci-tag">${c.tag}${!facultyFilter ? ' &middot; ' + c.faculty : ''}</div>
+        <div class="ci-txt">"${escapeHtml(c.txt)}"</div>
+      </div>`).join('');
+}
+
+// ── Submissions Tab ──
+function renderSubmissions() {
+  const search = (document.getElementById('search-submissions')?.value || '').toLowerCase();
+  const facultyFilter = document.getElementById('filter-faculty-submissions')?.value || '';
+  const deptFilter = document.getElementById('filter-department-submissions')?.value || '';
+
+  let subs = allSubmissions;
+  if (search) subs = subs.filter(s => s.facultyName.toLowerCase().includes(search));
+  if (facultyFilter) subs = subs.filter(s => s.facultyName === facultyFilter);
+  if (deptFilter) subs = subs.filter(s => s.department === deptFilter);
+  subs = [...subs].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  const tbody = document.getElementById('submissions-tbody');
+  if (subs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--slate-light); padding:32px">No submissions found.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = subs.map(s => {
+    const date = new Date(s.timestamp).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    const scoreClass = !s.overallRating ? '' : s.overallRating >= 4 ? 'badge-teal' : s.overallRating >= 3 ? 'badge-navy' : 'badge-amber';
+    return `
+      <tr>
+        <td>${date}</td>
+        <td style="font-weight:600; color:var(--navy)">${s.facultyName}</td>
+        <td><span class="badge badge-navy">${s.department}</span></td>
+        <td><span class="badge ${scoreClass}">${s.overallRating ?? '&mdash;'}</span></td>
+        <td><button class="btn btn-secondary" style="padding:6px 14px; font-size:12px" onclick='openModal(${JSON.stringify(s).replace(/'/g,"&#39;")})'>View</button></td>
+      </tr>`;
+  }).join('');
+}
+
+// ── By Faculty Tab ──
+function renderFacultyDetail() {
+  const facultyFilter = document.getElementById('filter-faculty-detail')?.value || '';
+  const container = document.getElementById('faculty-detail-container');
+  if (!facultyFilter) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">&#128100;</div><p>Select a faculty member above to view their evaluation summary.</p></div>`;
+    return;
+  }
+  const subs = allSubmissions.filter(s => s.facultyName === facultyFilter);
+  if (subs.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">&#128203;</div><p>No evaluations found for ${facultyFilter}.</p></div>`;
+    return;
+  }
+  const dept = subs[0].department;
+  const overallVals = subs.map(s => s.overallRating).filter(Boolean);
+  const overallAvg = avgOf(overallVals);
+  const items = itemAveragesFor(subs);
+  const comments = commentsFor(subs);
+
+  container.innerHTML = `
+    <div style="margin-bottom:24px">
+      <h3 style="font-size:18px; font-weight:700; color:var(--navy); margin-bottom:4px">${facultyFilter}</h3>
+      <p style="font-size:13px; color:var(--slate)">${subs.length} evaluation${subs.length!==1?'s':''} &middot; <span class="badge badge-navy">${dept}</span></p>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">Responses</div><div class="stat-value">${subs.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Overall Rating (avg / 5)</div><div class="stat-value">${overallAvg ? overallAvg.toFixed(2) : '&mdash;'}</div></div>
+      <div class="stat-card"><div class="stat-label">Department</div><div class="stat-value" style="font-size:16px">${dept}</div></div>
+    </div>
+    <h4 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:14px">Item Averages</h4>
+    <div class="item-grid">
+      ${items.map((it,i) => {
+        const pct = it.avg ? ((it.avg - 1) / 6) * 100 : 0;
+        const barColor = it.avg === null ? 'var(--border)' : it.avg < 3 ? 'var(--scale-1)' : it.avg < 5 ? 'var(--scale-3)' : it.avg < 6 ? 'var(--scale-5)' : 'var(--navy)';
+        return `
+        <div class="item-card">
+          <div class="ic-num">Item ${i+1}</div>
+          <div class="ic-desc">${it.item}</div>
+          <div class="ic-bar-bg"><div class="ic-bar-fill" style="width:${pct}%; background:${barColor}"></div></div>
+          <div class="ic-score">${it.avg !== null ? it.avg.toFixed(2) : '&mdash;'} <span>/ 7.00</span></div>
+        </div>`;
+      }).join('')}
+    </div>
+    <h4 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:14px">Free-Text Feedback</h4>
+    <div class="comment-feed" style="margin-bottom:20px">
+      ${comments.length === 0 ? '<div style="color:var(--slate-light); font-size:13px; font-style:italic">No written comments yet.</div>' :
+        comments.map(c => `<div class="comment-item"><div class="ci-tag">${c.tag}</div><div class="ci-txt">"${escapeHtml(c.txt)}"</div></div>`).join('')}
+    </div>
+  `;
+}
+
+// ── By Department Tab (report for department heads) ──
+function renderDepartmentDetail() {
+  const deptFilter = document.getElementById('filter-department-detail')?.value || '';
+  const container = document.getElementById('department-detail-container');
+
+  const departments = deptFilter ? [deptFilter] : [...new Set(allSubmissions.map(s => s.department))].sort();
+
+  if (allSubmissions.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">&#127976;</div><p>No evaluations submitted yet.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = departments.map(dept => {
+    const subs = allSubmissions.filter(s => s.department === dept);
+    if (subs.length === 0) return '';
+    const facultyInDept = [...new Set(subs.map(s => s.facultyName))].sort();
+    const overallAvg = avgOf(subs.map(s => s.overallRating).filter(Boolean));
+
+    const rows = facultyInDept.map(fac => {
+      const facSubs = subs.filter(s => s.facultyName === fac);
+      const facAvg = avgOf(facSubs.map(s => s.overallRating).filter(Boolean));
+      const itemAvg = avgOf(itemAveragesFor(facSubs).map(it => it.avg).filter(v => v !== null));
+      return { fac, count: facSubs.length, facAvg, itemAvg };
+    });
+
+    return `
+      <div class="dept-card">
+        <div class="dept-card-header">
+          <h4>${dept}</h4>
+          <div class="dept-meta">${subs.length} evaluation${subs.length!==1?'s':''} &middot; ${facultyInDept.length} faculty &middot; dept. avg ${overallAvg ? overallAvg.toFixed(2) : '&mdash;'} / 5</div>
+        </div>
+        <div class="table-wrap" style="border:none">
+          <table>
+            <thead><tr><th>Faculty</th><th>Responses</th><th>Overall Avg</th><th>Item Avg (of 7)</th></tr></thead>
+            <tbody>
+              ${rows.map(r => `
+                <tr>
+                  <td style="font-weight:600; color:var(--navy)">${r.fac}</td>
+                  <td>${r.count}</td>
+                  <td><span class="badge ${r.facAvg && r.facAvg>=4?'badge-teal':r.facAvg && r.facAvg>=3?'badge-navy':'badge-amber'}">${r.facAvg ? r.facAvg.toFixed(2) : '&mdash;'}</span></td>
+                  <td>${r.itemAvg !== null ? r.itemAvg.toFixed(2) : '&mdash;'}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Modal ──
+function openModal(sub) {
+  const date = new Date(sub.timestamp).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  document.getElementById('modal-title').textContent = `${sub.facultyName} — ${date}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-section">
+      <h4>Submission Info</h4>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:13px">
+        <div><span style="color:var(--slate-light)">Department:</span><br><strong>${sub.department}</strong></div>
+        <div><span style="color:var(--slate-light)">Overall Rating:</span><br><strong>${sub.overallRating ?? '&mdash;'} / 5</strong></div>
+        <div><span style="color:var(--slate-light)">Submitted:</span><br><strong>${date}</strong></div>
+      </div>
+    </div>
+    <div class="modal-section">
+      <h4>Item Ratings</h4>
+      ${(sub.ratings || []).map((r, i) => {
+        const val = r.rating;
+        const chipClass = val === 'na' ? 'score-na' : `score-${val}`;
+        return `
+          <div class="modal-item-row">
+            <div style="color:var(--slate-light); font-size:12px; width:20px; flex-shrink:0">${i+1}</div>
+            <div class="modal-item-text">${r.item}</div>
+            <div class="score-chip ${chipClass}">${val === 'na' ? 'N/A' : val}</div>
+          </div>`;
+      }).join('')}
+    </div>
+    <div class="modal-section">
+      <h4>Item Comments</h4>
+      ${(sub.comments && sub.comments.length) ? sub.comments.map(c => `
+        <div style="margin-bottom:10px"><div style="font-size:11px; color:var(--slate-light); font-weight:700; margin-bottom:2px">${c.item}</div><div class="narrative-box">${escapeHtml(c.comment)}</div></div>
+      `).join('') : '<div class="narrative-box"><em>No item-level comments.</em></div>'}
+    </div>
+    <div class="modal-section">
+      <h4>Narrative Comments</h4>
+      <div class="narrative-box">${sub.overallFeedback ? escapeHtml(sub.overallFeedback) : '<em>No narrative provided.</em>'}</div>
+    </div>
+  `;
+  document.getElementById('detail-modal').classList.add('open');
+}
+function closeModal(e) {
+  if (e.target === document.getElementById('detail-modal')) document.getElementById('detail-modal').classList.remove('open');
+}
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.innerText = s;
+  return d.innerHTML;
+}
+
+// ── Export CSV ──
+function exportCSV() {
+  if (allSubmissions.length === 0) { alert('No submissions to export.'); return; }
+  const header = ['Date','Faculty','Department', ...QUESTIONS.map((q,i)=>`Q${i+1} Rating`), ...QUESTIONS.map((q,i)=>`Q${i+1} Comment`), 'Overall Rating','Overall Feedback'];
+  const rows = allSubmissions.map(s => {
+    const date = new Date(s.timestamp).toLocaleDateString('en-US');
+    const ratingsMap = {}; (s.ratings||[]).forEach((r,i)=> ratingsMap[i]=r.rating);
+    const commentsMap = {}; (s.comments||[]).forEach(c=>{ const idx = QUESTIONS.indexOf(c.item); if(idx>-1) commentsMap[idx]=c.comment; });
+    const row = [
+      date, s.facultyName, s.department,
+      ...QUESTIONS.map((q,i)=> ratingsMap[i] ?? ''),
+      ...QUESTIONS.map((q,i)=> commentsMap[i] ?? ''),
+      s.overallRating ?? '', s.overallFeedback || ''
+    ];
+    return row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+  });
+  const csv = [header.map(h=>`"${h}"`).join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'Faculty_Evaluations_Export.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// Load dashboard data on page open
+loadAdminData();
+</script>
+
+</body>
+</html>
