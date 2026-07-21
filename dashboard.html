@@ -731,6 +731,15 @@
     .admin-header { flex-direction: column; align-items: flex-start; gap: 8px; }
   }
 
+  /* ── Print styles ── */
+  @media print {
+    .app-header, .admin-tabs, .filter-bar, .btn,
+    .modal-overlay, .app-footer { display: none !important; }
+    .admin-container { padding: 0; }
+    .table-wrap { box-shadow: none; border: 1px solid #ccc; }
+    .milestone-card { break-inside: avoid; }
+    body { font-size: 11px; }
+  }
 </style>
 </head>
 <body>
@@ -757,7 +766,10 @@
       <h2><strong>Program</strong> Dashboard</h2>
       <p>Aggregate milestone data and evaluation submissions</p>
     </div>
-    <button class="btn btn-secondary" onclick="exportCSV()" style="font-size:10px; letter-spacing:0.1em">⬇ Export CSV</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="exportCSV()" style="font-size:10px; letter-spacing:0.1em">⬇ Export CSV</button>
+        <button class="btn btn-secondary" onclick="printDashboard()" style="font-size:10px; letter-spacing:0.1em">🖨 Print</button>
+      </div>
   </div>
 
   <div class="admin-tabs">
@@ -802,10 +814,17 @@
   </div>
 
   <div id="admin-tab-residents" class="admin-tab-content" style="display:none">
-    <div class="filter-bar">
+    <div class="filter-bar" style="flex-wrap:wrap;gap:10px;margin-bottom:12px">
       <select id="filter-resident-detail" onchange="renderResidentDetail()">
         <option value="">Select a Resident…</option>
       </select>
+      <input type="date" id="filter-res-date-start" onchange="renderResidentDetail()" title="Filter from date">
+      <input type="date" id="filter-res-date-end" onchange="renderResidentDetail()" title="Filter to date">
+      <select id="filter-res-rotation" onchange="renderResidentDetail()">
+        <option value="">All Rotations</option>
+      </select>
+      <input type="text" id="filter-res-evaluator" placeholder="Filter by evaluator…" oninput="renderResidentDetail()" style="min-width:180px">
+      <button class="btn btn-secondary" onclick="clearResidentFilters()" style="font-size:10px;letter-spacing:0.1em;padding:8px 14px">✕ Clear Filters</button>
     </div>
     <div id="resident-detail-container"></div>
   </div>
@@ -832,8 +851,11 @@
 // ══════════════════════════════════════════════════
 // CONFIGURATION — Supabase
 // ══════════════════════════════════════════════════
-const SUPABASE_URL  = 'https://ubqecdyhgejqoweltagl.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
+const SUPABASE_URL         = 'https://ubqecdyhgejqoweltagl.supabase.co';
+const SUPABASE_ANON        = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
+// ⚠ Paste your Supabase service role key below (Settings → API → service_role → Reveal)
+// apikey header always uses anon key; Authorization uses service role key — this is correct
+const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDM4MDIzMCwiZXhwIjoyMDk5OTU2MjMwfQ.yptnELb0AoHKYwEqExy7U5J6fDEIEpVnom81Fi9K2eg';
 
 // ── Service role key (optional but more secure) ────────────────────
 // Paste your service role key here to use elevated read access.
@@ -972,25 +994,24 @@ let allSubmissions = [];
 
 // ── Storage — load from Supabase ──────────────────────────────────
 async function loadSubmissions() {
+  const useServiceKey = !SUPABASE_SERVICE_KEY.includes('PASTE_YOUR');
   try {
     const url = `${SUPABASE_URL}/rest/v1/epa_submissions?select=*&order=created_at.desc&limit=10000`;
     const response = await fetch(url, {
       headers: {
         'apikey':        SUPABASE_ANON,
-        'Authorization': `Bearer ${SUPABASE_ANON}`,
+        'Authorization': `Bearer ${useServiceKey ? SUPABASE_SERVICE_KEY : SUPABASE_ANON}`,
       },
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const rows = await response.json();
-    console.log('Rows returned:', rows.length);
     return rows.map(row => ({
       id:              row.id,
       timestamp:       row.created_at,
       resident:        row.resident,
       rotation:        row.rotation,
       evaluatorName:   row.evaluator_name,
-      credential:      row.credential,
-      dates:           `${row.date_start || ''} – ${row.date_end || ''}`,
+      dates:           row.date_start || '',
       dateStart:       row.date_start,
       dateEnd:         row.date_end,
       scores:          row.scores          || {},
@@ -1036,6 +1057,9 @@ function populateFilterDropdowns() {
     el.innerHTML = `<option value="">All Rotations</option>` +
       rotations.map(r => `<option value="${r}" ${r === cur ? 'selected' : ''}>${r}</option>`).join('');
   });
+
+  // Populate resident detail rotation filter
+  populateResidentRotationFilter();
 }
 
 function switchAdminTab(name, btn) {
@@ -1139,19 +1163,53 @@ function renderSubmissions() {
   }).join('');
 }
 
+// ── Print Dashboard ───────────────────────────────────────────────
+function printDashboard() {
+  window.print();
+}
+
+// ── Clear Resident Filters ────────────────────────────────────────
+function clearResidentFilters() {
+  document.getElementById('filter-res-date-start').value = '';
+  document.getElementById('filter-res-date-end').value = '';
+  document.getElementById('filter-res-rotation').value = '';
+  document.getElementById('filter-res-evaluator').value = '';
+  renderResidentDetail();
+}
+
+// ── Populate resident rotation filter ────────────────────────────
+function populateResidentRotationFilter() {
+  const rotations = [...new Set(allSubmissions.map(s => s.rotation))].sort();
+  const el = document.getElementById('filter-res-rotation');
+  if (!el) return;
+  const cur = el.value;
+  el.innerHTML = '<option value="">All Rotations</option>' +
+    rotations.map(r => `<option value="${r}" ${r === cur ? 'selected' : ''}>${r}</option>`).join('');
+}
+
 // ── Resident Detail Tab ──
 function renderResidentDetail() {
-  const resFilter = document.getElementById('filter-resident-detail')?.value || '';
-  const container = document.getElementById('resident-detail-container');
+  const resFilter    = document.getElementById('filter-resident-detail')?.value || '';
+  const dateStart    = document.getElementById('filter-res-date-start')?.value || '';
+  const dateEnd      = document.getElementById('filter-res-date-end')?.value || '';
+  const rotFilter    = document.getElementById('filter-res-rotation')?.value || '';
+  const evalFilter   = (document.getElementById('filter-res-evaluator')?.value || '').toLowerCase();
+  const container    = document.getElementById('resident-detail-container');
 
   if (!resFilter) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">👤</div><p>Select a resident above to view their milestone summary and evaluation history.</p></div>`;
     return;
   }
 
-  const subs = allSubmissions.filter(s => s.resident === resFilter);
+  // Apply all filters
+  let subs = allSubmissions.filter(s => s.resident === resFilter);
+  if (dateStart) subs = subs.filter(s => s.dateStart >= dateStart);
+  if (dateEnd)   subs = subs.filter(s => s.dateStart <= dateEnd);
+  if (rotFilter) subs = subs.filter(s => s.rotation === rotFilter);
+  if (evalFilter) subs = subs.filter(s => s.evaluatorName?.toLowerCase().includes(evalFilter));
+
   if (subs.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>No evaluations found for ${resFilter}.</p></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>No evaluations found for ${resFilter} with the current filters.</p></div>`;
     return;
   }
 
