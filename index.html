@@ -870,6 +870,7 @@ const ROTATIONS = {
       { id: 'afmc6', text: 'Coordinate care across settings and disciplines for continuity patients', context: 'Consider: managing referrals; coordinating with behavioral health, social work, community resources; navigating insurance/cost barriers; ensuring continuity across settings.', milestones: ['SBP2','SBP3'] },
       { id: 'afmc7', text: 'Engage in panel management and population health', context: 'Consider: using EHR tools to identify care gaps; chart audits; outreach to patients needing preventive services; participating in quality improvement initiatives.', milestones: ['PC3','SBP1'] },
       { id: 'afmc8', text: 'Demonstrate patient-centered communication across diverse encounters', context: 'Consider: motivational interviewing; shared decision-making; health literacy–appropriate language; recognizing cultural and language barriers; maintaining therapeutic relationships in challenging encounters.', milestones: ['ICS1','PROF1'] },
+      { id: 'afmc9', text: 'Evaluate and manage patients with mental health conditions in the primary care setting', context: 'Consider: screening for depression, anxiety, PTSD, and substance use disorders; initiating and managing psychotropic medications; safety planning for patients with suicidal ideation; warm handoffs and collaborative care coordination with behavioral health; recognizing limitations and appropriate referral.', milestones: ['PC2','MK1','ICS1'] },
     ]
   },
   'Outpatient Pediatrics': {
@@ -1067,22 +1068,8 @@ function renderEPAForm(rotationName) {
           <input type="text" id="field-evaluator-name" placeholder="e.g. Dr. Jane Smith, PA-C" required>
         </div>
         <div class="form-group">
-          <label>Credential / Role</label>
-          <select id="field-credential">
-            <option value="MD">MD</option>
-            <option value="DO">DO</option>
-            <option value="PA-C">PA-C</option>
-            <option value="NP">NP</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Supervision Start Date *</label>
+          <label>Supervision Date *</label>
           <input type="date" id="field-date-start" required>
-        </div>
-        <div class="form-group">
-          <label>Supervision End Date *</label>
-          <input type="date" id="field-date-end" required>
         </div>
       </div>
     </div>
@@ -1174,19 +1161,17 @@ function renderEPAForm(rotationName) {
 async function submitForm(rotationName) {
   const resident = document.getElementById('field-resident').value;
   const evaluatorName = document.getElementById('field-evaluator-name').value.trim();
-  const credential = document.getElementById('field-credential').value;
   const dateStart = document.getElementById('field-date-start').value;
-  const dateEnd = document.getElementById('field-date-end').value;
   const narrative = document.getElementById('field-narrative').value.trim();
 
   if (!resident) { alert('Please select a resident.'); return; }
   if (!evaluatorName) { alert('Please enter your name.'); return; }
-  if (!dateStart || !dateEnd) { alert('Please select supervision start and end dates.'); return; }
-  if (dateEnd < dateStart) { alert('End date cannot be before start date.'); return; }
+  if (!dateStart) { alert('Please select a supervision date.'); return; }
 
-  // Format date range for display
+  // Format date for display
   const fmt = d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const dates = dateStart === dateEnd ? fmt(dateStart) : `${fmt(dateStart)} – ${fmt(dateEnd)}`;
+  const dates = fmt(dateStart);
+  const dateEnd = dateStart; // single date
 
   const rotation = ROTATIONS[rotationName];
   const scores = {};
@@ -1211,10 +1196,9 @@ async function submitForm(rotationName) {
     resident,
     rotation: rotationName,
     evaluatorName,
-    credential,
     dates,
     dateStart,
-    dateEnd,
+    dateEnd: dateStart,
     narrative,
     scores,
     milestoneScores: computeMilestoneScores(rotationName, scores),
@@ -1263,9 +1247,8 @@ async function saveSubmission(sub) {
     resident:        sub.resident,
     rotation:        sub.rotation,
     evaluator_name:  sub.evaluatorName,
-    credential:      sub.credential,
     date_start:      sub.dateStart || '',
-    date_end:        sub.dateEnd   || '',
+    date_end:        sub.dateStart || '',
     scores:          sub.scores,
     milestone_scores: sub.milestoneScores,
     narrative:       sub.narrative,
@@ -1401,22 +1384,8 @@ function renderEPAFormInto(rotationName, el) {
           <input type="text" id="field-evaluator-name" placeholder="e.g. Dr. Jane Smith, PA-C" required>
         </div>
         <div class="form-group">
-          <label>Credential / Role</label>
-          <select id="field-credential">
-            <option value="MD">MD</option>
-            <option value="DO">DO</option>
-            <option value="PA-C">PA-C</option>
-            <option value="NP">NP</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Supervision Start Date *</label>
+          <label>Supervision Date *</label>
           <input type="date" id="field-date-start" required>
-        </div>
-        <div class="form-group">
-          <label>Supervision End Date *</label>
-          <input type="date" id="field-date-end" required>
         </div>
       </div>
     </div>
