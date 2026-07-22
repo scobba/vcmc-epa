@@ -853,16 +853,8 @@
 // ══════════════════════════════════════════════════
 const SUPABASE_URL         = 'https://ubqecdyhgejqoweltagl.supabase.co';
 const SUPABASE_ANON        = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
-// ⚠ Service role key — repository is private, key is safe here
-// apikey header always uses anon key (Supabase project identification)
-// Authorization header uses service role key (bypasses RLS for dashboard reads)
-const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDM4MDIzMCwiZXhwIjoyMDk5OTU2MjMwfQ.yptnELb0AoHKYwEqExy7U5J6fDEIEpVnom81Fi9K2eg';
+// Service role key will be added securely when deploying to Wix
 
-// ── Service role key (optional but more secure) ────────────────────
-// Paste your service role key here to use elevated read access.
-// Get it from: Supabase → Settings → API → service_role → Reveal
-// If left as-is, the dashboard falls back to the anon key (works fine
-// since the SELECT policy on epa_submissions allows anon read access).
 // ── Access control ─────────────────────────────────────────────────
 // Authentication handled by SharePoint/GitHub permissions.
 // Share this URL only with core faculty and coordinators.
@@ -1000,7 +992,7 @@ async function loadSubmissions() {
     const response = await fetch(url, {
       headers: {
         'apikey':        SUPABASE_ANON,
-        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'Authorization': `Bearer ${SUPABASE_ANON}`,
       },
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
