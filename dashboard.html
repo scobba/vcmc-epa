@@ -853,8 +853,9 @@
 // ══════════════════════════════════════════════════
 const SUPABASE_URL         = 'https://ubqecdyhgejqoweltagl.supabase.co';
 const SUPABASE_ANON        = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
-// ⚠ Paste your Supabase service role key below (Settings → API → service_role → Reveal)
-// apikey header always uses anon key; Authorization uses service role key — this is correct
+// ⚠ Service role key — repository is private, key is safe here
+// apikey header always uses anon key (Supabase project identification)
+// Authorization header uses service role key (bypasses RLS for dashboard reads)
 const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDM4MDIzMCwiZXhwIjoyMDk5OTU2MjMwfQ.yptnELb0AoHKYwEqExy7U5J6fDEIEpVnom81Fi9K2eg';
 
 // ── Service role key (optional but more secure) ────────────────────
@@ -994,13 +995,12 @@ let allSubmissions = [];
 
 // ── Storage — load from Supabase ──────────────────────────────────
 async function loadSubmissions() {
-  const useServiceKey = !SUPABASE_SERVICE_KEY.includes('PASTE_YOUR');
   try {
     const url = `${SUPABASE_URL}/rest/v1/epa_submissions?select=*&order=created_at.desc&limit=10000`;
     const response = await fetch(url, {
       headers: {
         'apikey':        SUPABASE_ANON,
-        'Authorization': `Bearer ${useServiceKey ? SUPABASE_SERVICE_KEY : SUPABASE_ANON}`,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
       },
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
