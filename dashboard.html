@@ -958,12 +958,12 @@ const SUPABASE_URL  = 'https://ubqecdyhgejqoweltagl.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
 
 // ── Supabase Auth client ──────────────────────────────────────────
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // ── Auth functions ────────────────────────────────────────────────
 async function sendMagicLink() {
   const email = document.getElementById('auth-email').value.trim();
-  const msg   = document.getElementById('auth-message');
   const btn   = document.getElementById('auth-btn');
 
   if (!email || !email.includes('@')) {
@@ -973,25 +973,30 @@ async function sendMagicLink() {
 
   btn.disabled = true;
   btn.textContent = 'Sending…';
-  msg.style.display = 'none';
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: window.location.href,
-    },
-  });
+  try {
+    const { error } = await supabaseClient.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.href,
+      },
+    });
 
-  if (error) {
-    showAuthMessage('Error: ' + error.message, 'error');
+    if (error) {
+      showAuthMessage('Error: ' + error.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Send Login Link';
+    } else {
+      document.getElementById('auth-description').textContent =
+        'Login link sent! Check your email and click the link to access the dashboard.';
+      document.getElementById('auth-email').style.display = 'none';
+      btn.style.display = 'none';
+      showAuthMessage('✓ Email sent to ' + email + '. The link expires in 1 hour.', 'success');
+    }
+  } catch(e) {
+    showAuthMessage('Error: ' + e.message, 'error');
     btn.disabled = false;
     btn.textContent = 'Send Login Link';
-  } else {
-    document.getElementById('auth-description').textContent =
-      'Login link sent! Check your email and click the link to access the dashboard.';
-    document.getElementById('auth-email').style.display = 'none';
-    btn.style.display = 'none';
-    showAuthMessage('✓ Email sent to ' + email + '. The link expires in 1 hour.', 'success');
   }
 }
 
@@ -1004,14 +1009,14 @@ function showAuthMessage(text, type) {
 
 async function checkAuth() {
   // Check if user is already logged in (e.g. returning from magic link)
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabaseClient.auth.getSession();
   if (session) {
     showDashboard();
     return;
   }
 
   // Handle magic link redirect (token in URL hash)
-  const { data, error } = await supabase.auth.getUser();
+  const { data, error } = await supabaseClient.auth.getUser();
   if (data?.user) {
     showDashboard();
   }
@@ -1025,7 +1030,7 @@ function showDashboard() {
 
 // ── Update loadSubmissions to use session token ───────────────────
 async function getAuthHeader() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabaseClient.auth.getSession();
   if (session) {
     return {
       'apikey':        SUPABASE_ANON,
