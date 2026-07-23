@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Program Dashboard — VCMC FM Residency</title>
 <meta name="robots" content="noindex, nofollow">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --navy: #1A2744;
@@ -740,10 +741,112 @@
     .milestone-card { break-inside: avoid; }
     body { font-size: 11px; }
   }
+
+  /* ── Auth Gate ── */
+  .auth-gate {
+    position: fixed;
+    inset: 0;
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    flex-direction: column;
+  }
+  .auth-box {
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    padding: 48px 36px;
+    border: 1px solid var(--border);
+  }
+  .auth-box img {
+    height: 56px;
+    margin-bottom: 24px;
+  }
+  .auth-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--slate-light);
+    margin-bottom: 10px;
+  }
+  .auth-box h2 {
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+  .auth-box h2 strong { font-weight: 700; }
+  .auth-box p {
+    font-size: 13px;
+    color: var(--slate);
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+  .auth-box input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 12px 14px;
+    font-size: 14px;
+    color: var(--navy);
+    text-align: center;
+    margin-bottom: 12px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .auth-box input:focus { border-color: var(--navy); }
+  .auth-message {
+    font-size: 12px;
+    min-height: 20px;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    border-radius: 0;
+  }
+  .auth-message.error { color: #B91C1C; background: #FEF2F2; border: 1px solid #FECACA; }
+  .auth-message.success { color: #15803D; background: #F0FBF4; border: 1px solid #BBF7D0; }
+  .auth-hint {
+    font-size: 11px;
+    color: var(--slate-light);
+    margin-top: 16px;
+    line-height: 1.5;
+  }
+  .auth-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--slate-light);
+    margin-top: 16px;
+  }
+  #dashboard-content { display: none; }
+
 </style>
 </head>
 <body>
 
+<!-- ── Auth Gate ── -->
+<div class="auth-gate" id="auth-gate">
+  <div class="auth-box">
+    <img src="https://static.wixstatic.com/media/48ea68_21770b96de134293966db6558bd3d23a~mv2.png/v1/fill/w_75,h_79,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/vcmc-fmr-icon.png" alt="VCMC FM Residency Logo">
+    <div class="auth-eyebrow">Program Dashboard</div>
+    <h2><strong>Faculty</strong> Access</h2>
+    <p id="auth-description">Enter your email address to receive a secure login link. No password required.</p>
+    <div id="auth-message" class="auth-message" style="display:none"></div>
+    <input type="email" id="auth-email" placeholder="your.email@vcmc.com"
+           onkeydown="if(event.key==='Enter') sendMagicLink()">
+    <button class="btn btn-primary" style="width:100%; border-radius:0; margin-top:4px"
+            onclick="sendMagicLink()" id="auth-btn">Send Login Link</button>
+    <p class="auth-hint">Access is restricted to authorized program faculty and coordinators.<br>
+    Contact your program coordinator if you need access.</p>
+  </div>
+</div>
+
+<div id="dashboard-content">
 <!-- ── Header ── -->
 <header class="app-header">
   <a class="logo" href="https://www.venturafamilymed.org" target="_blank">
@@ -851,9 +954,90 @@
 // ══════════════════════════════════════════════════
 // CONFIGURATION — Supabase
 // ══════════════════════════════════════════════════
-const SUPABASE_URL         = 'https://ubqecdyhgejqoweltagl.supabase.co';
-const SUPABASE_ANON        = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
-// Service role key will be added securely when deploying to Wix
+const SUPABASE_URL  = 'https://ubqecdyhgejqoweltagl.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
+
+// ── Supabase Auth client ──────────────────────────────────────────
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── Auth functions ────────────────────────────────────────────────
+async function sendMagicLink() {
+  const email = document.getElementById('auth-email').value.trim();
+  const msg   = document.getElementById('auth-message');
+  const btn   = document.getElementById('auth-btn');
+
+  if (!email || !email.includes('@')) {
+    showAuthMessage('Please enter a valid email address.', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  msg.style.display = 'none';
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: window.location.href,
+    },
+  });
+
+  if (error) {
+    showAuthMessage('Error: ' + error.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Send Login Link';
+  } else {
+    document.getElementById('auth-description').textContent =
+      'Login link sent! Check your email and click the link to access the dashboard.';
+    document.getElementById('auth-email').style.display = 'none';
+    btn.style.display = 'none';
+    showAuthMessage('✓ Email sent to ' + email + '. The link expires in 1 hour.', 'success');
+  }
+}
+
+function showAuthMessage(text, type) {
+  const msg = document.getElementById('auth-message');
+  msg.textContent = text;
+  msg.className = 'auth-message ' + type;
+  msg.style.display = 'block';
+}
+
+async function checkAuth() {
+  // Check if user is already logged in (e.g. returning from magic link)
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    showDashboard();
+    return;
+  }
+
+  // Handle magic link redirect (token in URL hash)
+  const { data, error } = await supabase.auth.getUser();
+  if (data?.user) {
+    showDashboard();
+  }
+}
+
+function showDashboard() {
+  document.getElementById('auth-gate').style.display = 'none';
+  document.getElementById('dashboard-content').style.display = 'block';
+  loadAdminData();
+}
+
+// ── Update loadSubmissions to use session token ───────────────────
+async function getAuthHeader() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    return {
+      'apikey':        SUPABASE_ANON,
+      'Authorization': `Bearer ${session.access_token}`,
+    };
+  }
+  // Fallback to anon (will be blocked by RLS once policy is updated)
+  return {
+    'apikey':        SUPABASE_ANON,
+    'Authorization': `Bearer ${SUPABASE_ANON}`,
+  };
+}
 
 // ── Access control ─────────────────────────────────────────────────
 // Authentication handled by SharePoint/GitHub permissions.
@@ -989,12 +1173,8 @@ let allSubmissions = [];
 async function loadSubmissions() {
   try {
     const url = `${SUPABASE_URL}/rest/v1/epa_submissions?select=*&order=created_at.desc&limit=10000`;
-    const response = await fetch(url, {
-      headers: {
-        'apikey':        SUPABASE_ANON,
-        'Authorization': `Bearer ${SUPABASE_ANON}`,
-      },
-    });
+    const headers = await getAuthHeader();
+    const response = await fetch(url, { headers });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const rows = await response.json();
     return rows.map(row => ({
@@ -1405,9 +1585,10 @@ function exportCSV() {
 // Dashboard connected to Supabase
 function checkConfiguration() {}
 
-// Load dashboard data on page open
-loadAdminData();
+// Check authentication on page load
+checkAuth();
 </script>
 
+</div><!-- end dashboard-content -->
 </body>
 </html>
