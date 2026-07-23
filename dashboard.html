@@ -860,7 +860,8 @@
   </a>
   <nav class="header-nav">
     <button class="nav-btn active" style="pointer-events:none">Program Dashboard</button>
-
+    <span class="nav-divider"></span>
+    <button class="nav-btn" onclick="signOut()">Sign Out</button>
   </nav>
 </header>
 
@@ -1027,6 +1028,17 @@ function showDashboard() {
   document.getElementById('auth-gate').style.display = 'none';
   document.getElementById('dashboard-content').style.display = 'block';
   loadAdminData();
+}
+
+async function signOut() {
+  await supabaseClient.auth.signOut();
+  document.getElementById('dashboard-content').style.display = 'none';
+  document.getElementById('auth-gate').style.display = 'flex';
+  document.getElementById('auth-email').value = '';
+  document.getElementById('auth-password').value = '';
+  document.getElementById('auth-message').style.display = 'none';
+  document.getElementById('auth-btn').disabled = false;
+  document.getElementById('auth-btn').textContent = 'Sign In';
 }
 
 // ── Update loadSubmissions to use session token ───────────────────
