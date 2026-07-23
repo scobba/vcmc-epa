@@ -835,12 +835,14 @@
     <img src="https://static.wixstatic.com/media/48ea68_21770b96de134293966db6558bd3d23a~mv2.png/v1/fill/w_75,h_79,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/vcmc-fmr-icon.png" alt="VCMC FM Residency Logo">
     <div class="auth-eyebrow">Program Dashboard</div>
     <h2><strong>Faculty</strong> Access</h2>
-    <p id="auth-description">Enter your email address to receive a secure login link. No password required.</p>
+    <p id="auth-description">Sign in with your program dashboard credentials.</p>
     <div id="auth-message" class="auth-message" style="display:none"></div>
-    <input type="email" id="auth-email" placeholder="your.email@vcmc.com"
-           onkeydown="if(event.key==='Enter') sendMagicLink()">
-    <button class="btn btn-primary" style="width:100%; border-radius:0; margin-top:4px"
-            onclick="sendMagicLink()" id="auth-btn">Send Login Link</button>
+    <input type="email" id="auth-email" placeholder="Email address"
+           onkeydown="if(event.key==='Enter') document.getElementById('auth-password').focus()">
+    <input type="password" id="auth-password" placeholder="Password"
+           onkeydown="if(event.key==='Enter') signIn()" style="margin-top:8px">
+    <button class="btn btn-primary" style="width:100%; border-radius:0; margin-top:12px"
+            onclick="signIn()" id="auth-btn">Sign In</button>
     <p class="auth-hint">Access is restricted to authorized program faculty and coordinators.<br>
     Contact your program coordinator if you need access.</p>
   </div>
@@ -962,41 +964,40 @@ const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // ── Auth functions ────────────────────────────────────────────────
-async function sendMagicLink() {
-  const email = document.getElementById('auth-email').value.trim();
-  const btn   = document.getElementById('auth-btn');
+async function signIn() {
+  const email    = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const btn      = document.getElementById('auth-btn');
 
   if (!email || !email.includes('@')) {
     showAuthMessage('Please enter a valid email address.', 'error');
     return;
   }
+  if (!password) {
+    showAuthMessage('Please enter your password.', 'error');
+    return;
+  }
 
   btn.disabled = true;
-  btn.textContent = 'Sending…';
+  btn.textContent = 'Signing in…';
 
   try {
-    const { error } = await supabaseClient.auth.signInWithOtp({
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
       email,
-      options: {
-        emailRedirectTo: window.location.href,
-      },
+      password,
     });
 
     if (error) {
-      showAuthMessage('Error: ' + error.message, 'error');
+      showAuthMessage('Incorrect email or password. Please try again.', 'error');
       btn.disabled = false;
-      btn.textContent = 'Send Login Link';
+      btn.textContent = 'Sign In';
     } else {
-      document.getElementById('auth-description').textContent =
-        'Login link sent! Check your email and click the link to access the dashboard.';
-      document.getElementById('auth-email').style.display = 'none';
-      btn.style.display = 'none';
-      showAuthMessage('✓ Email sent to ' + email + '. The link expires in 1 hour.', 'success');
+      showDashboard();
     }
   } catch(e) {
     showAuthMessage('Error: ' + e.message, 'error');
     btn.disabled = false;
-    btn.textContent = 'Send Login Link';
+    btn.textContent = 'Sign In';
   }
 }
 
