@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Faculty Dashboard — VCMC FM Residency</title>
 <meta name="robots" content="noindex, nofollow">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --navy: #1A2744;
@@ -136,12 +137,29 @@
   .empty-state { text-align: center; padding: 48px 24px; color: var(--slate-light); font-size: 13px; }
   .empty-state .empty-icon { font-size: 28px; margin-bottom: 10px; }
 
+  /* ── Auth: login gate ── */
+  .login-screen { max-width: 400px; margin: 90px auto; padding: 0 24px; text-align: center; }
+  .login-icon { width: 48px; height: 48px; background: var(--navy); color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; margin: 0 auto 22px; }
+  .login-screen h2 { font-size: 20px; font-weight: 300; color: var(--navy); margin-bottom: 8px; }
+  .login-screen h2 strong { font-weight: 700; }
+  .login-screen p { font-size: 13px; color: var(--slate); line-height: 1.65; margin-bottom: 26px; }
+  .login-form { display: flex; flex-direction: column; gap: 12px; }
+  .login-form input { border: 1px solid var(--border); border-radius: 0; padding: 12px 14px; font-size: 14px; color: var(--navy); font-family: inherit; outline: none; text-align: center; }
+  .login-form input:focus { border-color: var(--navy); }
+  .login-status { font-size: 12.5px; margin-top: 16px; line-height: 1.6; }
+  .login-status.sent { color: var(--scale-6); }
+  .login-status.error { color: var(--scale-1); }
+  .user-badge { display: flex; align-items: center; gap: 10px; }
+  .user-badge .email { font-size: 11px; color: var(--slate-light); }
+  .signout-btn { background: none; border: none; color: var(--slate-light); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; text-decoration: underline; padding: 0; font-family: inherit; }
+  .signout-btn:hover { color: var(--navy); }
+
   .app-footer { background: var(--navy); color: rgba(255,255,255,0.45); text-align: center; padding: 28px 40px; font-size: 11px; line-height: 2; letter-spacing: 0.04em; margin-top: 60px; }
   .app-footer a { color: rgba(255,255,255,0.65); text-decoration: none; }
   .app-footer a:hover { color: white; }
 
   @media print {
-    .app-header, .app-footer, .admin-tabs, .filter-bar, .admin-header-actions, .btn { display: none !important; }
+    .app-header, .app-footer, .admin-tabs, .filter-bar, .admin-header-actions, .btn, .login-screen { display: none !important; }
     .admin-tab-content { display: block !important; }
     .admin-container { padding: 0; max-width: 100%; }
     body { font-size: 12px; }
@@ -168,12 +186,25 @@
       <span class="line2">Family Medicine Residency Program</span>
     </div>
   </a>
-  <nav>
-    <button class="nav-btn active">Faculty Dashboard</button>
+  <nav class="user-badge" id="user-badge" style="display:none">
+    <button class="nav-btn active" style="pointer-events:none">Faculty Dashboard</button>
+    <span class="email" id="user-email"></span>
+    <button class="signout-btn" onclick="signOut()">Sign Out</button>
   </nav>
 </header>
 
-<div class="admin-container">
+<div class="login-screen" id="login-screen" style="display:none">
+  <div class="login-icon">&#128274;</div>
+  <h2>Faculty <strong>Dashboard</strong></h2>
+  <p>This dashboard shows individual evaluation data and is restricted to core faculty and program leadership. Enter your email to receive a secure sign-in link.</p>
+  <div class="login-form">
+    <input type="email" id="login-email" placeholder="you@venturacounty.gov" autocomplete="email">
+    <button class="btn btn-primary" onclick="sendMagicLink()">Send Sign-In Link</button>
+  </div>
+  <div class="login-status" id="login-status"></div>
+</div>
+
+<div class="admin-container" id="admin-container" style="display:none">
   <div class="admin-header">
     <div>
       <h2><strong>Faculty</strong> Evaluation Dashboard</h2>
@@ -266,7 +297,13 @@
 // ══════════════════════════════════════════════════
 const SUPABASE_URL  = 'https://ubqecdyhgejqoweltagl.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
-// Access control: share this URL only with core faculty, program leadership, and department heads.
+// The anon key above is safe to have in this file — it can only ever
+// INSERT evaluations and read the faculty roster. Reading submissions
+// requires a logged-in session (magic link), enforced by RLS in
+// Supabase — see faculty_auth_setup.sql. No service role key is used
+// anywhere in this system.
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const QUESTIONS = [
   "Encourages residents to participate actively in discussions",
@@ -285,14 +322,66 @@ const QUESTIONS = [
 let allSubmissions = [];   // faculty_submissions rows, normalized
 let facultyRoster = [];    // faculty rows, normalized
 
-// ── Storage — load from Supabase ──────────────────────────────────
+// ══════════════════════════════════════════════════
+// AUTH — magic link (email OTP), no passwords, no service role key
+// ══════════════════════════════════════════════════
+async function sendMagicLink() {
+  const emailInput = document.getElementById('login-email');
+  const statusEl = document.getElementById('login-status');
+  const email = emailInput.value.trim();
+  if (!email) { statusEl.className = 'login-status error'; statusEl.textContent = 'Enter your email address.'; return; }
+
+  statusEl.className = 'login-status';
+  statusEl.textContent = 'Sending…';
+
+  const { error } = await sb.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.href.split('#')[0] }
+  });
+
+  if (error) {
+    statusEl.className = 'login-status error';
+    statusEl.textContent = `Could not send sign-in link: ${error.message}`;
+  } else {
+    statusEl.className = 'login-status sent';
+    statusEl.textContent = `Check ${email} for a sign-in link. It may take a minute to arrive.`;
+  }
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  showLoginScreen();
+}
+
+function showLoginScreen() {
+  document.getElementById('login-screen').style.display = 'block';
+  document.getElementById('admin-container').style.display = 'none';
+  document.getElementById('user-badge').style.display = 'none';
+}
+
+function showDashboard(session) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-container').style.display = 'block';
+  document.getElementById('user-badge').style.display = 'flex';
+  document.getElementById('user-email').textContent = session.user.email;
+  loadAdminData();
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+  if (session) showDashboard(session);
+  else showLoginScreen();
+});
+
+// ── Storage — load from Supabase using the logged-in session ──────
 async function loadSubmissions() {
   try {
-    const url = `${SUPABASE_URL}/rest/v1/faculty_submissions?select=*&order=created_at.desc&limit=10000`;
-    const response = await fetch(url, { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const rows = await response.json();
-    return rows.map(row => ({
+    const { data, error } = await sb
+      .from('faculty_submissions')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10000);
+    if (error) throw error;
+    return (data || []).map(row => ({
       id: row.id,
       timestamp: row.created_at,
       facultyName: row.faculty_name,
@@ -310,11 +399,13 @@ async function loadSubmissions() {
 
 async function loadFacultyRoster() {
   try {
-    const url = `${SUPABASE_URL}/rest/v1/faculty?select=name,department,active&order=sort_order.asc,name.asc`;
-    const response = await fetch(url, { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const rows = await response.json();
-    return rows.map(r => ({ name: r.name, department: r.department || 'Unknown', active: r.active }));
+    const { data, error } = await sb
+      .from('faculty')
+      .select('name,department,active')
+      .order('sort_order', { ascending: true })
+      .order('name', { ascending: true });
+    if (error) throw error;
+    return (data || []).map(r => ({ name: r.name, department: r.department || 'Unknown', active: r.active }));
   } catch (e) {
     console.error('Failed to load faculty roster:', e.message);
     return [];
@@ -636,8 +727,13 @@ function exportCSV() {
   a.click(); URL.revokeObjectURL(url);
 }
 
-// Load dashboard data on page open
-loadAdminData();
+// Check auth state on page open (also handles the magic-link redirect,
+// since supabase-js parses the token from the URL automatically)
+(async function initAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) showDashboard(session);
+  else showLoginScreen();
+})();
 </script>
 
 </body>
