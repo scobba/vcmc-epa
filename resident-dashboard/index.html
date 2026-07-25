@@ -1092,7 +1092,7 @@ const ROTATIONS = {
     { id:'med4', text:'Identify and respond to patient safety events on the inpatient service', milestones:['SBP1'] },
     { id:'med5', text:'Communicate with patients and families about diagnosis, prognosis, and goals of care', milestones:['ICS1','PROF1'] },
     { id:'med6', text:'Document clinical reasoning in inpatient notes', milestones:['ICS3'] },
-    { id:'med7', text:'Perform procedures', milestones:['PC5'] },
+    { id:'med7', text:'Perform Procedures', milestones:['PC5'] },
   ]},
   'Continuity Care Clinic': { epas: [
     { id:'afmc1', text:'Manage patients with multiple chronic conditions longitudinally', milestones:['PC2','MK1'] },
@@ -1103,6 +1103,7 @@ const ROTATIONS = {
     { id:'afmc6', text:'Coordinate care across settings and disciplines for continuity patients', milestones:['SBP2','SBP3'] },
     { id:'afmc7', text:'Engage in panel management and population health', milestones:['PC3','SBP1'] },
     { id:'afmc8', text:'Demonstrate patient-centered communication across diverse encounters', milestones:['ICS1','PROF1'] },
+    { id:'afmc9', text:'Evaluate and manage patients with mental health conditions in the primary care setting', milestones:['PC2','MK1','ICS1'] },
   ]},
   'Outpatient Pediatrics': { epas: [
     { id:'opeds1', text:'Conduct well-child visits across developmental stages', milestones:['PC3','MK1'] },
@@ -1345,7 +1346,7 @@ function renderSubmissions() {
         <td>${date}</td>
         <td style="font-weight:600; color:var(--navy)">${s.resident}</td>
         <td><span class="badge badge-navy">${s.rotation}</span></td>
-        <td>${s.evaluatorName}${s.credential ? ` <span style="color:var(--slate-light); font-size:11px">(${s.credential})</span>` : ''}</td>
+        <td>${s.evaluatorName}</td>
         <td><span class="badge ${scoreClass}">${avg}</span></td>
         <td><button class="btn btn-secondary" style="padding:6px 14px; font-size:12px" onclick='openModal(${JSON.stringify(s).replace(/'/g, "&#39;")})'>View</button></td>
       </tr>
@@ -1472,7 +1473,7 @@ function renderResidentDetail() {
               <tr>
                 <td>${date}</td>
                 <td><span class="badge badge-navy">${s.rotation}</span></td>
-                <td>${s.evaluatorName} <span style="color:var(--slate-light); font-size:11px">(${s.credential})</span></td>
+                <td>${s.evaluatorName}</td>
                 <td><span class="badge badge-teal">${avg}</span></td>
                 <td><button class="btn btn-secondary" style="padding:6px 14px; font-size:12px" onclick='openModal(${JSON.stringify(s).replace(/'/g, "&#39;")})'>View</button></td>
               </tr>
@@ -1494,7 +1495,6 @@ function renderResidentDetail() {
                 <div style="display:flex; align-items:center; gap:10px">
                   <span class="badge badge-navy">${s.rotation}</span>
                   <span style="font-size:13px; font-weight:600; color:var(--navy)">${s.evaluatorName}</span>
-                  <span style="font-size:11px; color:var(--slate-light)">(${s.credential})</span>
                 </div>
                 <span style="font-size:12px; color:var(--slate-light)">${date} · ${s.dates}</span>
               </div>
@@ -1518,7 +1518,7 @@ function openModal(sub) {
     <div class="modal-section">
       <h4>Submission Info</h4>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:13px">
-        <div><span style="color:var(--slate-light)">Evaluator:</span><br><strong>${sub.evaluatorName} (${sub.credential})</strong></div>
+        <div><span style="color:var(--slate-light)">Evaluator:</span><br><strong>${sub.evaluatorName}</strong></div>
         <div><span style="color:var(--slate-light)">Submitted:</span><br><strong>${date}</strong></div>
         <div><span style="color:var(--slate-light)">Dates Supervised:</span><br><strong>${sub.dates}</strong></div>
         <div><span style="color:var(--slate-light)">Rotation:</span><br><strong>${sub.rotation}</strong></div>
@@ -1578,7 +1578,7 @@ function exportCSV() {
   if (allSubmissions.length === 0) { alert('No submissions to export.'); return; }
 
   const milestones = Object.keys(MILESTONE_DEFS);
-  const headers = ['Date', 'Resident', 'Rotation', 'Evaluator', 'Credential', 'Dates Supervised', 'Avg Score', 'Narrative', ...milestones];
+  const headers = ['Date', 'Resident', 'Rotation', 'Evaluator', 'Supervision Date', 'Avg Score', 'Narrative', ...milestones];
 
   const rows = allSubmissions.map(s => {
     const numericScores = Object.values(s.scores).filter(v => v !== 'na');
@@ -1588,7 +1588,7 @@ function exportCSV() {
     const milestoneVals = milestones.map(m =>
       s.milestoneScores[m] !== undefined ? s.milestoneScores[m].toFixed(2) : '');
     const narrative = `"${(s.narrative || '').replace(/"/g, '""')}"`;
-    return [date, s.resident, s.rotation, s.evaluatorName, s.credential, s.dates, avg, narrative, ...milestoneVals].join(',');
+    return [date, s.resident, s.rotation, s.evaluatorName, s.dates, avg, narrative, ...milestoneVals].join(',');
   });
 
   const csv = [headers.join(','), ...rows].join('\n');
