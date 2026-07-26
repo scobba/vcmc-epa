@@ -281,6 +281,17 @@
   .app-footer a { color: rgba(255,255,255,0.65); text-decoration: none; }
   .app-footer a:hover { color: white; }
 
+  .dup-modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(26,39,68,0.45);
+    z-index: 500; align-items: center; justify-content: center; padding: 20px;
+  }
+  .dup-modal-overlay.open { display: flex; }
+  .dup-modal { background: var(--white); max-width: 440px; width: 100%; padding: 28px 26px; box-shadow: 0 8px 32px rgba(26,39,68,0.2); }
+  .dup-modal h3 { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 12px; }
+  .dup-modal p { font-size: 13.5px; color: var(--slate); line-height: 1.6; margin-bottom: 6px; }
+  .dup-existing-name { font-size: 15px; font-weight: 700; color: var(--navy); background: var(--bg-soft); border: 1px solid var(--border); padding: 10px 14px; margin: 10px 0 22px; }
+  .dup-modal-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+
   @media (max-width: 640px) {
     .app-header { padding: 0 16px; height: 56px; }
     .app-header .logo-icon { height: 30px; }
@@ -310,6 +321,19 @@
 </header>
 
 <div class="form-container" id="form-content"></div>
+
+<div class="dup-modal-overlay" id="dup-modal">
+  <div class="dup-modal">
+    <h3>Is This the Same Person?</h3>
+    <p>You entered "<strong id="dup-typed-name"></strong>", which isn't an exact match on the roster, but it's very close to a name already on file:</p>
+    <div class="dup-existing-name" id="dup-existing-name"></div>
+    <p>Selecting an option below won't change your ratings — it only affects which name/department gets saved with your evaluation.</p>
+    <div class="dup-modal-actions">
+      <button class="btn btn-secondary" onclick="resolveDupModal(false)">No — Add as New</button>
+      <button class="btn btn-primary" onclick="resolveDupModal(true)">Yes — Use This Person</button>
+    </div>
+  </div>
+</div>
 
 <footer class="app-footer">
   <div>Ventura County Medical Center &middot; Family Medicine Residency Program</div>
@@ -388,6 +412,44 @@ function findFacultyMatch(name) {
   const n = normalize(name);
   if (!n) return null;
   return FACULTY.find(f => normalize(f.name) === n) || null;
+}
+
+// Simple edit-distance check — catches typo/spelling variants of an
+// existing name (e.g. "Tipu Kahn" vs. the roster's "Tipu Khan") that
+// findFacultyMatch's exact-normalized comparison would miss, so the
+// resident gets asked before a near-duplicate is created. Damerau-
+// Levenshtein (rather than plain Levenshtein) counts an adjacent-letter
+// swap as a single edit, which is exactly the "Kahn"/"Khan" case.
+function damerauLevenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const d = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) d[i][0] = i;
+  for (let j = 0; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
+    }
+  }
+  return d[m][n];
+}
+
+function findCloseMatch(name) {
+  const target = normalize(name);
+  if (!target || target.length < 3) return null;
+  let best = null, bestDist = Infinity;
+  FACULTY.forEach(f => {
+    if (f.name.startsWith('[')) return; // skip "could not load" placeholders
+    const candidate = normalize(f.name);
+    if (candidate === target) return; // exact matches are handled elsewhere
+    const dist = damerauLevenshtein(target, candidate);
+    const threshold = Math.max(1, Math.floor(Math.max(target.length, candidate.length) * 0.2));
+    if (dist <= threshold && dist < bestDist) { best = f; bestDist = dist; }
+  });
+  return best;
 }
 
 function departmentOptions() {
@@ -616,12 +678,54 @@ function updateSubmitState() {
 // ══════════════════════════════════════════════════
 // STORAGE — Supabase (INSERT only — anon key)
 // ══════════════════════════════════════════════════
+let pendingSubmit = null;   // holds {facultyName, department} while the duplicate-check modal is open
+let dupCandidate = null;    // the close-match faculty record being confirmed against
+
 async function submitForm() {
   const facultyInput = document.getElementById('field-faculty');
   const deptSel = document.getElementById('field-department');
   const facultyName = facultyInput.value.trim();
   const department = deptSel.value;
 
+  // If this name doesn't exactly match anyone on the roster, check for a
+  // close spelling match before letting it self-register as a new person.
+  if (!findFacultyMatch(facultyName)) {
+    const close = findCloseMatch(facultyName);
+    if (close) {
+      pendingSubmit = { facultyName, department };
+      dupCandidate = close;
+      document.getElementById('dup-typed-name').textContent = facultyName;
+      document.getElementById('dup-existing-name').textContent =
+        close.name + (close.department ? ' — ' + close.department : '');
+      document.getElementById('dup-modal').classList.add('open');
+      return; // wait for resolveDupModal() to continue
+    }
+  }
+
+  await proceedWithSubmit(facultyName, department);
+}
+
+function resolveDupModal(useExisting) {
+  document.getElementById('dup-modal').classList.remove('open');
+  if (!pendingSubmit) return;
+  let { facultyName, department } = pendingSubmit;
+
+  if (useExisting && dupCandidate) {
+    facultyName = dupCandidate.name;
+    if (dupCandidate.department) department = dupCandidate.department;
+    // Reflect the resolved choice back into the visible form fields.
+    document.getElementById('field-faculty').value = facultyName;
+    document.getElementById('field-department').value = department;
+    window.__facultyName = facultyName;
+    window.__department = department;
+  }
+
+  pendingSubmit = null;
+  dupCandidate = null;
+  proceedWithSubmit(facultyName, department);
+}
+
+async function proceedWithSubmit(facultyName, department) {
   const payload = {
     faculty_name:     facultyName,
     department:       department,
