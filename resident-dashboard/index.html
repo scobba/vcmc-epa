@@ -651,12 +651,13 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 13px; font-weight: 700; flex-shrink: 0;
   }
-  .score-1 { background: #FEF2F2; color: var(--scale-1); }
-  .score-2 { background: #FFF8F0; color: var(--scale-2); }
-  .score-3 { background: #FEFCE8; color: var(--scale-3); }
-  .score-4 { background: #F0FBF4; color: var(--scale-4); }
-  .score-5 { background: var(--teal-pale); color: var(--scale-5); }
-  .score-na { background: var(--bg-soft); color: var(--scale-na); }
+  .score-0 { background: #EDF1F5; color: #5C7488; }
+  .score-1 { background: #E9EEF3; color: #4E6E85; }
+  .score-2 { background: #E5EBF1; color: #41667C; }
+  .score-3 { background: #E1E8EF; color: #355B74; }
+  .score-4 { background: #DDE5ED; color: #264A6A; }
+  .score-5 { background: #D8E1EB; color: #1A2744; }
+  .score-na { background: #F0F1F3; color: #68727E; }
 
   .narrative-box {
     background: var(--bg-soft);
@@ -1181,6 +1182,7 @@ const ROTATIONS = {
 };
 
 const SCALE_LABELS = {
+  0:'Not Yet Entrustable',
   1:'Complete Supervision', 2:'Partial Supervision', 3:'Minimal Supervision',
   4:'As if Independent', 5:'Aspirational', na:'N/A'
 };
@@ -1292,10 +1294,8 @@ function renderMilestones() {
       ${milestoneOrder.map(code => {
         const vals = milestoneAccum[code] || [];
         const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-        const pct = avg ? ((avg - 1) / 4) * 100 : 0;
-        const barColor = avg === null ? 'var(--border)' :
-          avg < 2 ? 'var(--scale-1)' : avg < 3 ? 'var(--scale-2)' :
-          avg < 4 ? 'var(--scale-4)' : 'var(--navy)';
+        const pct = avg === null ? 0 : (avg / 5) * 100;
+        const barColor = avg === null ? 'var(--border)' : 'var(--navy)';
         return `
           <div class="milestone-card">
             <div class="mc-code">${code}</div>
@@ -1340,7 +1340,7 @@ function renderSubmissions() {
       ? (numericScores.reduce((a, b) => a + b, 0) / numericScores.length).toFixed(2)
       : '—';
     const date = new Date(s.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const scoreClass = avg === '—' ? '' : avg >= 4 ? 'badge-teal' : avg >= 3 ? 'badge-navy' : 'badge-amber';
+    const scoreClass = avg === '—' ? '' : 'badge-navy';
     return `
       <tr>
         <td>${date}</td>
@@ -1442,10 +1442,8 @@ function renderResidentDetail() {
       ${milestoneOrder.map(code => {
         const vals = milestoneAccum[code] || [];
         const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-        const pct = avg ? ((avg - 1) / 4) * 100 : 0;
-        const barColor = avg === null ? 'var(--border)' :
-          avg < 2 ? 'var(--scale-1)' : avg < 3 ? 'var(--scale-2)' :
-          avg < 4 ? 'var(--scale-4)' : 'var(--navy)';
+        const pct = avg === null ? 0 : (avg / 5) * 100;
+        const barColor = avg === null ? 'var(--border)' : 'var(--navy)';
         return `
           <div class="milestone-card">
             <div class="mc-code">${code}</div>
