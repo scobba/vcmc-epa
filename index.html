@@ -331,7 +331,7 @@
   /* Radio scale */
   .scale-options {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     gap: 6px;
     padding-left: 34px;
   }
@@ -354,12 +354,13 @@
   .scale-option input:checked + label .scale-pip { background: rgba(255,255,255,0.85); }
   .scale-option input:checked + label .scale-label { color: rgba(255,255,255,0.85); }
 
-  .scale-option[data-val="1"] input:checked + label { background: #9B1C1C; border-color: #9B1C1C; }
-  .scale-option[data-val="2"] input:checked + label { background: #C05621; border-color: #C05621; }
-  .scale-option[data-val="3"] input:checked + label { background: #92600A; border-color: #92600A; }
-  .scale-option[data-val="4"] input:checked + label { background: #15803D; border-color: #15803D; }
-  .scale-option[data-val="5"] input:checked + label { background: var(--navy); border-color: var(--navy); }
-  .scale-option[data-val="na"] input:checked + label { background: #4B5563; border-color: #4B5563; }
+  .scale-option[data-val="0"] input:checked + label { background: #5C7488; border-color: #5C7488; }
+  .scale-option[data-val="1"] input:checked + label { background: #4E6E85; border-color: #4E6E85; }
+  .scale-option[data-val="2"] input:checked + label { background: #41667C; border-color: #41667C; }
+  .scale-option[data-val="3"] input:checked + label { background: #355B74; border-color: #355B74; }
+  .scale-option[data-val="4"] input:checked + label { background: #264A6A; border-color: #264A6A; }
+  .scale-option[data-val="5"] input:checked + label { background: #1A2744; border-color: #1A2744; }
+  .scale-option[data-val="na"] input:checked + label { background: #68727E; border-color: #68727E; }
 
   .scale-pip {
     width: 6px; height: 6px;
@@ -725,7 +726,7 @@
     .landing-cards { grid-template-columns: 1fr; }
     .form-grid { grid-template-columns: 1fr; }
     .form-grid.three { grid-template-columns: 1fr; }
-    .scale-options { grid-template-columns: repeat(3, 1fr); }
+    .scale-options { grid-template-columns: repeat(4, 1fr); }
     .admin-container, .form-container { padding: 0 16px 60px; }
     .admin-header { flex-direction: column; align-items: flex-start; gap: 8px; }
   }
@@ -813,6 +814,7 @@ async function loadResidents() {
 }
 
 const SCALE_LABELS = {
+  0: "Not Yet Entrustable",
   1: "Complete Supervision",
   2: "Partial Supervision",
   3: "Minimal Supervision",
@@ -822,6 +824,7 @@ const SCALE_LABELS = {
 };
 
 const SCALE_COLORS = {
+  0: 'score-0',
   1: 'score-1', 2: 'score-2', 3: 'score-3',
   4: 'score-4', 5: 'score-5', na: 'score-na'
 };
@@ -1038,12 +1041,13 @@ function renderEPAForm(rotationName) {
   const el = document.getElementById('form-body');
 
   const scaleOpts = [
-    { val: 1, label: 'Complete Supervision', color: 'var(--scale-1)' },
-    { val: 2, label: 'Partial Supervision', color: 'var(--scale-2)' },
-    { val: 3, label: 'Minimal Supervision', color: 'var(--scale-3)' },
-    { val: 4, label: 'As if Independent', color: 'var(--scale-4)' },
-    { val: 5, label: 'Aspirational', color: 'var(--scale-5)' },
-    { val: 'na', label: 'N/A', color: 'var(--scale-na)' },
+    { val: 0, label: 'Not Yet Entrustable', color: '#5C7488' },
+    { val: 1, label: 'Complete Supervision', color: '#4E6E85' },
+    { val: 2, label: 'Partial Supervision', color: '#41667C' },
+    { val: 3, label: 'Minimal Supervision', color: '#355B74' },
+    { val: 4, label: 'As if Independent', color: '#264A6A' },
+    { val: 5, label: 'Aspirational', color: '#1A2744' },
+    { val: 'na', label: 'N/A', color: '#68727E' },
   ];
 
   el.innerHTML = `
@@ -1354,12 +1358,13 @@ function renderEPAFormInto(rotationName, el) {
   const epas = rotation.epas;
 
   const scaleOpts = [
-    { val: 1, label: 'Complete Supervision', color: 'var(--scale-1)' },
-    { val: 2, label: 'Partial Supervision',  color: 'var(--scale-2)' },
-    { val: 3, label: 'Minimal Supervision',  color: 'var(--scale-3)' },
-    { val: 4, label: 'As if Independent',    color: 'var(--scale-4)' },
-    { val: 5, label: 'Aspirational',         color: 'var(--scale-5)' },
-    { val: 'na', label: 'N/A',               color: 'var(--scale-na)' },
+    { val: 0, label: 'Not Yet Entrustable', color: '#5C7488' },
+    { val: 1, label: 'Complete Supervision', color: '#4E6E85' },
+    { val: 2, label: 'Partial Supervision', color: '#41667C' },
+    { val: 3, label: 'Minimal Supervision', color: '#355B74' },
+    { val: 4, label: 'As if Independent', color: '#264A6A' },
+    { val: 5, label: 'Aspirational', color: '#1A2744' },
+    { val: 'na', label: 'N/A', color: '#68727E' },
   ];
 
   el.innerHTML = `
@@ -1394,27 +1399,31 @@ function renderEPAFormInto(rotationName, el) {
       <h4>Entrustment Scale Reference</h4>
       <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:10px; margin-top:4px">
         <div style="display:flex; gap:10px; align-items:flex-start">
-          <div style="width:24px;height:24px;border-radius:0;background:#9B1C1C;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;margin-top:1px">1</div>
+          <div style="width:24px;height:24px;border-radius:0;background:#5C7488;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;margin-top:1px">0</div>
+          <div><div style="font-size:12px;font-weight:700;color:var(--slate)">Not Yet Entrustable</div><div style="font-size:11px;color:var(--slate-light);line-height:1.4">Not yet able to perform this activity safely, even with the supervisor directing care.</div></div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start">
+          <div style="width:24px;height:24px;border-radius:0;background:#4E6E85;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;margin-top:1px">1</div>
           <div><div style="font-size:12px;font-weight:700;color:var(--slate)">Complete Supervision</div><div style="font-size:11px;color:var(--slate-light);line-height:1.4">Requires proactive, continuous guidance. Supervisor must be physically present and directing care.</div></div>
         </div>
         <div style="display:flex; gap:10px; align-items:flex-start">
-          <div style="width:24px;height:24px;border-radius:0;background:#C05621;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;margin-top:1px">2</div>
+          <div style="width:24px;height:24px;border-radius:0;background:#41667C;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;margin-top:1px">2</div>
           <div><div style="font-size:12px;font-weight:700;color:var(--slate)">Partial Supervision</div><div style="font-size:11px;color:var(--slate-light);line-height:1.4">Can perform with supervisor readily available. Needs regular check-ins and co-management.</div></div>
         </div>
         <div style="display:flex; gap:10px; align-items:flex-start">
-          <div style="width:24px;height:24px;border-radius:0;background:#92600A;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;margin-top:1px">3</div>
+          <div style="width:24px;height:24px;border-radius:0;background:#355B74;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;margin-top:1px">3</div>
           <div><div style="font-size:12px;font-weight:700;color:var(--slate)">Minimal Supervision</div><div style="font-size:11px;color:var(--slate-light);line-height:1.4">Performs independently with supervisor available if needed. Reactive supervision only.</div></div>
         </div>
         <div style="display:flex; gap:10px; align-items:flex-start">
-          <div style="width:24px;height:24px;border-radius:0;background:#15803D;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;margin-top:1px">4</div>
+          <div style="width:24px;height:24px;border-radius:0;background:#264A6A;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;margin-top:1px">4</div>
           <div><div style="font-size:12px;font-weight:700;color:var(--slate)">As if Independent</div><div style="font-size:11px;color:var(--slate-light);line-height:1.4">Performs independently. Supervisor reviews after the fact — oversight only.</div></div>
         </div>
         <div style="display:flex; gap:10px; align-items:flex-start">
-          <div style="width:24px;height:24px;border-radius:0;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;margin-top:1px">5</div>
+          <div style="width:24px;height:24px;border-radius:0;background:#1A2744;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;margin-top:1px">5</div>
           <div><div style="font-size:12px;font-weight:700;color:var(--slate)">Aspirational</div><div style="font-size:11px;color:var(--slate-light);line-height:1.4">Can supervise others performing this activity.</div></div>
         </div>
         <div style="display:flex; gap:10px; align-items:flex-start">
-          <div style="width:24px;height:24px;border-radius:0;background:#4B5563;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;margin-top:1px">N/A</div>
+          <div style="width:24px;height:24px;border-radius:0;background:#68727E;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;margin-top:1px">N/A</div>
           <div><div style="font-size:12px;font-weight:700;color:var(--slate)">Not Applicable</div><div style="font-size:11px;color:var(--slate-light);line-height:1.4">This activity was not observed during the supervision period.</div></div>
         </div>
       </div>
