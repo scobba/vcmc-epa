@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Camp HOPE Clinical Team Debrief — VCMC Family Medicine Residency</title>
+<style>
+  :root {
+    --navy: #1A2744;
+    --navy-mid: #253660;
+    --gold: #B8901E;
+    --gold-pale: #FBF6E9;
+    --gold-border: #E8D08A;
+    --indigo: #333366;
+    --sage: #6A8D76;
+    --sage-pale: #EEF4F0;
+    --slate: #4A5568;
+    --slate-light: #8896A8;
+    --border: #E2E6ED;
+    --bg: #FFFFFF;
+    --bg-soft: #F8F9FB;
+    --white: #FFFFFF;
+    --teal: #1A5C8A;
+    --teal-pale: #EBF4FA;
+    --adq-1: #9B1C1C;
+    --adq-2: #C2410C;
+    --adq-3: #A16207;
+    --adq-4: #4D7C0F;
+    --adq-5: #15803D;
+    --scale-na: #6B7280;
+    --warn: #C2410C;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: var(--white);
+    color: var(--navy);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    background: var(--white);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 68px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand-lockup { display: flex; align-items: center; gap: 18px; }
+  .app-header .logo {
+    display: flex; align-items: center; gap: 14px;
+    text-decoration: none; cursor: pointer;
+  }
+  .app-header .logo-icon { height: 40px; width: auto; display: block; flex-shrink: 0; }
+  .logo-text { display: flex; flex-direction: column; gap: 2px; }
+  .logo-text .line1, .logo-text .line2 {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--navy); line-height: 1.2;
+  }
+  .brand-divider { width: 1px; height: 34px; background: var(--border); flex-shrink: 0; }
+  .hfj-logo { height: 38px; width: auto; display: block; flex-shrink: 0; transition: opacity 0.15s; }
+  .hfj-logo:hover { opacity: 0.78; }
+  .note-block a, .success-screen a {
+    color: var(--teal); font-weight: 600; text-decoration: none;
+    border-bottom: 1px solid rgba(26,92,138,0.35);
+  }
+  .note-block a:hover, .success-screen a:hover { border-bottom-color: var(--teal); }
+  .nav-btn {
+    background: transparent; border: none; border-bottom: 2px solid var(--navy);
+    color: var(--navy); padding: 8px 16px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; font-family: inherit; height: 68px;
+  }
+
+  /* ── Layout ── */
+  .form-container { max-width: 820px; margin: 0 auto; padding: 0 24px 80px; }
+
+  .form-header {
+    text-align: center; padding: 36px 0 28px;
+    border-bottom: 1px solid var(--border); margin-bottom: 28px;
+  }
+  .form-header .eyebrow {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--slate-light); margin-bottom: 10px;
+  }
+  .form-header h2 {
+    font-size: 26px; font-weight: 300; color: var(--navy);
+    margin-bottom: 10px; letter-spacing: -0.01em;
+  }
+  .form-header h2 strong { font-weight: 700; }
+  .form-header .sub {
+    font-size: 13px; color: var(--slate); max-width: 600px; margin: 0 auto 4px;
+  }
+  .intro-block {
+    background: var(--bg-soft); border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    padding: 20px 24px; margin-bottom: 24px;
+  }
+  .intro-block p { font-size: 13.5px; color: var(--slate); line-height: 1.7; }
+  .intro-block p + p { margin-top: 12px; }
+  .anon-banner {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 16px;
+    background: var(--teal-pale); border: 1px solid #C7DEEC; color: var(--teal);
+    padding: 9px 18px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  /* ── Sections ── */
+  .section { margin-bottom: 8px; }
+  .section-head {
+    margin: 36px 0 14px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-head .kicker {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 5px;
+  }
+  .section-head h3 { font-size: 18px; font-weight: 600; color: var(--navy); }
+
+  .note-block {
+    background: var(--sage-pale); border: 1px solid #D3E2D8;
+    border-left: 3px solid var(--sage);
+    padding: 16px 20px; margin-bottom: 14px;
+    font-size: 13px; color: var(--slate); line-height: 1.65;
+  }
+
+  /* ── Question card ── */
+  .q-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-left: 3px solid transparent;
+    padding: 20px 22px; margin-bottom: 10px;
+    transition: border-left-color 0.15s;
+  }
+  .q-card:focus-within { border-left-color: var(--navy); }
+  .q-card.missing { border-left-color: var(--warn); }
+  .q-head { display: flex; gap: 12px; margin-bottom: 14px; }
+  .q-num {
+    width: 22px; height: 22px; background: var(--navy); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+  .q-text { font-size: 14px; font-weight: 600; color: var(--navy); line-height: 1.5; }
+  .q-text .req { color: var(--warn); font-weight: 700; margin-left: 3px; }
+  .q-hint {
+    font-size: 12px; color: var(--slate-light); font-weight: 400;
+    margin-top: 5px; line-height: 1.5;
+  }
+  .q-body { padding-left: 34px; }
+
+  /* ── Choice rows ── */
+  .choice-list { display: flex; flex-direction: column; gap: 6px; }
+  .choice { position: relative; }
+  .choice input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .choice label {
+    display: flex; align-items: flex-start; gap: 11px;
+    padding: 11px 14px; border: 1px solid var(--border);
+    cursor: pointer; background: var(--white); transition: all 0.12s;
+    font-size: 13.5px; line-height: 1.45; color: var(--navy);
+  }
+  .choice label:hover { border-color: var(--navy); background: var(--bg-soft); }
+  .choice input:focus-visible + label { outline: 2px solid var(--navy); outline-offset: 1px; }
+  .choice-mark {
+    width: 15px; height: 15px; border: 1.5px solid var(--slate-light);
+    flex-shrink: 0; margin-top: 2px; position: relative; background: var(--white);
+  }
+  .choice.radio .choice-mark { border-radius: 50%; }
+  .choice input:checked + label { border-color: var(--navy); background: var(--bg-soft); font-weight: 600; }
+  .choice input:checked + label .choice-mark { border-color: var(--navy); background: var(--navy); }
+  .choice input:checked + label .choice-mark::after {
+    content: ''; position: absolute; inset: 3px; background: var(--white);
+  }
+  .choice.radio input:checked + label .choice-mark::after { border-radius: 50%; }
+
+  .cap-msg {
+    margin-top: 9px; font-size: 12px; font-weight: 600; color: var(--warn);
+  }
+
+  .other-wrap { margin-top: 8px; padding-left: 26px; display: none; }
+  .other-wrap.open { display: block; }
+  .other-wrap input {
+    width: 100%; border: 1px solid var(--border); padding: 9px 12px;
+    font-size: 13.5px; font-family: inherit; color: var(--navy);
+    outline: none; border-radius: 0; background: var(--white);
+  }
+  .other-wrap input:focus { border-color: var(--navy); }
+
+  /* ── Likert ── */
+  .likert-scale-key {
+    display: flex; flex-wrap: wrap; gap: 6px 18px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--slate-light);
+    margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed var(--border);
+  }
+  .likert-row { margin-bottom: 16px; }
+  .likert-row:last-child { margin-bottom: 0; }
+  .likert-stmt {
+    font-size: 13.5px; color: var(--navy); line-height: 1.5;
+    margin-bottom: 7px; display: flex; gap: 9px;
+  }
+  .likert-stmt .ltr {
+    font-weight: 700; color: var(--gold); flex-shrink: 0; min-width: 14px;
+  }
+  .likert-opts { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+  .likert-opt { position: relative; }
+  .likert-opt input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .likert-opt label {
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    min-height: 46px; padding: 6px 3px; border: 1px solid var(--border);
+    cursor: pointer; background: var(--white); transition: all 0.12s;
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.02em;
+    color: var(--slate); line-height: 1.25;
+  }
+  .likert-opt label:hover { border-color: var(--navy); background: var(--bg-soft); }
+  .likert-opt input:focus-visible + label { outline: 2px solid var(--navy); outline-offset: 1px; }
+  .likert-opt input:checked + label {
+    background: var(--navy); border-color: var(--navy); color: var(--white);
+  }
+  .likert-opt[data-na="1"] input:checked + label { background: var(--scale-na); border-color: var(--scale-na); }
+  /* graded fills used only where the scale has unambiguous valence */
+  .likert-opts.graded .likert-opt[data-val="1"] input:checked + label { background: var(--adq-1); border-color: var(--adq-1); }
+  .likert-opts.graded .likert-opt[data-val="2"] input:checked + label { background: var(--adq-2); border-color: var(--adq-2); }
+  .likert-opts.graded .likert-opt[data-val="3"] input:checked + label { background: var(--adq-3); border-color: var(--adq-3); }
+  .likert-opts.graded .likert-opt[data-val="4"] input:checked + label { background: var(--adq-4); border-color: var(--adq-4); }
+  .likert-opts.graded .likert-opt[data-val="5"] input:checked + label { background: var(--adq-5); border-color: var(--adq-5); }
+
+  /* ── Text ── */
+  .text-input, .text-area {
+    width: 100%; border: 1px solid var(--border); border-radius: 0;
+    padding: 11px 13px; font-size: 13.5px; font-family: inherit;
+    color: var(--navy); outline: none; background: var(--white);
+  }
+  .text-area { min-height: 110px; resize: vertical; }
+  .text-input:focus, .text-area:focus { border-color: var(--navy); }
+
+  /* ── Submit ── */
+  .submit-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .progress-text { font-size: 12px; color: var(--slate-light); }
+  .progress-text strong { color: var(--navy); }
+  .btn {
+    padding: 12px 30px; font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; cursor: pointer; border: none;
+    transition: opacity 0.15s; font-family: inherit; border-radius: 0;
+  }
+  .btn-primary { background: var(--navy); color: white; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .warn-text { font-size: 12px; color: var(--warn); margin-top: 12px; width: 100%; text-align: right; }
+
+  .success-screen { max-width: 460px; margin: 90px auto; padding: 0 24px; text-align: center; }
+  .success-icon {
+    width: 60px; height: 60px; background: var(--bg-soft); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; margin: 0 auto 24px; color: var(--sage);
+  }
+  .success-screen h2 { font-size: 22px; font-weight: 300; margin-bottom: 12px; color: var(--navy); }
+  .success-screen h2 strong { font-weight: 700; }
+  .success-screen p { color: var(--slate); font-size: 14px; line-height: 1.7; }
+
+  .app-footer {
+    background: var(--navy); color: rgba(255,255,255,0.45); text-align: center;
+    padding: 28px 40px; font-size: 11px; line-height: 2;
+    letter-spacing: 0.04em; margin-top: 60px;
+  }
+  .app-footer a { color: rgba(255,255,255,0.65); text-decoration: none; }
+  .app-footer a:hover { color: white; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  @media (max-width: 700px) {
+    .app-header { padding: 0 14px; height: auto; min-height: 58px; flex-wrap: wrap; gap: 8px; }
+    .brand-lockup { gap: 11px; padding: 9px 0; }
+    .app-header .logo-icon { height: 30px; }
+    .hfj-logo { height: 27px; }
+    .brand-divider { height: 26px; }
+    .logo-text .line1, .logo-text .line2 { font-size: 7.5px; letter-spacing: 0.08em; }
+    .nav-btn { display: none; }
+    .form-container { padding: 0 14px 60px; }
+    .q-card { padding: 16px 14px; }
+    .q-body { padding-left: 0; }
+    .q-head { margin-bottom: 12px; }
+    .likert-opts { grid-template-columns: repeat(3, 1fr); }
+    .likert-opt label { min-height: 40px; font-size: 9px; }
+    .submit-bar { flex-direction: column; align-items: stretch; }
+    .btn { width: 100%; }
+    .warn-text { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand-lockup">
+    <a class="logo" href="https://www.venturafamilymed.org" target="_blank" rel="noopener">
+      <img class="logo-icon" src="https://static.wixstatic.com/media/48ea68_21770b96de134293966db6558bd3d23a~mv2.png/v1/fill/w_75,h_79,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/vcmc-fmr-icon.png" alt="VCMC Family Medicine Residency">
+      <div class="logo-text">
+        <span class="line1">Ventura County Medical Center</span>
+        <span class="line2">Family Medicine Residency Program</span>
+      </div>
+    </a>
+    <div class="brand-divider"></div>
+    <a href="https://www.hfjvc.org" target="_blank" rel="noopener" aria-label="Healthcare For Justice">
+      <img class="hfj-logo" src="data:image/png;base64,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" alt="Healthcare For Justice">
+    </a>
+  </div>
+  <nav><button class="nav-btn" type="button">Clinical Team Debrief</button></nav>
+</header>
+
+<div class="form-container" id="app"></div>
+
+<footer class="app-footer">
+  <div>Ventura County Medical Center &middot; Family Medicine Residency Program &middot; Healthcare For Justice</div>
+  <div>300 Hillmont Ave, Building 340, Ventura, CA 93003 &middot; (805) 652-6228</div>
+  <div><a href="https://www.venturafamilymed.org" target="_blank" rel="noopener">venturafamilymed.org</a></div>
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════
+// CONFIGURATION
+// ══════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://ubqecdyhgejqoweltagl.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
+const TABLE     = 'camp_hope_responses';
+const CAMP_YEAR = 2026;
+
+const SURVEY = {
+  "key": "clinical_team",
+  "eyebrow": "Camp HOPE Ventura County · 2026",
+  "titleHtml": "Clinical Team <strong>Debrief Survey</strong>",
+  "subtitle": "Faculty and resident physicians · Healthcare For Justice and VCMC Family Medicine Residency Program",
+  "banner": "Anonymous",
+  "intro": [
+    "Thank you for serving at Camp HOPE Ventura County this year. This survey helps us answer a specific question: was this a good use of faculty and resident time, from a patient care, educational, and community medicine standpoint — and if it was not, in what ways was it not?",
+    "Please answer candidly. Critical feedback is more useful to us than positive feedback. Your responses are anonymous; we ask only for your role so we can look at faculty and resident experiences separately. Results will be used for program evaluation, curriculum decisions, and to support funding requests for next year. Expect about 8–10 minutes."
+  ],
+  "successHtml": "Your feedback will shape how we staff, supply, and structure Camp HOPE next year. Results will be reported in aggregate, and free-text comments will be summarized or de-identified before being shared outside the core faculty group.<br><br>To discuss anything further, email Anthony Walls, MD at <a href=\"mailto:anthony.walls@hfjvc.org\">anthony.walls@hfjvc.org</a> or <a href=\"mailto:anthony.walls@venturacounty.gov\">anthony.walls@venturacounty.gov</a>.",
+  "sections": [
+    {
+      "kicker": "Section 1",
+      "title": "Your participation",
+      "items": [
+        {
+          "id": "q1",
+          "num": 1,
+          "type": "single",
+          "required": true,
+          "text": "What was your role at Camp HOPE this year?",
+          "options": [
+            "Faculty physician",
+            "Resident physician — PGY-1",
+            "Resident physician — PGY-2",
+            "Resident physician — PGY-3",
+            "Resident physician — PGY-4",
+            "Other clinical team member (nurse, MA, pharmacist, behavioral health)"
+          ]
+        },
+        {
+          "id": "q2",
+          "num": 2,
+          "type": "single",
+          "required": true,
+          "text": "How many days were you on site?",
+          "options": [
+            "1 day",
+            "2 days",
+            "3 days",
+            "4 days",
+            "5 days"
+          ]
+        },
+        {
+          "id": "q3",
+          "num": 3,
+          "type": "single",
+          "text": "Approximately how many camper or staff encounters did you personally handle across your time on site?",
+          "options": [
+            "0",
+            "1–5",
+            "6–15",
+            "16–30",
+            "More than 30"
+          ]
+        },
+        {
+          "id": "q4",
+          "num": 4,
+          "type": "multi",
+          "other": true,
+          "exclusive": [
+            "None of the above"
+          ],
+          "text": "Which of the following did you personally manage at camp?",
+          "hint": "Select all that apply.",
+          "options": [
+            "Scheduled medication administration, including psychotropic medications",
+            "Medication reconciliation, missing home medications, or refill problems",
+            "Acute behavioral, emotional, or psychiatric concern",
+            "Minor injury (abrasion, laceration, sprain, contusion)",
+            "Heat-related illness or dehydration",
+            "Asthma or other respiratory complaint",
+            "Allergic reaction",
+            "Skin complaint (rash, insect bite, sunburn, lice)",
+            "Gastrointestinal complaint (nausea, vomiting, diarrhea, abdominal pain)",
+            "Headache or other pain complaint",
+            "Acute febrile illness",
+            "Ongoing management of a chronic condition (asthma, diabetes, seizure disorder, ADHD, etc.)",
+            "Emotional support or counseling for a camper (e.g. homesickness or other)",
+            "Guidance or support to camp counselors and staff",
+            "Care for a camp staff member or volunteer",
+            "None of the above"
+          ]
+        }
+      ]
+    },
+    {
+      "kicker": "Section 2",
+      "title": "Patient care value",
+      "items": [
+        {
+          "id": "q5",
+          "num": 5,
+          "type": "likert",
+          "required": true,
+          "scale": [
+            {
+              "v": 1,
+              "l": "Strongly disagree"
+            },
+            {
+              "v": 2,
+              "l": "Disagree"
+            },
+            {
+              "v": 3,
+              "l": "Neither"
+            },
+            {
+              "v": 4,
+              "l": "Agree"
+            },
+            {
+              "v": 5,
+              "l": "Strongly agree"
+            },
+            {
+              "v": "na",
+              "l": "N/A"
+            }
+          ],
+          "scaleName": "agreement",
+          "text": "Please rate your agreement with each statement about the care delivered at camp.",
+          "statements": [
+            {
+              "key": "a",
+              "text": "Campers received medical care they would not otherwise have received during camp week."
+            },
+            {
+              "key": "b",
+              "text": "On-site medical presence allowed at least one camper to remain at camp who would otherwise have been sent home."
+            },
+            {
+              "key": "c",
+              "text": "On-site medical presence avoided at least one 911 call, emergency department visit, or urgent care visit."
+            },
+            {
+              "key": "d",
+              "text": "Camper medications were administered more safely and more reliably because our team was there."
+            },
+            {
+              "key": "e",
+              "text": "Camp staff were able to stay focused on their own roles because medical concerns were handled by our team."
+            },
+            {
+              "key": "f",
+              "text": "The medical needs I encountered were substantial enough to justify having a physician on site."
+            },
+            {
+              "key": "g",
+              "text": "The volume of medical need matched the size of the team we sent."
+            }
+          ]
+        },
+        {
+          "id": "q6",
+          "num": 6,
+          "type": "single",
+          "required": true,
+          "text": "Thinking about everything you personally handled: what proportion genuinely required physician-level decision-making, as opposed to care that a nurse or a trained camp staff member could have delivered safely?",
+          "options": [
+            "Essentially none of it",
+            "A small amount — less than about a quarter",
+            "About a quarter to half",
+            "More than half",
+            "Nearly all of it"
+          ]
+        },
+        {
+          "id": "q7",
+          "num": 7,
+          "type": "single",
+          "text": "Was there any point when a camper's medical or behavioral needs exceeded what our team was equipped to handle?",
+          "options": [
+            "No",
+            "Yes, once",
+            "Yes, more than once",
+            "Unsure"
+          ]
+        },
+        {
+          "id": "q8",
+          "num": 8,
+          "type": "long",
+          "text": "Briefly describe what happened and what would have been needed.",
+          "showIf": {
+            "q": "q7",
+            "in": [
+              "Yes, once",
+              "Yes, more than once"
+            ]
+          }
+        },
+        {
+          "id": "q9",
+          "num": 9,
+          "type": "single",
+          "required": true,
+          "text": "On the days you were at Camp HOPE, you were not doing your usual clinical or administrative work. Purely from a patient care standpoint — total benefit to patients — how did a day at Camp HOPE compare with a typical day of your usual duties?",
+          "options": [
+            "Much less valuable than a usual day",
+            "Somewhat less valuable",
+            "About the same",
+            "Somewhat more valuable",
+            "Much more valuable than a usual day"
+          ]
+        },
+        {
+          "id": "q10",
+          "num": 10,
+          "type": "multi",
+          "other": true,
+          "exclusive": [
+            "Nothing — this fell within protected or elective time"
+          ],
+          "text": "What did you have to give up, reschedule, or hand off in order to be at camp?",
+          "hint": "Select all that apply.",
+          "options": [
+            "Clinic sessions (patients rescheduled or absorbed by colleagues)",
+            "Inpatient or hospital service coverage",
+            "Call or urgent care shifts",
+            "Didactic or teaching sessions",
+            "Administrative or committee time",
+            "Scholarly or QI work",
+            "Personal time, vacation, or days off",
+            "Nothing — this fell within protected or elective time"
+          ]
+        }
+      ]
+    },
+    {
+      "kicker": "Section 3",
+      "title": "Educational value",
+      "items": [
+        {
+          "id": "q11",
+          "num": 11,
+          "type": "single",
+          "required": true,
+          "text": "Purely from an educational standpoint, how did a day at Camp HOPE compare with a typical day of clinic or your usual rotation?",
+          "options": [
+            "Much less educational than a usual day",
+            "Somewhat less educational",
+            "About the same",
+            "Somewhat more educational",
+            "Much more educational than a usual day"
+          ]
+        },
+        {
+          "id": "q12",
+          "num": 12,
+          "type": "likert",
+          "required": true,
+          "scale": [
+            {
+              "v": 1,
+              "l": "Strongly disagree"
+            },
+            {
+              "v": 2,
+              "l": "Disagree"
+            },
+            {
+              "v": 3,
+              "l": "Neither"
+            },
+            {
+              "v": 4,
+              "l": "Agree"
+            },
+            {
+              "v": 5,
+              "l": "Strongly agree"
+            },
+            {
+              "v": "na",
+              "l": "N/A"
+            }
+          ],
+          "scaleName": "agreement",
+          "text": "Please rate your agreement with each statement.",
+          "statements": [
+            {
+              "key": "a",
+              "text": "I encountered clinical problems I do not routinely see in my usual practice setting."
+            },
+            {
+              "key": "b",
+              "text": "Practicing in a resource-limited setting required me to adapt my usual approach."
+            },
+            {
+              "key": "c",
+              "text": "I gained skill in trauma-informed care of children and adolescents."
+            },
+            {
+              "key": "d",
+              "text": "I better understand the health effects of domestic violence and adverse childhood experiences."
+            },
+            {
+              "key": "e",
+              "text": "I developed skill in working alongside a non-medical community organization."
+            },
+            {
+              "key": "f",
+              "text": "I had meaningful opportunities to teach others."
+            },
+            {
+              "key": "g",
+              "text": "I received meaningful teaching or supervision."
+            },
+            {
+              "key": "h",
+              "text": "The level of resident autonomy was appropriate — neither too much nor too little."
+            },
+            {
+              "key": "i",
+              "text": "I will change something specific about how I practice as a result of this experience."
+            }
+          ]
+        },
+        {
+          "id": "q13",
+          "num": 13,
+          "type": "long",
+          "text": "If you will change something specific about your practice, what is it?"
+        }
+      ]
+    },
+    {
+      "kicker": "Section 3A",
+      "title": "Supervision and assessment",
+      "showIf": {
+        "role": "faculty"
+      },
+      "items": [
+        {
+          "id": "q14",
+          "num": 14,
+          "type": "likert",
+          "scale": [
+            {
+              "v": 1,
+              "l": "Strongly disagree"
+            },
+            {
+              "v": 2,
+              "l": "Disagree"
+            },
+            {
+              "v": 3,
+              "l": "Neither"
+            },
+            {
+              "v": 4,
+              "l": "Agree"
+            },
+            {
+              "v": 5,
+              "l": "Strongly agree"
+            },
+            {
+              "v": "na",
+              "l": "N/A"
+            }
+          ],
+          "scaleName": "agreement",
+          "text": "Please rate your agreement with each statement about supervision and assessment.",
+          "statements": [
+            {
+              "key": "a",
+              "text": "I had meaningful opportunities to teach residents at camp."
+            },
+            {
+              "key": "b",
+              "text": "I was able to give residents real-time, specific feedback."
+            },
+            {
+              "key": "c",
+              "text": "I observed residents in ways that will inform my milestone or EPA assessments of them."
+            },
+            {
+              "key": "d",
+              "text": "I saw resident behaviors and skills that I would not have seen in clinic."
+            },
+            {
+              "key": "e",
+              "text": "Faculty supervision at camp was staffed at the right level."
+            }
+          ]
+        },
+        {
+          "id": "q15",
+          "num": 15,
+          "type": "single",
+          "text": "How many faculty physicians per day would you recommend for next year?",
+          "options": [
+            "Fewer than we sent",
+            "The same as we sent",
+            "One more per day",
+            "Two or more additional per day"
+          ]
+        }
+      ]
+    },
+    {
+      "kicker": "Section 3B",
+      "title": "The resident experience",
+      "showIf": {
+        "role": "resident"
+      },
+      "items": [
+        {
+          "id": "q16",
+          "num": 16,
+          "type": "likert",
+          "scale": [
+            {
+              "v": 1,
+              "l": "Strongly disagree"
+            },
+            {
+              "v": 2,
+              "l": "Disagree"
+            },
+            {
+              "v": 3,
+              "l": "Neither"
+            },
+            {
+              "v": 4,
+              "l": "Agree"
+            },
+            {
+              "v": 5,
+              "l": "Strongly agree"
+            },
+            {
+              "v": "na",
+              "l": "N/A"
+            }
+          ],
+          "scaleName": "agreement",
+          "text": "Please rate your agreement with each statement.",
+          "statements": [
+            {
+              "key": "a",
+              "text": "Camp HOPE should remain part of the residency curriculum."
+            },
+            {
+              "key": "b",
+              "text": "I would recommend this experience to a co-resident."
+            },
+            {
+              "key": "c",
+              "text": "This experience makes me more likely to care for survivors of domestic violence and those with high adverse childhood experience scores in my future practice."
+            },
+            {
+              "key": "d",
+              "text": "This experience makes me more likely to work with underserved children in my future practice."
+            },
+            {
+              "key": "e",
+              "text": "Faculty supervision at camp was available when I needed it."
+            },
+            {
+              "key": "f",
+              "text": "Time away from my usual rotation for camp created problems for me or my team."
+            }
+          ]
+        },
+        {
+          "id": "q17",
+          "num": 17,
+          "type": "single",
+          "text": "How should resident participation be structured going forward?",
+          "options": [
+            "Required for all residents",
+            "Required for one class or track only",
+            "Elective — resident opt-in",
+            "Offered but not counted toward curriculum requirements",
+            "Should not be offered"
+          ]
+        },
+        {
+          "id": "q18",
+          "num": 18,
+          "type": "short",
+          "text": "If Camp HOPE were counted as a formal curricular experience, which rotation or requirement do you think it best satisfies?"
+        }
+      ]
+    },
+    {
+      "kicker": "Section 4",
+      "title": "Community medicine value",
+      "items": [
+        {
+          "id": "q19",
+          "num": 19,
+          "type": "likert",
+          "required": true,
+          "scale": [
+            {
+              "v": 1,
+              "l": "Strongly disagree"
+            },
+            {
+              "v": 2,
+              "l": "Disagree"
+            },
+            {
+              "v": 3,
+              "l": "Neither"
+            },
+            {
+              "v": 4,
+              "l": "Agree"
+            },
+            {
+              "v": 5,
+              "l": "Strongly agree"
+            },
+            {
+              "v": "na",
+              "l": "N/A"
+            }
+          ],
+          "scaleName": "agreement",
+          "text": "Please rate your agreement with each statement.",
+          "statements": [
+            {
+              "key": "a",
+              "text": "This was a meaningful community medicine experience."
+            },
+            {
+              "key": "b",
+              "text": "I better understand the role of the Family Justice Center in our county's safety net."
+            },
+            {
+              "key": "c",
+              "text": "This strengthened the relationship between VCMC Family Medicine and the community we serve."
+            },
+            {
+              "key": "d",
+              "text": "This experience is a good representation of what community medicine should look like in our program."
+            },
+            {
+              "key": "e",
+              "text": "I would want our program to continue this partnership next year."
+            }
+          ]
+        },
+        {
+          "id": "q20",
+          "num": 20,
+          "type": "single",
+          "required": true,
+          "text": "Compared with the other community medicine experiences in our residency curriculum, where would you rank Camp HOPE?",
+          "options": [
+            "Among the least valuable",
+            "Below average",
+            "About average",
+            "Above average",
+            "Among the most valuable",
+            "I have not participated in other community medicine experiences"
+          ]
+        }
+      ]
+    },
+    {
+      "kicker": "Section 5",
+      "title": "Process, supplies, and systems",
+      "items": [
+        {
+          "id": "q21",
+          "num": 21,
+          "type": "likert",
+          "required": true,
+          "scale": [
+            {
+              "v": 1,
+              "l": "Inadequate"
+            },
+            {
+              "v": 2,
+              "l": "Marginal"
+            },
+            {
+              "v": 3,
+              "l": "Adequate"
+            },
+            {
+              "v": 4,
+              "l": "Very good"
+            },
+            {
+              "v": 5,
+              "l": "Excellent"
+            },
+            {
+              "v": "na",
+              "l": "N/A"
+            }
+          ],
+          "scaleName": "adequacy",
+          "graded": true,
+          "text": "Please rate the adequacy of each of the following.",
+          "statements": [
+            {
+              "key": "a",
+              "text": "Clarity of my role and expectations before I arrived"
+            },
+            {
+              "key": "b",
+              "text": "Pre-camp orientation and onboarding"
+            },
+            {
+              "key": "c",
+              "text": "Medical supplies and equipment"
+            },
+            {
+              "key": "d",
+              "text": "Medication stock — over-the-counter and prescription"
+            },
+            {
+              "key": "e",
+              "text": "Medication storage, security, and administration workflow"
+            },
+            {
+              "key": "f",
+              "text": "Documentation process for encounters"
+            },
+            {
+              "key": "g",
+              "text": "Private, appropriate space to evaluate campers"
+            },
+            {
+              "key": "h",
+              "text": "Communication with camp staff and counselors"
+            },
+            {
+              "key": "i",
+              "text": "Communication and handoff between members of our medical team"
+            },
+            {
+              "key": "j",
+              "text": "Emergency response and transport plan"
+            },
+            {
+              "key": "k",
+              "text": "Physician supervision structure"
+            },
+            {
+              "key": "l",
+              "text": "Shift length and daily schedule"
+            },
+            {
+              "key": "m",
+              "text": "Personal logistics — travel, meals, lodging, breaks"
+            }
+          ]
+        },
+        {
+          "id": "q22",
+          "num": 22,
+          "type": "multi",
+          "other": true,
+          "exclusive": [
+            "Nothing was missing"
+          ],
+          "text": "Were there supplies, equipment, or medications we did not have that you needed or wanted?",
+          "hint": "Select all that apply.",
+          "options": [
+            "Analgesics and antipyretics (acetaminophen, ibuprofen)",
+            "Oral antihistamines",
+            "Topical steroids or anti-itch preparations",
+            "Topical antibiotics",
+            "Oral antibiotics",
+            "Rescue inhaler and spacer",
+            "Nebulizer and albuterol solution",
+            "Epinephrine autoinjector",
+            "Wound care supplies (irrigation, closure strips, sutures, dressings)",
+            "Splinting or immobilization supplies",
+            "Crutches or other mobility aids",
+            "Antiemetics",
+            "Antidiarrheals or oral rehydration solution",
+            "Insect bite and sting care",
+            "Lice treatment",
+            "Sunscreen and sunburn care",
+            "Otoscope and ophthalmoscope",
+            "Pulse oximeter",
+            "Thermometer",
+            "Pediatric-size blood pressure cuffs",
+            "Point-of-care glucose testing",
+            "Rapid testing (strep, influenza, COVID-19)",
+            "Supplemental oxygen",
+            "Automated external defibrillator",
+            "Secure controlled-substance storage",
+            "Refrigeration for medications",
+            "Replacement supply of a camper's home psychotropic medication",
+            "Nothing was missing"
+          ]
+        },
+        {
+          "id": "q23",
+          "num": 23,
+          "type": "long",
+          "text": "Describe any process or system problem you encountered, and what specifically you would change."
+        },
+        {
+          "id": "q24",
+          "num": 24,
+          "type": "long",
+          "text": "What worked well and should be kept exactly as it was?"
+        },
+        {
+          "id": "q25",
+          "num": 25,
+          "type": "single",
+          "text": "Was there anything that concerned you from a patient safety, scope-of-practice, or liability standpoint?",
+          "options": [
+            "No",
+            "Yes",
+            "Unsure"
+          ]
+        },
+        {
+          "id": "q26",
+          "num": 26,
+          "type": "long",
+          "text": "Please describe your concern.",
+          "showIf": {
+            "q": "q25",
+            "in": [
+              "Yes",
+              "Unsure"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "kicker": "Section 6",
+      "title": "Coverage and next year",
+      "items": [
+        {
+          "type": "note",
+          "text": "On-site physician coverage ran Monday through Friday daytime. Friday night and Saturday were covered by a volunteer nurse, Graal, with a faculty physician available by phone. The next questions ask whether that arrangement was sufficient, or whether an on-site physician was needed for the full camp."
+        },
+        {
+          "id": "q27",
+          "num": 27,
+          "type": "single",
+          "required": true,
+          "text": "How much of a problem was the absence of an on-site physician on Friday night and Saturday?",
+          "hint": "Compare against what was actually in place: a volunteer nurse on site with a faculty physician reachable by phone.",
+          "options": [
+            "Not a problem — the nurse plus a phone physician was sufficient",
+            "A minor problem",
+            "A moderate problem",
+            "A significant problem — an on-site physician was needed",
+            "I do not have enough information to say"
+          ]
+        },
+        {
+          "id": "q28",
+          "num": 28,
+          "type": "long",
+          "text": "What specifically would an on-site physician have added on Friday night or Saturday that the nurse-plus-phone arrangement did not cover?"
+        },
+        {
+          "id": "q29",
+          "num": 29,
+          "type": "single",
+          "required": true,
+          "text": "If we could fund one additional physician-day next year, where would it do the most good?",
+          "options": [
+            "Friday night and Saturday — extend on-site coverage to the full camp",
+            "Add a second physician to an already-covered weekday",
+            "Pre-camp preparation (health forms, medication review, staff training)",
+            "It would not add enough to be worth the cost",
+            "Unsure"
+          ]
+        },
+        {
+          "id": "q30",
+          "num": 30,
+          "type": "single",
+          "required": true,
+          "text": "Would you participate again next year?",
+          "options": [
+            "Yes, definitely",
+            "Probably",
+            "Unsure",
+            "Probably not",
+            "Definitely not"
+          ]
+        },
+        {
+          "id": "q31",
+          "num": 31,
+          "type": "single",
+          "text": "How many days would you be willing to commit next year?",
+          "options": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+          ]
+        },
+        {
+          "id": "q32",
+          "num": 32,
+          "type": "long",
+          "text": "What single change would most improve Camp HOPE medical services next year?"
+        },
+        {
+          "id": "q33",
+          "num": 33,
+          "type": "long",
+          "text": "Anything else you would like us to know?"
+        },
+        {
+          "type": "note",
+          "text": "This survey collects no name, email, or other identifier. Because our team is small, combinations of role, PGY level, and days on site could still make an individual identifiable, so results will be reported in aggregate only, and free-text comments will be summarized or de-identified before being shared outside the core faculty group."
+        },
+        {
+          "type": "note",
+          "html": "If you would like to discuss any of this further, or if there is something you would rather say directly than in a survey, please contact Anthony Walls, MD at <a href=\"mailto:anthony.walls@hfjvc.org\">anthony.walls@hfjvc.org</a> or <a href=\"mailto:anthony.walls@venturacounty.gov\">anthony.walls@venturacounty.gov</a>."
+        }
+      ]
+    }
+  ]
+};
+
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+const answers = {};
+let attemptedSubmit = false;
+
+const esc = s => String(s).replace(/[&<>"']/g, m =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+
+function roleGroup() {
+  const r = answers['q1'];
+  if (!r) return null;
+  if (/^Faculty/i.test(r)) return 'faculty';
+  if (/^Resident/i.test(r)) return 'resident';
+  return 'other';
+}
+
+function visible(item) {
+  const c = item.showIf;
+  if (!c) return true;
+  if (c.role) return roleGroup() === c.role;
+  if (c.q) {
+    const v = answers[c.q];
+    if (v === undefined || v === null) return false;
+    return c.in.includes(v);
+  }
+  return true;
+}
+
+function isAnswered(item) {
+  const v = answers[item.id];
+  if (item.type === 'likert') {
+    return item.statements.every(s => answers[item.id + '_' + s.key] !== undefined);
+  }
+  if (item.type === 'multi') return Array.isArray(v) && v.length > 0;
+  if (item.type === 'short' || item.type === 'long') return !!(v && v.trim());
+  return v !== undefined && v !== null && v !== '';
+}
+
+function allItems() {
+  const out = [];
+  SURVEY.sections.forEach(sec => {
+    if (!visible(sec)) return;
+    sec.items.forEach(it => { if (it.type !== 'note' && visible(it)) out.push(it); });
+  });
+  return out;
+}
+
+function requiredMissing() {
+  return allItems().filter(it => it.required && !isAnswered(it));
+}
+
+// ══════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════
+function render() {
+  const app = document.getElementById('app');
+  const missingIds = attemptedSubmit ? new Set(requiredMissing().map(i => i.id)) : new Set();
+
+  let html = `
+    <div class="form-header">
+      <div class="eyebrow">${esc(SURVEY.eyebrow)}</div>
+      <h2>${SURVEY.titleHtml}</h2>
+      <div class="sub">${esc(SURVEY.subtitle)}</div>
+      <div class="anon-banner">${esc(SURVEY.banner)}</div>
+    </div>
+    <div class="intro-block">${SURVEY.intro.map(p => '<p>' + esc(p) + '</p>').join('')}</div>
+  `;
+
+  SURVEY.sections.forEach(sec => {
+    if (!visible(sec)) return;
+    html += '<div class="section">';
+    html += `<div class="section-head"><div class="kicker">${esc(sec.kicker)}</div><h3>${esc(sec.title)}</h3></div>`;
+    sec.items.forEach(item => {
+      if (!visible(item)) return;
+      html += item.type === 'note'
+        ? `<div class="note-block">${item.html ? item.html : esc(item.text)}</div>`
+        : renderQuestion(item, missingIds.has(item.id));
+    });
+    html += '</div>';
+  });
+
+  const missing = requiredMissing();
+  const total = allItems().length;
+  const done = allItems().filter(isAnswered).length;
+
+  html += `
+    <div class="submit-bar">
+      <div class="progress-text"><strong>${done}</strong> of ${total} questions answered${missing.length ? ' &middot; ' + missing.length + ' required item' + (missing.length === 1 ? '' : 's') + ' remaining' : ''}</div>
+      <button class="btn btn-primary" id="submit-btn" type="button">Submit response</button>
+      <div class="warn-text" id="warn" style="display:none"></div>
+    </div>
+  `;
+
+  app.innerHTML = html;
+  bind();
+}
+
+function renderQuestion(item, isMissing) {
+  const hint = item.hint ? `<div class="q-hint">${esc(item.hint)}</div>` : '';
+  const req = item.required ? '<span class="req">*</span>' : '';
+  let body = '';
+
+  if (item.type === 'single' || item.type === 'multi') {
+    const multi = item.type === 'multi';
+    const cur = answers[item.id];
+    body += '<div class="choice-list">';
+    item.options.forEach((opt, i) => {
+      const id = item.id + '_o' + i;
+      const checked = multi ? (Array.isArray(cur) && cur.includes(opt)) : cur === opt;
+      body += `
+        <div class="choice ${multi ? 'check' : 'radio'}">
+          <input type="${multi ? 'checkbox' : 'radio'}" id="${id}" name="${item.id}"
+                 data-q="${item.id}" data-val="${esc(opt)}" ${checked ? 'checked' : ''}>
+          <label for="${id}"><span class="choice-mark"></span><span>${esc(opt)}</span></label>
+        </div>`;
+    });
+    if (item.other) {
+      const id = item.id + '_other';
+      const on = multi ? (Array.isArray(cur) && cur.includes('Other')) : cur === 'Other';
+      body += `
+        <div class="choice ${multi ? 'check' : 'radio'}">
+          <input type="${multi ? 'checkbox' : 'radio'}" id="${id}" name="${item.id}"
+                 data-q="${item.id}" data-val="Other" ${on ? 'checked' : ''}>
+          <label for="${id}"><span class="choice-mark"></span><span>Other</span></label>
+        </div>
+        <div class="other-wrap ${on ? 'open' : ''}" id="${item.id}_otherwrap">
+          <input type="text" placeholder="Please specify" data-othertext="${item.id}"
+                 value="${esc(answers[item.id + '_other_text'] || '')}">
+        </div>`;
+    }
+    body += '</div>';
+  }
+
+  if (item.type === 'likert') {
+    const graded = item.graded ? ' graded' : '';
+    body += '<div class="likert-scale-key">' +
+      item.scale.map(s => `<span>${esc(s.l)}</span>`).join('') + '</div>';
+    item.statements.forEach(st => {
+      const key = item.id + '_' + st.key;
+      body += `<div class="likert-row">
+        <div class="likert-stmt"><span class="ltr">${esc(st.key)}.</span><span>${esc(st.text)}</span></div>
+        <div class="likert-opts${graded}">`;
+      item.scale.forEach(s => {
+        const id = key + '_' + s.v;
+        const checked = answers[key] === s.v;
+        body += `
+          <div class="likert-opt" data-val="${esc(s.v)}" ${s.v === 'na' ? 'data-na="1"' : ''}>
+            <input type="radio" id="${id}" name="${key}" data-likert="${key}"
+                   data-val="${esc(s.v)}" ${checked ? 'checked' : ''}>
+            <label for="${id}">${esc(s.l)}</label>
+          </div>`;
+      });
+      body += '</div></div>';
+    });
+  }
+
+  if (item.type === 'short') {
+    body += `<input type="text" class="text-input" data-text="${item.id}"
+             value="${esc(answers[item.id] || '')}" placeholder="${esc(item.placeholder || '')}">`;
+  }
+  if (item.type === 'long') {
+    body += `<textarea class="text-area" data-text="${item.id}"
+             placeholder="${esc(item.placeholder || '')}">${esc(answers[item.id] || '')}</textarea>`;
+  }
+
+  return `
+    <div class="q-card ${isMissing ? 'missing' : ''}" id="card_${item.id}">
+      <div class="q-head">
+        <div class="q-num">${item.num}</div>
+        <div><div class="q-text">${esc(item.text)}${req}</div>${hint}</div>
+      </div>
+      <div class="q-body">${body}</div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════
+// BINDINGS
+// ══════════════════════════════════════════════════
+function bind() {
+  document.querySelectorAll('input[data-q]').forEach(el => {
+    el.addEventListener('change', e => {
+      const q = e.target.dataset.q, val = e.target.dataset.val;
+      if (e.target.type === 'checkbox') {
+        let cur = Array.isArray(answers[q]) ? answers[q].slice() : [];
+        const i = cur.indexOf(val);
+        if (e.target.checked) { if (i === -1) cur.push(val); }
+        else if (i > -1) cur.splice(i, 1);
+
+        const item = itemById(q);
+        const excl = (item && item.exclusive) || [];
+        if (e.target.checked && excl.includes(val)) {
+          // "None of the above" clears everything else
+          cur = [val];
+        } else if (e.target.checked) {
+          cur = cur.filter(v => !excl.includes(v));
+        }
+        const max = item && item.max;
+        if (max && cur.length > max) {
+          e.target.checked = false;
+          flash(q, `You can select up to ${max}.`);
+          return;
+        }
+        answers[q] = cur;
+      } else {
+        answers[q] = val;
+      }
+      render();
+      focusBack(e.target.id);
+    });
+  });
+
+  document.querySelectorAll('input[data-likert]').forEach(el => {
+    el.addEventListener('change', e => {
+      const raw = e.target.dataset.val;
+      answers[e.target.dataset.likert] = raw === 'na' ? 'na' : Number(raw);
+      render();
+      focusBack(e.target.id);
+    });
+  });
+
+  document.querySelectorAll('[data-text]').forEach(el => {
+    el.addEventListener('input', e => { answers[e.target.dataset.text] = e.target.value; });
+    el.addEventListener('blur', () => { if (attemptedSubmit) render(); });
+  });
+
+  document.querySelectorAll('[data-othertext]').forEach(el => {
+    el.addEventListener('input', e => {
+      answers[e.target.dataset.othertext + '_other_text'] = e.target.value;
+    });
+  });
+
+  const btn = document.getElementById('submit-btn');
+  if (btn) btn.addEventListener('click', submitForm);
+}
+
+function focusBack(id) {
+  const el = document.getElementById(id);
+  if (el) el.focus({ preventScroll: true });
+}
+
+function itemById(id) {
+  for (const sec of SURVEY.sections) {
+    for (const it of sec.items) if (it.id === id) return it;
+  }
+  return null;
+}
+
+function flash(qid, msg) {
+  const card = document.getElementById('card_' + qid);
+  if (!card) return;
+  let el = card.querySelector('.cap-msg');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'cap-msg';
+    card.querySelector('.q-body').appendChild(el);
+  }
+  el.textContent = msg;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { if (el.parentNode) el.remove(); }, 2600);
+}
+
+// ══════════════════════════════════════════════════
+// SUBMIT
+// ══════════════════════════════════════════════════
+async function submitForm() {
+  attemptedSubmit = true;
+  const missing = requiredMissing();
+  render();
+
+  if (missing.length) {
+    const warn = document.getElementById('warn');
+    warn.style.display = 'block';
+    warn.textContent = `Please answer the ${missing.length} required question${missing.length === 1 ? '' : 's'} marked in orange.`;
+    const first = document.getElementById('card_' + missing[0].id);
+    if (first && first.scrollIntoView) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  const payload = {
+    survey: SURVEY.key,
+    camp_year: CAMP_YEAR,
+    role_group: SURVEY.key === 'clinical_team' ? roleGroup() : null,
+    responses: buildResponses(),
+    contact: null
+  };
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON,
+        'Authorization': `Bearer ${SUPABASE_ANON}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' — ' + (await res.text()));
+    showSuccess();
+  } catch (err) {
+    console.error(err);
+    btn.disabled = false;
+    btn.textContent = 'Submit response';
+    const warn = document.getElementById('warn');
+    warn.style.display = 'block';
+    warn.textContent = 'Your response did not save. Check your connection and press Submit again — nothing has been lost.';
+  }
+}
+
+function buildResponses() {
+  const out = {};
+  SURVEY.sections.forEach(sec => {
+    if (!visible(sec)) return;
+    sec.items.forEach(item => {
+      if (item.type === 'note' || !visible(item)) return;
+      const rec = { num: item.num, question: item.text };
+      if (item.type === 'likert') {
+        rec.scale = item.scaleName;
+        rec.statements = item.statements.map(s => ({
+          key: s.key, text: s.text, value: answers[item.id + '_' + s.key] ?? null
+        }));
+      } else {
+        rec.answer = answers[item.id] ?? null;
+        if (item.other && answers[item.id + '_other_text']) {
+          rec.other_text = answers[item.id + '_other_text'];
+        }
+      }
+      out[item.id] = rec;
+    });
+  });
+  return out;
+}
+
+function showSuccess() {
+  document.getElementById('app').innerHTML = `
+    <div class="success-screen">
+      <div class="success-icon">&#10003;</div>
+      <h2>Thank you &mdash; <strong>your response is recorded</strong></h2>
+      <p>${SURVEY.successHtml}</p>
+    </div>`;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+render();
+</script>
+</body>
+</html>
