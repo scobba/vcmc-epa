@@ -1,0 +1,17 @@
+# ⚠ This repo is served publicly by GitHub Pages at eval.venturafamilymed.org.
+# Any file committed here is world-readable at that domain — a committed token
+# is a disclosed token. Keep credentials out of this folder entirely; these
+# entries are a backstop, not the plan.
+
+# Secrets and local config
+.env
+.env.*
+*.pem
+*.key
+.mcp.json
+.claude/settings.local.json
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini

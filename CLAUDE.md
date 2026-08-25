@@ -1,0 +1,64 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+A set of medical-education survey and dashboard apps for the VCMC Family Medicine Residency Program, served as a static site from GitHub Pages at `eval.venturafamilymed.org` (see `CNAME`).
+
+There is no build system, no package manager, no test suite, and no dependencies to install. **Every page is a single self-contained `index.html`** with all CSS in one `<style>` block and all JS in one `<script>` block at the bottom. Deployment is `git push` to `main`; the live URL updates directly.
+
+To preview locally, open the file in a browser, or serve the repo root so the clean URLs resolve:
+
+```bash
+python -m http.server 8000
+```
+
+Note that live data reads/writes still hit the production Supabase projects from a local page — there is no staging backend.
+
+## Backend: two separate Supabase projects
+
+Everything talks to Supabase directly over PostgREST from the browser. The anon key is embedded in each page by design; access control lives in Supabase Row Level Security policies, which are **not** in this repo.
+
+| Project | Used by | Tables |
+| --- | --- | --- |
+| `ubqecdyhgejqoweltagl` | root, `faculty/`, `faculty-dashboard/`, `resident-dashboard/` | `epa_submissions`, `faculty_submissions`, `residents`, `faculty` |
+| `zwfbppgkodhlpgsxcdry` | `camphope/*` | `camp_hope_responses` |
+
+Forms POST anonymously with the anon key (`Prefer: return=minimal`). Dashboards sit behind a Supabase Auth email/password gate and send the **session access token** instead of the anon key — RLS is expected to block anon reads. Dashboard accounts are created manually in the Supabase console; there is no signup flow. Dashboards also carry `<meta name="robots" content="noindex, nofollow">`.
+
+Two auth implementations exist for the same thing: `faculty-dashboard/` and `resident-dashboard/` load the `@supabase/supabase-js@2` CDN bundle and use `supabaseClient.auth`, while `camphope/dashboard/` hits `/auth/v1/token` with plain `fetch` and stores the token in `sessionStorage`. Match whichever file you are editing.
+
+## The three app families
+
+**EPA resident evaluation** — [index.html](index.html) is the form; [resident-dashboard/index.html](resident-dashboard/index.html) is the analytics view. Faculty pick a rotation, a resident (roster fetched live from `residents`), then score each EPA on a 0–5 entrustment scale (plus `na`). The form computes `milestone_scores` client-side in `computeMilestoneScores()` by averaging each EPA's score into every ACGME milestone that EPA maps to, and stores both the raw `scores` and the derived `milestone_scores` JSON on the row. The dashboard re-reads those precomputed milestone averages rather than recomputing from raw scores.
+
+Each submission also carries `scores_detail` (see [sql/001_add_scores_detail.sql](sql/001_add_scores_detail.sql)) — an ordered array of `{ id, text, milestones, score }` built by `buildScoresDetail()` that freezes the EPA wording and milestone mapping **as they stood at submission time**. This is what makes the evaluation record survive edits to `ROTATIONS`. Two rules follow from it:
+
+- Never rewrite `scores_detail` on existing rows, and never "backfill" it from the current definitions — a reconstructed snapshot is a fabricated record of what the evaluator saw.
+- The dashboard resolves EPA labels through `epaRows()`, which prefers the stored snapshot, falls back to current `ROTATIONS` for pre-migration rows, and renders any orphaned score under its raw id rather than dropping it. Render EPA text through that helper, never from `ROTATIONS` directly.
+
+Renaming an EPA id still breaks the *fallback* path for pre-migration rows, so ids remain append-only: retire an EPA rather than reusing its id.
+
+**Faculty evaluation** — [faculty/index.html](faculty/index.html) is the anonymous form (10 fixed `QUESTIONS`, 1–7 agreement scale + `na`, plus a 1–5 overall); [faculty-dashboard/index.html](faculty-dashboard/index.html) aggregates it. The form does fuzzy duplicate detection on typed faculty names via Damerau–Levenshtein (`findCloseMatch`) and, on successful submit, self-registers genuinely new names into the `faculty` table (`registerNewFaculty`) so the roster grows without admin action. That write is best-effort and must never block a submission.
+
+**Camp HOPE surveys** — [camphope/index.html](camphope/index.html) (clinical team) and [camphope/partner/index.html](camphope/partner/index.html) (Family Justice Center partners) are two copies of the *same* survey engine differing only in the `SURVEY` object; [camphope/dashboard/index.html](camphope/dashboard/index.html) reads both. Item types are `single`, `multi`, `short`, `long`, `likert`, and `note`, with conditional display via `showIf` (either `{ q, in: [...] }` or `{ role }`, where role is derived from the q1 answer by `roleGroup()`). Both surveys write to the same `camp_hope_responses` table, discriminated by `survey` (`clinical_team` / `partner_fjc`) and `camp_year`.
+
+## The duplication that will bite you
+
+These pages share no code. Data definitions are copy-pasted across files and drift silently:
+
+- `ROTATIONS` (11 rotations, 71 EPAs) exists in both [index.html](index.html) and [resident-dashboard/index.html](resident-dashboard/index.html). The dashboard copy is a deliberately trimmed mirror — same rotation names, same EPA `id`s, same `milestones`, but **no `context` field**. Milestone `id`s must also stay aligned with `MILESTONE_DEFS`.
+- `QUESTIONS` is duplicated verbatim between [faculty/index.html](faculty/index.html) and [faculty-dashboard/index.html](faculty-dashboard/index.html). Rows store the question text alongside each rating, so changing wording splits old and new responses in the aggregate.
+- The camphope survey engine (`render`, `visible`, `isAnswered`, `buildResponses`, `submitForm`) is duplicated between the two form files. Fix a bug in one, fix it in the other.
+- The `:root` design-token block (navy/gold/slate palette, VCMC header, footer) is duplicated in all seven pages. Scale color tokens differ intentionally: `--scale-1..5` for the 0–5 EPA scale, `--scale-1..7` for the 1–7 faculty scale, `--adq-1..5` for camphope.
+
+The camphope dashboard is the exception — it does **not** duplicate the survey definitions. Each stored response record is self-describing (`{ num, question, answer }`, or `{ num, question, scale, statements }` for likert), and `questionIndex()` reconstructs the questionnaire and infers each question's kind from the submitted rows. Preserve that self-describing shape in `buildResponses()` or the dashboard loses its labels.
+
+## Conventions
+
+- Rendering is `innerHTML` from template literals with an `esc()` helper on untrusted text; state lives in module-level `let` variables (`answers`, `ratings`, `allSubmissions`, `RAW`) and a full `render()` redraw on change.
+- Rotation and question data is authored inline as JS object literals near the top of the `<script>` block, after the Supabase config.
+- Dashboards offer client-side CSV export (`exportCSV`) and `window.print()` with print stylesheets — no server-side reporting.
+- Column names are snake_case in payloads and camelCase after the load-time mapping in `loadSubmissions()`; keep that boundary in one place.
+- Commits are single-file page edits; keep changes scoped to the page you are asked about rather than propagating a refactor across all seven.
