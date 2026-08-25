@@ -53,14 +53,44 @@ table should report `OK`. Then run it for real once and confirm files appear.
 
 ## Scheduling
 
-Monthly is reasonable for the EPA data. Run it manually right after Camp HOPE each year,
-since that survey collects a year's worth of responses in one week.
+A task named **`VCMC eval backup`** is already registered: weekly, Mondays at 07:00.
+It runs as the logged-on user, so no password is stored anywhere. `-StartWhenAvailable`
+means a run missed because the laptop was off happens at the next opportunity rather
+than being skipped.
+
+Check on it:
 
 ```powershell
-$a = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -File "C:\Users\<you>\vcmc-epa\tools\backup-supabase.ps1"'
-$t = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At 6am
-Register-ScheduledTask -TaskName 'VCMC eval backup' -Action $a -Trigger $t -Description 'Snapshot Supabase evaluation data'
+Get-ScheduledTaskInfo -TaskName 'VCMC eval backup' | Select-Object LastRunTime, LastTaskResult, NextRunTime
 ```
+
+`LastTaskResult` of `0` means the last run succeeded. Anything else means read
+`_last-run.txt`.
+
+Change the schedule (e.g. to Fridays at 5pm):
+
+```powershell
+Set-ScheduledTask -TaskName 'VCMC eval backup' -Trigger (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Friday -At 5pm)
+```
+
+Run it on demand -- worth doing right after Camp HOPE each year, since that survey
+collects a year of responses in one week:
+
+```powershell
+Start-ScheduledTask -TaskName 'VCMC eval backup'
+```
+
+Remove it:
+
+```powershell
+Unregister-ScheduledTask -TaskName 'VCMC eval backup' -Confirm:$false
+```
+
+## Checking it is still working
+
+`_last-run.txt` at the top of the backup folder is rewritten every run and states `OK`
+or `FAILED` with the per-table row counts. Glancing at that file is the whole check --
+if its date is stale, the task has stopped running.
 
 ## Behaviour worth knowing
 

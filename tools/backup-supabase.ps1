@@ -165,6 +165,15 @@ if (-not $TestOnly) {
     $summary = [pscustomobject]@{ takenAt = (Get-Date).ToString('o'); failures = $failed; tables = @($manifest) }
     [System.IO.File]::WriteAllText((Join-Path $runDir 'manifest.json'),
         (ConvertTo-Json -InputObject $summary -Depth 10), (New-Object System.Text.UTF8Encoding($false)))
+
+    # One-glance status at the top of the backup folder. When this runs unattended
+    # the failure mode that matters is failing every week with nobody noticing, and
+    # nobody opens a per-run manifest unprompted. This sits where you will see it.
+    $status = if ($failed -gt 0) { "FAILED - $failed table(s)" } else { 'OK' }
+    $lines  = @("$status   $(Get-Date -Format 'yyyy-MM-dd HH:mm')", "snapshot: $stamp", '')
+    $lines += $manifest | ForEach-Object { "  {0,-12} {1,-22} {2,6}  {3}" -f $_.project, $_.table, $_.rows, $_.status }
+    [System.IO.File]::WriteAllText((Join-Path $OutDir '_last-run.txt'),
+        (($lines -join "`r`n") + "`r`n"), (New-Object System.Text.UTF8Encoding($false)))
 }
 
 if ($failed -gt 0) {
