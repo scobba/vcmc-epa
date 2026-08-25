@@ -65,7 +65,22 @@ function Get-TableRows {
 
     while ($true) {
         $url  = "https://$Ref.supabase.co/rest/v1/$Table" + "?select=*&order=id.asc&limit=$PageSize&offset=$offset"
-        $resp = Invoke-WebRequest -Uri $url -Headers $headers -UseBasicParsing
+        try {
+            $resp = Invoke-WebRequest -Uri $url -Headers $headers -UseBasicParsing
+        }
+        catch {
+            # Surface PostgREST's own explanation. Without this the caller sees only
+            # "(403) Forbidden" and loses the response body, which is where the actual
+            # cause lives - e.g. "GRANT SELECT ON public.residents TO service_role".
+            $r = $_.Exception.Response
+            if ($r) {
+                $code   = [int]$r.StatusCode
+                $detail = ''
+                try { $detail = (New-Object IO.StreamReader($r.GetResponseStream())).ReadToEnd() } catch { }
+                throw "HTTP $code $detail"
+            }
+            throw
+        }
 
         $range = $resp.Headers['Content-Range']
         if ($range -and $total -lt 0) {
@@ -103,7 +118,11 @@ $manifest = New-Object System.Collections.ArrayList
 $failed   = 0
 
 foreach ($p in $Projects) {
+    # Process scope first, then User scope. Without the fallback a terminal opened
+    # before the variables were set reports "not set" and the fix looks like a
+    # credential problem rather than a stale environment.
     $key = [Environment]::GetEnvironmentVariable($p.KeyVar)
+    if ([string]::IsNullOrWhiteSpace($key)) { $key = [Environment]::GetEnvironmentVariable($p.KeyVar, 'User') }
     if ([string]::IsNullOrWhiteSpace($key)) {
         Write-Warning "$($p.Name): $($p.KeyVar) is not set - skipping this project."
         $failed++
