@@ -46,6 +46,12 @@ curl -s "$SUPABASE_URL/rest/v1/epa_submissions?select=<column>&limit=1" -H "apik
 - Never commit full RLS policy bodies. Recording that a policy changed is fine; publishing the `using (…)` expression hands out the authorization logic for free.
 - Never commit connection strings, personal access tokens, or the service-role key. The anon keys already embedded in the pages are public by design; nothing else is.
 
+### Backups
+
+Supabase holds the only copy of every submission. [tools/backup-supabase.ps1](tools/backup-supabase.ps1) writes a JSON snapshot of all five tables across both projects; see [tools/README.md](tools/README.md) for setup. It reads service-role keys from environment variables and writes outside the repo — snapshots contain resident names and narrative evaluations and must never land in this folder.
+
+Prefer that script over the dashboards' CSV export when the goal is preservation: CSV flattens `scores`, `milestone_scores`, and `scores_detail` into text and cannot be loaded back.
+
 ## The three app families
 
 **EPA resident evaluation** — [index.html](index.html) is the form; [resident-dashboard/index.html](resident-dashboard/index.html) is the analytics view. Faculty pick a rotation, a resident (roster fetched live from `residents`), then score each EPA on a 0–5 entrustment scale (plus `na`). The form computes `milestone_scores` client-side in `computeMilestoneScores()` by averaging each EPA's score into every ACGME milestone that EPA maps to, and stores both the raw `scores` and the derived `milestone_scores` JSON on the row. The dashboard re-reads those precomputed milestone averages rather than recomputing from raw scores.
