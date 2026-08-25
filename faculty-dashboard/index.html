@@ -550,9 +550,31 @@ function switchAdminTab(name, btn) {
 
 function avgOf(vals) { return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null; }
 
+// The canonical ordered question list for a set of submissions. Starts from the
+// current QUESTIONS, so the intended order holds and an item nobody has answered
+// yet still appears, then appends any question text present in the data but no
+// longer in QUESTIONS. A reworded or retired item therefore keeps its historical
+// responses visible instead of dropping out of the aggregate.
+function questionIndex(subs) {
+  const out = [...QUESTIONS];
+  const seen = new Set(out);
+  subs.forEach(s => (s.ratings || []).forEach(r => {
+    if (r && r.item && !seen.has(r.item)) { seen.add(r.item); out.push(r.item); }
+  }));
+  return out;
+}
+
+// Aggregates by the question text stored on each rating, never by array
+// position. Every row records the wording it was answered under, so inserting,
+// removing, or reordering an item in QUESTIONS can no longer silently attribute
+// old answers to a different question.
 function itemAveragesFor(subs) {
-  return QUESTIONS.map((q, i) => {
-    const vals = subs.map(s => (s.ratings[i] && s.ratings[i].rating !== 'na') ? Number(s.ratings[i].rating) : null).filter(v => v !== null && !isNaN(v));
+  return questionIndex(subs).map(q => {
+    const vals = subs
+      .map(s => (s.ratings || []).find(r => r && r.item === q))
+      .filter(r => r && r.rating !== 'na' && r.rating !== undefined && r.rating !== null)
+      .map(r => Number(r.rating))
+      .filter(v => !isNaN(v));
     return { item: q, avg: avgOf(vals), count: vals.length };
   });
 }
@@ -802,15 +824,19 @@ function escapeHtml(s) {
 // ── Export CSV ──
 function exportCSV() {
   if (allSubmissions.length === 0) { alert('No submissions to export.'); return; }
-  const header = ['Date','Faculty','Department', ...QUESTIONS.map((q,i)=>`Q${i+1} Rating`), ...QUESTIONS.map((q,i)=>`Q${i+1} Comment`), 'Overall Rating','Overall Feedback'];
+  // Same contract as the on-screen aggregate: columns are keyed by question
+  // text, so a row answered under older wording lands in its own column rather
+  // than being shifted into a neighbouring question's.
+  const qs = questionIndex(allSubmissions);
+  const header = ['Date','Faculty','Department', ...qs.map((q,i)=>`Q${i+1} Rating`), ...qs.map((q,i)=>`Q${i+1} Comment`), 'Overall Rating','Overall Feedback'];
   const rows = allSubmissions.map(s => {
     const date = new Date(s.timestamp).toLocaleDateString('en-US');
-    const ratingsMap = {}; (s.ratings||[]).forEach((r,i)=> ratingsMap[i]=r.rating);
-    const commentsMap = {}; (s.comments||[]).forEach(c=>{ const idx = QUESTIONS.indexOf(c.item); if(idx>-1) commentsMap[idx]=c.comment; });
+    const ratingsMap = {}; (s.ratings||[]).forEach(r=>{ if (r && r.item) ratingsMap[r.item]=r.rating; });
+    const commentsMap = {}; (s.comments||[]).forEach(c=>{ if (c && c.item) commentsMap[c.item]=c.comment; });
     const row = [
       date, s.facultyName, s.department,
-      ...QUESTIONS.map((q,i)=> ratingsMap[i] ?? ''),
-      ...QUESTIONS.map((q,i)=> commentsMap[i] ?? ''),
+      ...qs.map(q=> ratingsMap[q] ?? ''),
+      ...qs.map(q=> commentsMap[q] ?? ''),
       s.overallRating ?? '', s.overallFeedback || ''
     ];
     return row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
