@@ -29,6 +29,17 @@ Forms POST anonymously with the anon key (`Prefer: return=minimal`). Dashboards 
 
 Two auth implementations exist for the same thing: `faculty-dashboard/` and `resident-dashboard/` load the `@supabase/supabase-js@2` CDN bundle and use `supabaseClient.auth`, while `camphope/dashboard/` hits `/auth/v1/token` with plain `fetch` and stores the token in `sessionStorage`. Match whichever file you are editing.
 
+### What may go in `sql/`
+
+Schema changes are recorded as numbered files in `sql/` and applied by hand in the Supabase SQL editor — there is no migration runner, and nothing applies them automatically on deploy.
+
+**This repo is public, and it is also the published website.** Every file in it is readable both at `github.com/scobba/vcmc-epa` and at `eval.venturafamilymed.org/<path>`, and git history is permanent — committing something and deleting it later does not unpublish it. So:
+
+- Migrations in `sql/` may contain **schema only**: `alter table`, `create index`, `comment on`, grants.
+- Never commit resident names, evaluation content, narrative text, or any other identifiable data. A migration that fixes a mis-entered evaluation or merges duplicate residents *will* contain real names — that one gets run in the Supabase SQL editor, and only a numbered file describing what was run and when gets committed.
+- Never commit full RLS policy bodies. Recording that a policy changed is fine; publishing the `using (…)` expression hands out the authorization logic for free.
+- Never commit connection strings, personal access tokens, or the service-role key. The anon keys already embedded in the pages are public by design; nothing else is.
+
 ## The three app families
 
 **EPA resident evaluation** — [index.html](index.html) is the form; [resident-dashboard/index.html](resident-dashboard/index.html) is the analytics view. Faculty pick a rotation, a resident (roster fetched live from `residents`), then score each EPA on a 0–5 entrustment scale (plus `na`). The form computes `milestone_scores` client-side in `computeMilestoneScores()` by averaging each EPA's score into every ACGME milestone that EPA maps to, and stores both the raw `scores` and the derived `milestone_scores` JSON on the row. The dashboard re-reads those precomputed milestone averages rather than recomputing from raw scores.
