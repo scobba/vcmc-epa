@@ -1210,6 +1210,7 @@ async function loadSubmissions() {
       scores:          row.scores          || {},
       milestoneScores: row.milestone_scores || {},
       scoresDetail:    row.scores_detail    || null,
+      formVersion:     row.form_version     || null,
       narrative:       row.narrative        || '',
     }));
   } catch(e) {
@@ -1548,6 +1549,7 @@ function openModal(sub) {
         <div><span style="color:var(--slate-light)">Submitted:</span><br><strong>${date}</strong></div>
         <div><span style="color:var(--slate-light)">Dates Supervised:</span><br><strong>${sub.dates}</strong></div>
         <div><span style="color:var(--slate-light)">Rotation:</span><br><strong>${sub.rotation}</strong></div>
+        <div><span style="color:var(--slate-light)">Form version:</span><br><strong>${sub.formVersion || '—'}</strong></div>
       </div>
     </div>
 
@@ -1604,7 +1606,7 @@ function exportCSV() {
   if (allSubmissions.length === 0) { alert('No submissions to export.'); return; }
 
   const milestones = Object.keys(MILESTONE_DEFS);
-  const headers = ['Date', 'Resident', 'Rotation', 'Evaluator', 'Supervision Date', 'Avg Score', 'Narrative', ...milestones];
+  const headers = ['Date', 'Resident', 'Rotation', 'Evaluator', 'Supervision Date', 'Form Version', 'Avg Score', 'Narrative', ...milestones];
 
   const rows = allSubmissions.map(s => {
     const numericScores = Object.values(s.scores).filter(v => v !== 'na');
@@ -1614,7 +1616,7 @@ function exportCSV() {
     const milestoneVals = milestones.map(m =>
       s.milestoneScores[m] !== undefined ? s.milestoneScores[m].toFixed(2) : '');
     const narrative = `"${(s.narrative || '').replace(/"/g, '""')}"`;
-    return [date, s.resident, s.rotation, s.evaluatorName, s.dates, avg, narrative, ...milestoneVals].join(',');
+    return [date, s.resident, s.rotation, s.evaluatorName, s.dates, s.formVersion || '', avg, narrative, ...milestoneVals].join(',');
   });
 
   const csv = [headers.join(','), ...rows].join('\n');

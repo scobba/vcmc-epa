@@ -33,6 +33,12 @@ Two auth implementations exist for the same thing: `faculty-dashboard/` and `res
 
 Schema changes are recorded as numbered files in `sql/` and applied by hand in the Supabase SQL editor — there is no migration runner, and nothing applies them automatically on deploy.
 
+**Apply the migration before pushing the page that needs it.** The form POSTs every column it knows about in one payload, so a page deployed ahead of its migration makes PostgREST reject the entire insert (`42703`) and every evaluation fails with an error the evaluator cannot work around. Run the SQL, confirm the column resolves, then push. A quick anonymous probe distinguishes the two states without needing credentials — `42703 column … does not exist` means the migration has not run, while `42501 permission denied for table` means the column exists and RLS is doing its job:
+
+```
+curl -s "$SUPABASE_URL/rest/v1/epa_submissions?select=<column>&limit=1" -H "apikey: <anon key>"
+```
+
 **This repo is public, and it is also the published website.** Every file in it is readable both at `github.com/scobba/vcmc-epa` and at `eval.venturafamilymed.org/<path>`, and git history is permanent — committing something and deleting it later does not unpublish it. So:
 
 - Migrations in `sql/` may contain **schema only**: `alter table`, `create index`, `comment on`, grants.
@@ -49,7 +55,9 @@ Each submission also carries `scores_detail` (see [sql/001_add_scores_detail.sql
 - Never rewrite `scores_detail` on existing rows, and never "backfill" it from the current definitions — a reconstructed snapshot is a fabricated record of what the evaluator saw.
 - The dashboard resolves EPA labels through `epaRows()`, which prefers the stored snapshot, falls back to current `ROTATIONS` for pre-migration rows, and renders any orphaned score under its raw id rather than dropping it. Render EPA text through that helper, never from `ROTATIONS` directly.
 
-Renaming an EPA id still breaks the *fallback* path for pre-migration rows, so ids remain append-only: retire an EPA rather than reusing its id.
+Renaming an EPA id still breaks the *fallback* path for pre-migration rows, so ids are append-only — and there is a mechanism for that. Mark an EPA `retired: true` and `activeEpas()` drops it from the form, from `buildScoresDetail()`, and from `computeMilestoneScores()`, while its definition stays in `ROTATIONS` to resolve labels for older rows. Never delete an EPA entry and never reuse an id; keep retired entries in **both** copies of `ROTATIONS`, since the dashboard mirror is what resolves the label.
+
+Every submission is also stamped with `form_version` (see [sql/002_add_form_version.sql](sql/002_add_form_version.sql)) from the `FORM_VERSION` constant near the top of [index.html](index.html). Bump it whenever the measurement changes — an EPA reworded, added, or retired, or a milestone mapping altered — so a cohort of evaluations can be identified without inspecting every row. `NULL` means the row predates versioning; never backfill it.
 
 **Faculty evaluation** — [faculty/index.html](faculty/index.html) is the anonymous form (10 fixed `QUESTIONS`, 1–7 agreement scale + `na`, plus a 1–5 overall); [faculty-dashboard/index.html](faculty-dashboard/index.html) aggregates it. The form does fuzzy duplicate detection on typed faculty names via Damerau–Levenshtein (`findCloseMatch`) and, on successful submit, self-registers genuinely new names into the `faculty` table (`registerNewFaculty`) so the roster grows without admin action. That write is best-effort and must never block a submission.
 

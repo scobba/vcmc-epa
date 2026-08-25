@@ -783,6 +783,13 @@
 const SUPABASE_URL  = 'https://ubqecdyhgejqoweltagl.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
 
+// Identifies the version of the instrument that produced a submission. Bump it
+// whenever the measurement changes — an EPA reworded, added, or retired, or a
+// milestone mapping altered — so a cohort of evaluations can later be told
+// apart by which form they came from. Rows written before this existed carry
+// form_version = NULL; do not backfill them with a guess.
+const FORM_VERSION = '2026.1';
+
 // ══════════════════════════════════════════════════
 // DATA — Rotations, EPAs, Milestones
 // ══════════════════════════════════════════════════
@@ -1032,12 +1039,20 @@ function selectRotation(name) {
   document.getElementById('form-body').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+// The EPAs presented for a rotation. An EPA marked `retired: true` is dropped
+// from the form but its definition MUST stay in ROTATIONS — it is what still
+// resolves the label for evaluations submitted before scores_detail existed.
+// Retire an EPA; never delete one, and never reuse its id for something else.
+function activeEpas(rotationName) {
+  return (ROTATIONS[rotationName]?.epas || []).filter(epa => !epa.retired);
+}
+
 // ══════════════════════════════════════════════════
 // FORM — EPA Form
 // ══════════════════════════════════════════════════
 function renderEPAForm(rotationName) {
   const rotation = ROTATIONS[rotationName];
-  const epas = rotation.epas;
+  const epas = activeEpas(rotationName);
   const el = document.getElementById('form-body');
 
   const scaleOpts = [
@@ -1177,11 +1192,10 @@ async function submitForm(rotationName) {
   const dates = fmt(dateStart);
   const dateEnd = dateStart; // single date
 
-  const rotation = ROTATIONS[rotationName];
   const scores = {};
   let allAnswered = true;
 
-  for (const epa of rotation.epas) {
+  for (const epa of activeEpas(rotationName)) {
     const checked = document.querySelector(`input[name="epa-${epa.id}"]:checked`);
     if (!checked) { allAnswered = false; break; }
     scores[epa.id] = checked.value === 'na' ? 'na' : parseInt(checked.value);
@@ -1207,6 +1221,7 @@ async function submitForm(rotationName) {
     scores,
     milestoneScores: computeMilestoneScores(rotationName, scores),
     scoresDetail: buildScoresDetail(rotationName, scores),
+    formVersion: FORM_VERSION,
   };
 
   try {
@@ -1225,9 +1240,7 @@ async function submitForm(rotationName) {
 // Postgres jsonb does not preserve object key order, and display order here
 // is meaningful. Never reconstruct this from the current ROTATIONS.
 function buildScoresDetail(rotationName, scores) {
-  const rotation = ROTATIONS[rotationName];
-  if (!rotation) return [];
-  return rotation.epas
+  return activeEpas(rotationName)
     .filter(epa => scores[epa.id] !== undefined)
     .map(epa => ({
       id:         epa.id,
@@ -1238,10 +1251,9 @@ function buildScoresDetail(rotationName, scores) {
 }
 
 function computeMilestoneScores(rotationName, scores) {
-  const rotation = ROTATIONS[rotationName];
   const milestoneAccum = {};
 
-  for (const epa of rotation.epas) {
+  for (const epa of activeEpas(rotationName)) {
     const score = scores[epa.id];
     if (score === 'na' || score === undefined) continue;
     for (const m of epa.milestones) {
@@ -1275,6 +1287,7 @@ async function saveSubmission(sub) {
     scores:          sub.scores,
     milestone_scores: sub.milestoneScores,
     scores_detail:   sub.scoresDetail,
+    form_version:    sub.formVersion,
     narrative:       sub.narrative,
   };
 
@@ -1375,7 +1388,7 @@ function selectRotationForm(name) {
 
 function renderEPAFormInto(rotationName, el) {
   const rotation = ROTATIONS[rotationName];
-  const epas = rotation.epas;
+  const epas = activeEpas(rotationName);
 
   const scaleOpts = [
     { val: 0, label: 'Not Yet Entrustable', color: '#5C7488' },
