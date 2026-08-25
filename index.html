@@ -1206,6 +1206,7 @@ async function submitForm(rotationName) {
     narrative,
     scores,
     milestoneScores: computeMilestoneScores(rotationName, scores),
+    scoresDetail: buildScoresDetail(rotationName, scores),
   };
 
   try {
@@ -1216,6 +1217,24 @@ async function submitForm(rotationName) {
     submitBtn.textContent = 'Submit Evaluation';
     alert('There was an error submitting. Please try again.');
   }
+}
+
+// Captures the wording and milestone mapping of each EPA as it stood at the
+// moment of submission, so a historical evaluation always renders with the
+// instrument the evaluator actually saw. Stored as an ARRAY, not an object:
+// Postgres jsonb does not preserve object key order, and display order here
+// is meaningful. Never reconstruct this from the current ROTATIONS.
+function buildScoresDetail(rotationName, scores) {
+  const rotation = ROTATIONS[rotationName];
+  if (!rotation) return [];
+  return rotation.epas
+    .filter(epa => scores[epa.id] !== undefined)
+    .map(epa => ({
+      id:         epa.id,
+      text:       epa.text,
+      milestones: epa.milestones,
+      score:      scores[epa.id],
+    }));
 }
 
 function computeMilestoneScores(rotationName, scores) {
@@ -1255,6 +1274,7 @@ async function saveSubmission(sub) {
     date_end:        sub.dateStart || '',
     scores:          sub.scores,
     milestone_scores: sub.milestoneScores,
+    scores_detail:   sub.scoresDetail,
     narrative:       sub.narrative,
   };
 

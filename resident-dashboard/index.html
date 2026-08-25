@@ -1209,6 +1209,7 @@ async function loadSubmissions() {
       dateEnd:         row.date_end,
       scores:          row.scores          || {},
       milestoneScores: row.milestone_scores || {},
+      scoresDetail:    row.scores_detail    || null,
       narrative:       row.narrative        || '',
     }));
   } catch(e) {
@@ -1348,7 +1349,7 @@ function renderSubmissions() {
         <td><span class="badge badge-navy">${s.rotation}</span></td>
         <td>${s.evaluatorName}</td>
         <td><span class="badge ${scoreClass}">${avg}</span></td>
-        <td><button class="btn btn-secondary" style="padding:6px 14px; font-size:12px" onclick='openModal(${JSON.stringify(s).replace(/'/g, "&#39;")})'>View</button></td>
+        <td><button class="btn btn-secondary" style="padding:6px 14px; font-size:12px" onclick="openModal('${s.id}')">View</button></td>
       </tr>
     `;
   }).join('');
@@ -1473,7 +1474,7 @@ function renderResidentDetail() {
                 <td><span class="badge badge-navy">${s.rotation}</span></td>
                 <td>${s.evaluatorName}</td>
                 <td><span class="badge badge-teal">${avg}</span></td>
-                <td><button class="btn btn-secondary" style="padding:6px 14px; font-size:12px" onclick='openModal(${JSON.stringify(s).replace(/'/g, "&#39;")})'>View</button></td>
+                <td><button class="btn btn-secondary" style="padding:6px 14px; font-size:12px" onclick="openModal('${s.id}')">View</button></td>
               </tr>
             `;
           }).join('')}
@@ -1507,8 +1508,35 @@ function renderResidentDetail() {
 // ══════════════════════════════════════════════════
 // MODAL — Submission Detail
 // ══════════════════════════════════════════════════
+// Resolves the EPA list for one submission. Rows submitted after scores_detail
+// was introduced carry their own wording and are rendered from that, so edits
+// to ROTATIONS never rewrite history. Older rows fall back to the current
+// definitions, and any score whose EPA the definitions no longer contain is
+// still shown under its raw id rather than silently dropped.
+function epaRows(sub) {
+  if (Array.isArray(sub.scoresDetail) && sub.scoresDetail.length) {
+    return sub.scoresDetail.map(r => ({ text: r.text || r.id, score: r.score }));
+  }
+  const defs = ROTATIONS[sub.rotation]?.epas || [];
+  const rows = [];
+  const seen = new Set();
+  defs.forEach(epa => {
+    if (sub.scores[epa.id] === undefined) return;
+    rows.push({ text: epa.text, score: sub.scores[epa.id] });
+    seen.add(epa.id);
+  });
+  Object.entries(sub.scores || {}).forEach(([id, score]) => {
+    if (!seen.has(id)) rows.push({ text: id, score });
+  });
+  return rows;
+}
+
+// Accepts a submission id or a submission object. Table rows pass the id so a
+// full record — scores_detail included — never has to be serialized into an
+// onclick attribute.
 function openModal(sub) {
-  const rotation = ROTATIONS[sub.rotation];
+  if (typeof sub === 'string') sub = allSubmissions.find(s => String(s.id) === sub);
+  if (!sub) return;
   const date = new Date(sub.timestamp).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
   document.getElementById('modal-title').textContent = `${sub.resident} — ${sub.rotation}`;
@@ -1525,8 +1553,8 @@ function openModal(sub) {
 
     <div class="modal-section">
       <h4>EPA Ratings</h4>
-      ${(rotation?.epas || []).map((epa, i) => {
-        const val = sub.scores[epa.id];
+      ${epaRows(sub).map((epa, i) => {
+        const val = epa.score;
         const chipClass = val === 'na' ? 'score-na' : `score-${val}`;
         const label = val === 'na' ? 'N/A' : SCALE_LABELS[val] || val;
         return `
