@@ -369,7 +369,19 @@
   <div><a href="https://www.venturafamilymed.org" target="_blank">venturafamilymed.org</a></div>
 </footer>
 
+<script src="../shared/definitions.js?v=1"></script>
 <script>
+// Fail visibly rather than silently. Without the shared definitions this page
+// would render its frame and simply show nothing to work with, which reads as
+// "there is no data" instead of "a file is missing".
+if (typeof QUESTIONS === 'undefined') {
+  document.body.innerHTML = '<div style="max-width:640px;margin:80px auto;padding:0 24px;font-family:Helvetica,Arial,sans-serif;color:#1A2744">'
+    + '<h2 style="margin-bottom:12px">This page did not load correctly</h2>'
+    + '<p style="color:#4A5568;line-height:1.6">A required file (shared/definitions.js) did not load, so the dashboard cannot be shown. Please reload the page; if this persists, contact the program office.</p></div>';
+  throw new Error('shared/definitions.js failed to load');
+
+}
+
 // ══════════════════════════════════════════════════
 // CONFIGURATION — Supabase
 // ══════════════════════════════════════════════════
@@ -468,18 +480,8 @@ async function getAuthHeader() {
 // Add faculty/coordinator accounts from Supabase → Authentication → Users.
 // Share this URL only with core faculty and coordinators.
 
-const QUESTIONS = [
-  "Encourages residents to participate actively in discussions",
-  "Is respectful toward residents",
-  "Is easily approachable",
-  "Is easily available/reachable",
-  "Displays enthusiasm for teaching",
-  "Provides appropriate balance of supervision and autonomy",
-  "Gives specific, actionable feedback",
-  "Solicits/is open to feedback",
-  "Demonstrates diagnostic proficiency and explains clinical reasoning",
-  "Finds ways to effectively balance education and patient care"
-];
+// QUESTIONS now lives in shared/definitions.js (the form decides what is asked;
+// the text stored on each rating decides how it is counted -- see itemAveragesFor)
 
 // ── State ──────────────────────────────────────────────────────────
 let allSubmissions = [];   // faculty_submissions rows, normalized

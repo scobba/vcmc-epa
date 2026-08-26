@@ -73,10 +73,9 @@ Each rating is stored as `{ item, rating }` with the question wording attached, 
 
 ## The duplication that will bite you
 
-These pages share no code. Data definitions are copy-pasted across files and drift silently:
+These pages share no framework and little code. The data definitions have been extracted, but plenty of duplication remains:
 
-- `ROTATIONS` (11 rotations, 71 EPAs) exists in both [index.html](index.html) and [resident-dashboard/index.html](resident-dashboard/index.html). The dashboard copy is a deliberately trimmed mirror — same rotation names, same EPA `id`s, same `milestones`, but **no `context` field**. Milestone `id`s must also stay aligned with `MILESTONE_DEFS`.
-- `QUESTIONS` is duplicated between [faculty/index.html](faculty/index.html) and [faculty-dashboard/index.html](faculty-dashboard/index.html), but the dashboard no longer treats its copy as the source of identity — see the faculty section above. The form's copy decides what is asked; the text stored on each rating decides how it is counted. Keeping the copies in sync is now a tidiness concern, not a correctness one.
+- `ROTATIONS`, `MILESTONE_DEFS`, `SCALE_LABELS` and the faculty `QUESTIONS` used to be copy-pasted across four pages. They now live once in [shared/definitions.js](shared/definitions.js), loaded by a plain `<script>` before each page's own script — relative paths (`shared/…` from the root, `../shared/…` from a subdirectory) so opening a page straight from disk still works. `SCALE_COLORS`, `SCALE_OPTS`, `OVERALL_OPTS` and `FORM_VERSION` stay inline; they are page-specific. **Bump the `?v=` on every `<script src>` after editing the shared file**, or browsers keep the cached copy.
 - The camphope survey engine (`render`, `visible`, `isAnswered`, `buildResponses`, `submitForm`) is duplicated between the two form files. Fix a bug in one, fix it in the other.
 - The `:root` design-token block (navy/gold/slate palette, VCMC header, footer) is duplicated in all seven pages. Scale color tokens differ intentionally: `--scale-1..5` for the 0–5 EPA scale, `--scale-1..7` for the 1–7 faculty scale, `--adq-1..5` for camphope.
 

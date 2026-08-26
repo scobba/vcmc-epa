@@ -776,7 +776,19 @@
   <div><a href="https://www.venturafamilymed.org" target="_blank">venturafamilymed.org</a></div>
 </footer>
 
+<script src="shared/definitions.js?v=1"></script>
 <script>
+// Fail visibly rather than silently. Without the shared definitions this page
+// would render its frame and simply show nothing to work with, which reads as
+// "there is no data" instead of "a file is missing".
+if (typeof ROTATIONS === 'undefined') {
+  document.body.innerHTML = '<div style="max-width:640px;margin:80px auto;padding:0 24px;font-family:Helvetica,Arial,sans-serif;color:#1A2744">'
+    + '<h2 style="margin-bottom:12px">This page did not load correctly</h2>'
+    + '<p style="color:#4A5568;line-height:1.6">A required file (shared/definitions.js) did not load, so the evaluation form cannot be shown. Please reload the page; if this persists, contact the program office.</p></div>';
+  throw new Error('shared/definitions.js failed to load');
+
+}
+
 // ══════════════════════════════════════════════════
 // CONFIGURATION — Supabase (must be first)
 // ══════════════════════════════════════════════════
@@ -820,15 +832,7 @@ async function loadResidents() {
   residentsLoaded = true;
 }
 
-const SCALE_LABELS = {
-  0: "Not Yet Entrustable",
-  1: "Complete Supervision",
-  2: "Partial Supervision",
-  3: "Minimal Supervision",
-  4: "As if Independent",
-  5: "Aspirational",
-  na: "N/A"
-};
+// SCALE_LABELS, MILESTONE_DEFS and ROTATIONS now live in shared/definitions.js
 
 const SCALE_COLORS = {
   0: 'score-0',
@@ -836,145 +840,9 @@ const SCALE_COLORS = {
   4: 'score-4', 5: 'score-5', na: 'score-na'
 };
 
-const MILESTONE_DEFS = {
-  PC1: 'Care of the Acutely Ill Patient',
-  PC2: 'Care of Patients with Chronic Illness',
-  PC3: 'Health Promotion and Wellness',
-  PC4: 'Ongoing Care — Undifferentiated Symptoms',
-  PC5: 'Management of Procedural Care',
-  MK1: 'Medical Knowledge — Breadth and Depth',
-  MK2: 'Critical Thinking and Decision Making',
-  SBP1: 'Patient Safety and Quality Improvement',
-  SBP2: 'System Navigation for Patient-Centered Care',
-  SBP3: 'Physician Role in Health Care Systems',
-  SBP4: 'Advocacy',
-  PBLI1: 'Evidence-Based and Informed Practice',
-  PBLI2: 'Reflective Practice and Personal Growth',
-  PROF1: 'Professional Behavior and Ethical Principles',
-  PROF2: 'Accountability/Conscientiousness',
-  PROF3: 'Self-Awareness and Help-Seeking',
-  ICS1: 'Patient- and Family-Centered Communication',
-  ICS2: 'Interprofessional and Team Communication',
-  ICS3: 'Communication within Health Care Systems'
-};
+// (MILESTONE_DEFS -> shared/definitions.js)
 
-const ROTATIONS = {
-  'Inpatient Medicine': {
-    epas: [
-      { id: 'med1', text: 'Evaluate and manage an adult patient admitted with an acute medical illness', context: 'Consider: prioritized differential diagnosis for acute presentations; appropriate diagnostic workup; management plan for common and complex acute conditions; recognizing clinical deterioration; incorporating psychosocial factors.', milestones: ['PC1','MK2'] },
-      { id: 'med2', text: 'Perform safe and effective transitions of care', context: 'Consider: comprehensive discharge summaries; medication reconciliation; appropriate follow-up; structured handoff tools (e.g., I-PASS); communicating pending results; patient insurance, transportation, and social support.', milestones: ['SBP2','ICS3'] },
-      { id: 'med3', text: 'Coordinate multidisciplinary inpatient care', context: 'Consider: clear communication with consultants; synthesizing recommendations into a unified care plan; working with nursing, pharmacy, social work, case management; resolving conflicting recommendations; leading interdisciplinary rounds.', milestones: ['ICS2','SBP2'] },
-      { id: 'med4', text: 'Identify and respond to patient safety events on the inpatient service', context: 'Consider: recognizing system factors contributing to errors; reporting through institutional systems; participating in safety event analysis; communicating with patients and families; suggesting error prevention strategies.', milestones: ['SBP1'] },
-      { id: 'med5', text: 'Communicate with patients and families about diagnosis, prognosis, and goals of care', context: 'Consider: delivering difficult news sensitively; conducting family meetings; shared decision-making regarding treatment plans and advance directives; health literacy–appropriate language; managing conflict.', milestones: ['ICS1','PROF1'] },
-      { id: 'med6', text: 'Document clinical reasoning in inpatient notes', context: 'Consider: organized admission, progress, and discharge notes reflecting diagnostic and therapeutic reasoning; avoiding inappropriate copy-pasting; updating the problem list; timely documentation.', milestones: ['ICS3'] },
-      { id: 'med7', text: 'Perform Procedures', context: 'Consider: obtaining informed consent; proper technique (e.g., paracentesis, central venous catheter insertion, thoracentesis, lumbar puncture); sterile technique; recognizing and managing complications; accurate documentation.', milestones: ['PC5'] },
-    ]
-  },
-  'Continuity Care Clinic': {
-    epas: [
-      { id: 'afmc1', text: 'Manage patients with multiple chronic conditions longitudinally', context: 'Consider: treatment plans for diabetes, hypertension, hyperlipidemia, depression; balancing competing comorbidities; collaborative goal-setting; evidence-based guidelines with patient preferences.', milestones: ['PC2','MK1'] },
-      { id: 'afmc2', text: 'Conduct age- and risk-appropriate preventive care', context: 'Consider: USPSTF/AAFP screening guidelines; immunizations; wellness exams; shared decision-making on competing guidelines; barriers to preventive care.', milestones: ['PC3'] },
-      { id: 'afmc3', text: 'Evaluate and manage undifferentiated symptoms over time', context: 'Consider: differential for symptoms without clear diagnosis; tolerating diagnostic uncertainty; cost-effective workup; patient education on expected course; multidisciplinary coordination.', milestones: ['PC4'] },
-      { id: 'afmc4', text: 'Perform common office procedures', context: 'Consider: skin biopsies, joint injections, IUD/Nexplanon insertion/removal, toenail removal, cryotherapy; informed consent; appropriate technique; complication management.', milestones: ['PC5'] },
-      { id: 'afmc5', text: 'Apply evidence-based medicine to clinical decision-making in the office', context: 'Consider: formulating clinical questions; appraising guidelines and primary literature; integrating evidence with patient preferences; recognizing clinical reasoning errors.', milestones: ['PBLI1','MK2'] },
-      { id: 'afmc6', text: 'Coordinate care across settings and disciplines for continuity patients', context: 'Consider: managing referrals; coordinating with behavioral health, social work, community resources; navigating insurance/cost barriers; ensuring continuity across settings.', milestones: ['SBP2','SBP3'] },
-      { id: 'afmc7', text: 'Engage in panel management and population health', context: 'Consider: using EHR tools to identify care gaps; chart audits; outreach to patients needing preventive services; participating in quality improvement initiatives.', milestones: ['PC3','SBP1'] },
-      { id: 'afmc8', text: 'Demonstrate patient-centered communication across diverse encounters', context: 'Consider: motivational interviewing; shared decision-making; health literacy–appropriate language; recognizing cultural and language barriers; maintaining therapeutic relationships in challenging encounters.', milestones: ['ICS1','PROF1'] },
-      { id: 'afmc9', text: 'Evaluate and manage patients with mental health conditions in the primary care setting', context: 'Consider: screening for depression, anxiety, PTSD, and substance use disorders; initiating and managing psychotropic medications; safety planning for patients with suicidal ideation; warm handoffs and collaborative care coordination with behavioral health; recognizing limitations and appropriate referral.', milestones: ['PC2','MK1','ICS1'] },
-    ]
-  },
-  'Outpatient Pediatrics': {
-    epas: [
-      { id: 'opeds1', text: 'Conduct well-child visits across developmental stages', context: 'Consider: age-appropriate growth and developmental assessment (ASQ, M-CHAT); growth curves; immunizations per CDC/ACIP schedule; anticipatory guidance; developmental delay identification and referral.', milestones: ['PC3','MK1'] },
-      { id: 'opeds2', text: 'Evaluate and manage common pediatric outpatient conditions', context: 'Consider: otitis media, pharyngitis, URI, eczema, asthma, ADHD; differentiating viral from bacterial illness; age- and weight-appropriate medications; subspecialty referral.', milestones: ['PC2','PC4','MK1'] },
-      { id: 'opeds3', text: 'Identify and respond to child abuse and neglect', context: 'Consider: recognizing concerning physical findings; behavioral indicators of abuse; mandatory reporting obligations; objective documentation; coordination with social services and CPS.', milestones: ['PROF1','SBP2'] },
-      { id: 'opeds4', text: 'Provide adolescent-specific care', context: 'Consider: confidential screening for depression, substance use, sexual health, eating disorders; contraceptive counseling; minor consent and confidentiality laws; gender-affirming care needs.', milestones: ['ICS1','PC3','PROF1'] },
-      { id: 'opeds5', text: 'Communicate with families about vaccine hesitancy and preventive care', context: 'Consider: motivational interviewing for parental vaccine concerns; addressing misinformation non-judgmentally; shared decision-making; documenting declined vaccines.', milestones: ['ICS1','MK1'] },
-      { id: 'opeds6', text: 'Evaluate and manage the newborn in the outpatient setting', context: 'Consider: newborn discharge exam and early visits; feeding adequacy; weight gain and jaundice; newborn screening results; congenital anomalies; postpartum depression screening.', milestones: ['PC1','MK1','PC3'] },
-      { id: 'opeds7', text: 'Coordinate care for children with special health care needs', context: 'Consider: medical home model for complex conditions (autism, cerebral palsy); coordinating subspecialists, therapists, school systems; individualized care plans; insurance/authorization navigation.', milestones: ['SBP2','PC2','SBP3'] },
-    ]
-  },
-  'Emergency Department': {
-    epas: [
-      { id: 'er1', text: 'Triage and initiate evaluation of undifferentiated acute presentations', context: 'Consider: rapid assessment of chief complaint and vital signs; focused differential; initial workup; acuity determination; identifying life-threatening conditions; reassessment with new data.', milestones: ['PC1','MK2'] },
-      { id: 'er2', text: 'Manage multiple patients simultaneously in the ED', context: 'Consider: prioritizing among patients of varying acuity; timely reassessment; efficient disposition; time management; situational awareness; recognizing when to ask for help.', milestones: ['PC1','PROF2'] },
-      { id: 'er3', text: 'Assess, resuscitate and stabilize an acute trauma or acutely ill patient', context: 'Consider: primary survey (ABCDE); life-threatening injury prioritization; resuscitation including hemorrhage control, fluid/blood products, airway management; trauma bay procedures; closed-loop team communication; secondary survey.', milestones: ['PC1','PC5','MK2','ICS2'] },
-      { id: 'er4', text: 'Perform common ED procedures', context: 'Consider: laceration repair, abscess I&D, splinting/casting, joint reduction, procedural sedation; informed consent; appropriate technique; complication recognition and management.', milestones: ['PC5'] },
-      { id: 'er5', text: 'Determine appropriate disposition from the ED', context: 'Consider: admission vs. observation vs. discharge; risk stratification; follow-up arrangement; discharge instructions with return precautions; social work/case management involvement.', milestones: ['SBP2','SBP3'] },
-      { id: 'er6', text: 'Communicate effectively with patients and families in high-acuity, time-pressured situations', context: 'Consider: delivering bad news sensitively; rapid informed consent; communicating with distressed families; jargon-free language; managing expectations; maintaining professionalism under pressure.', milestones: ['ICS1','PROF1'] },
-      { id: 'er7', text: 'Request and coordinate consultations in the ED', context: 'Consider: formulating clear clinical questions; structured communication of findings; integrating consultant recommendations; following up on recommendations; resolving disagreements professionally.', milestones: ['ICS2'] },
-    ]
-  },
-  'ICU': {
-    epas: [
-      { id: 'icu1', text: 'Recognize and initiate stabilization of a critically ill patient', context: 'Consider: rapid ABC assessment; initiating resuscitation; activating protocols (sepsis bundle, code blue); time-sensitive prioritization; early clinical deterioration recognition; code leadership.', milestones: ['PC1','MK2'] },
-      { id: 'icu2', text: 'Manage mechanical ventilation', context: 'Consider: appropriate initial ventilator settings; arterial blood gas interpretation; adjusting ventilator parameters; recognizing ventilator-associated complications; extubation indications and timing.', milestones: ['PC1','MK1'] },
-      { id: 'icu3', text: 'Manage hemodynamic support', context: 'Consider: recognizing and diagnosing shock etiologies; selecting and titrating vasopressors/inotropes; volume status assessment; fluid resuscitation management.', milestones: ['PC1','MK1'] },
-      { id: 'icu4', text: 'Perform ICU procedures', context: 'Consider: arterial line placement, central venous catheter insertion, intubation, and/or lumbar puncture; informed consent; sterile technique; complication recognition and management; accurate documentation.', milestones: ['PC5'] },
-      { id: 'icu5', text: 'Lead goals-of-care and end-of-life discussions in the ICU', context: 'Consider: building rapport with families in crisis; honest and compassionate prognosis discussions; code status decisions; patient values and advance directives; withdrawal of life-sustaining treatment; palliative care coordination.', milestones: ['ICS1','PROF1'] },
-      { id: 'icu6', text: 'Coordinate care of a critically ill patient with multiple organ system involvement', context: 'Consider: synthesizing input from multiple subspecialty consultants; prioritizing interventions with competing organ system needs; communicating a unified plan; anticipating complications.', milestones: ['SBP2','ICS2','PC1'] },
-      { id: 'icu7', text: 'Perform structured ICU handoffs', context: 'Consider: standardized handoff tool; communicating patient acuity, active problems, recent changes, contingency plans; closed-loop communication; prioritizing sickest patients; code status and family dynamics.', milestones: ['SBP2','ICS3'] },
-    ]
-  },
-  'Inpatient Pediatrics': {
-    epas: [
-      { id: 'ipeds1', text: 'Evaluate and manage common pediatric inpatient conditions', context: 'Consider: bronchiolitis, pneumonia, asthma exacerbation, croup, dehydration, neonatal jaundice, febrile seizures; weight-based medication dosing; age-appropriate vital sign interpretation; level of care determination.', milestones: ['PC1','MK1'] },
-      { id: 'ipeds2', text: 'Recognize and initiate management of the acutely ill child', context: 'Consider: sepsis, respiratory failure, status epilepticus, DKA; PALS algorithms; weight-based fluid boluses; PICU escalation; communicating urgency to the team.', milestones: ['PC1','MK2'] },
-      { id: 'ipeds3', text: 'Communicate with parents and caregivers about their child\'s illness', context: 'Consider: diagnosis and treatment plan in health literacy–appropriate language; addressing parental anxiety; caregivers as partners in care; teach-back; navigating parental preference conflicts; interpreter use.', milestones: ['ICS1'] },
-      { id: 'ipeds4', text: 'Perform pediatric procedures', context: 'Consider: I&D, lumbar puncture, NG tube placement; age-appropriate pain management and distraction; informed consent from caregivers; pediatric anatomy considerations; complication management.', milestones: ['PC5'] },
-      { id: 'ipeds5', text: 'Coordinate discharge planning for pediatric patients', context: 'Consider: medication reconciliation with weight-based dosing; caregiver education on medication administration and warning signs; PCP follow-up arrangement; social determinants; social work coordination.', milestones: ['SBP2','ICS3'] },
-      { id: 'ipeds6', text: 'Coordinate multidisciplinary care for hospitalized children', context: 'Consider: communication with pediatric subspecialists, nursing, respiratory therapy, child life, social work; synthesizing consultant recommendations; interdisciplinary rounds; closed-loop communication during critical situations.', milestones: ['ICS2','SBP2'] },
-      { id: 'ipeds7', text: 'Perform structured pediatric handoffs', context: 'Consider: standardized handoff tool; patient acuity, weight-based medications, contingency plans; age-specific concerns (feeding tolerance, respiratory status in bronchiolitis); parental concerns and psychosocial factors.', milestones: ['SBP2','ICS3'] },
-    ]
-  },
-  'Labor & Delivery': {
-    epas: [
-      { id: 'ld1', text: 'Manage normal labor and perform spontaneous vaginal delivery', context: 'Consider: monitoring labor progress; fetal heart rate tracing interpretation (Category I, II, III); managing active labor including augmentation; spontaneous vaginal delivery; third stage management; perineal laceration assessment and repair.', milestones: ['PC1','PC5','MK1'] },
-      { id: 'ld2', text: 'Recognize and respond to obstetric emergencies', context: 'Consider: shoulder dystocia maneuvers; postpartum hemorrhage recognition and treatment; non-reassuring fetal heart tracings; cord prolapse; eclampsia recognition and treatment; calm and clear team communication.', milestones: ['PC1','MK2'] },
-      { id: 'ld3', text: 'Perform procedures', context: 'Consider: accurate cervical exams; amniotomy; fetal scalp electrodes and intrauterine pressure catheters; perineal laceration repair (1st–4th degree); circumcision; operative vaginal delivery assistance.', milestones: ['PC5'] },
-      { id: 'ld4', text: 'Provide immediate newborn care', context: 'Consider: newborn assessment and Apgar scoring; neonatal resuscitation per NRP guidelines; NICU transfer indications; initial newborn exam; counseling parents on newborn care, feeding, and warning signs.', milestones: ['PC1','MK1'] },
-      { id: 'ld5', text: 'Communicate with laboring patients and families about labor progress, interventions, and complications', context: 'Consider: discussing labor progress in understandable terms; explaining induction/augmentation/operative delivery indications; shared decision-making; communicating cesarean section indications sensitively; addressing birth plan preferences.', milestones: ['ICS1'] },
-      { id: 'ld6', text: 'Perform structured handoffs', context: 'Consider: labor status, cervical exam findings, fetal heart rate pattern, maternal/fetal risk factors, and contingency plans during shift changes; standardized handoff tool; ensuring receiving provider understands anticipated complications.', milestones: ['SBP2','ICS3'] },
-    ]
-  },
-  'Professionalism': {
-    epas: [
-      { id: 'prof1', text: 'Demonstrate professional behavior appropriate to the clinical setting', context: 'Consider: arriving on time and prepared; respectful interactions with patients, families, and all team members; constructive response to feedback; recognizing personal limitations; ethical conduct; composure in stressful situations.', milestones: ['PROF1','PROF2','PROF3'] },
-      { id: 'prof2', text: 'Seek and incorporate feedback to improve performance', context: 'Consider: receptivity to feedback from faculty, peers, and staff; self-reflection on clinical performance; identifying learning gaps; developing and implementing a learning plan; using performance data to measure improvement.', milestones: ['PBLI2','PROF3'] },
-      { id: 'prof3', text: 'Demonstrate effective interprofessional teamwork', context: 'Consider: respectful communication with all team members; clear consultation requests; closed-loop communication; constructive feedback to peers and learners; coordinating multiple team member recommendations; resolving interprofessional conflict.', milestones: ['ICS2'] },
-      { id: 'prof4', text: 'Advocate for individual patients\' needs within the health care system', context: 'Consider: navigating insurance barriers and prior authorizations; connecting patients with community resources; considering cost and social determinants in clinical decisions; identifying health disparities.', milestones: ['SBP3','SBP4'] },
-    ]
-  },
-  'Inpatient Surgery': {
-    epas: [
-      { id: 'surg1', text: 'Evaluate and manage common surgical conditions', context: 'Consider: diagnosing acute abdomen, appendicitis, cholecystitis, bowel obstruction, hernias; surgical vs. conservative management indications; focused surgical history and physical; recognizing when urgent surgical consultation is needed.', milestones: ['PC1','MK1'] },
-      { id: 'surg2', text: 'Provide perioperative care', context: 'Consider: preoperative risk assessment and medication management; postoperative complication monitoring (DVT, infection, ileus, bleeding); multimodal pain management; wound care; coordination with anesthesia and surgery teams.', milestones: ['PC1','MK1'] },
-      { id: 'surg3', text: 'Assist in the operating room', context: 'Consider: sterile technique; appropriate tissue handling; knot tying and wound closure; understanding the procedure and anticipating next steps; intraoperative communication with the surgical team; professionalism during long procedures.', milestones: ['PC5'] },
-      { id: 'surg4', text: 'Counsel patients about surgical procedures and alternatives', context: 'Consider: explaining risks, benefits, and alternatives in patient-friendly language; obtaining informed consent; independent risk and appropriateness assessment; advocating against unnecessary procedures.', milestones: ['PC5','ICS1'] },
-      { id: 'surg5', text: 'Assess, resuscitate and stabilize an acute trauma patient', context: 'Consider: primary survey (ABCDE); life-threatening injury prioritization; resuscitation including hemorrhage control, fluids, airway management; trauma bay procedures; closed-loop team communication; secondary survey; disposition coordination.', milestones: ['PC1','PC5','MK2','ICS2'] },
-      { id: 'surg6', text: 'Coordinate postoperative transitions of care', context: 'Consider: discharge planning including medication reconciliation, wound care instructions, activity restrictions, follow-up appointments; communicating with the patient\'s PCP; identifying rehabilitation/SNF needs; documentation of hospital course.', milestones: ['SBP2','ICS3'] },
-    ]
-  },
-  'Urgent Care': {
-    epas: [
-      { id: 'uc1', text: 'Evaluate and manage acute, undifferentiated presentations in the urgent care setting', context: 'Consider: assessing walk-in patients with acute complaints (chest pain, abdominal pain, lacerations, URI); focused differential diagnosis; ED transfer vs. outpatient management determination; red flag recognition.', milestones: ['PC1','PC4','MK2'] },
-      { id: 'uc2', text: 'Perform common urgent care procedures', context: 'Consider: laceration repair, abscess I&D, foreign body removal, splinting, point-of-care testing interpretation; informed consent; appropriate technique; recognizing scope limitations.', milestones: ['PC5'] },
-      { id: 'uc3', text: 'Provide appropriate follow-up planning and safety-netting', context: 'Consider: clear discharge instructions with return precautions; PCP follow-up arrangement; communication with the patient\'s continuity provider; identifying patients needing additional resources.', milestones: ['SBP2','ICS1'] },
-      { id: 'uc4', text: 'Manage patient flow and prioritize among multiple simultaneous patients', context: 'Consider: efficient patient evaluation; appropriate ancillary testing; timely disposition decisions; situational awareness across multiple patients; effective communication with nursing and support staff.', milestones: ['PC1','PROF2'] },
-    ]
-  },
-  'Women\'s Health Clinic': {
-    epas: [
-      { id: 'wh1', text: 'Provide comprehensive well-woman care', context: 'Consider: pelvic exams and Pap smears; clinical breast exams; age-appropriate cancer screening; STI screening and counseling; HPV immunization; USPSTF and ACOG guidelines; sexual health and reproductive planning.', milestones: ['PC3','PC5'] },
-      { id: 'wh2', text: 'Evaluate and manage common gynecologic complaints', context: 'Consider: abnormal uterine bleeding, vaginitis, pelvic pain, dysmenorrhea, menopause symptoms, urinary incontinence; appropriate diagnostic workup; evidence-based treatment; gynecologic referral indications.', milestones: ['PC2','MK1'] },
-      { id: 'wh3', text: 'Provide contraceptive management including LARC procedures', context: 'Consider: counseling on all contraceptive methods including efficacy, risks, and benefits; LARC insertion and removal; complication management; contraceptive myths; patient autonomy.', milestones: ['PC5','ICS1'] },
-      { id: 'wh4', text: 'Perform colposcopy and manage abnormal cervical cancer screening results', context: 'Consider: interpreting Pap smear and HPV co-testing results per ASCCP guidelines; colposcopy with directed biopsy; transformation zone identification; biopsy result follow-up and management counseling.', milestones: ['PC5','PBLI1'] },
-      { id: 'wh5', text: 'Provide routine prenatal care', context: 'Consider: initial and subsequent prenatal visits including dating and risk assessment; prenatal labs and screening tests; fetal growth and maternal health monitoring; screening for gestational diabetes and preeclampsia; delivery plan development.', milestones: ['PC3','PC2','MK1'] },
-      { id: 'wh6', text: 'Evaluate and manage early pregnancy complications', context: 'Consider: vaginal bleeding in early pregnancy (threatened, inevitable, incomplete, missed abortion); ectopic pregnancy diagnosis and management; quantitative hCG and early ultrasound interpretation; counseling patients about pregnancy loss with sensitivity.', milestones: ['PC1','ICS1','MK1'] },
-      { id: 'wh7', text: 'Counsel patients on menopause management and hormone therapy', context: 'Consider: menopausal symptom assessment; HRT risks and benefits per current evidence; non-hormonal alternatives; osteoporosis and cardiovascular risk screening; sexual health concerns; shared decision-making.', milestones: ['PC2','PBLI1','ICS1'] },
-    ]
-  },
-};
+// (ROTATIONS -> shared/definitions.js)
 
 // ══════════════════════════════════════════════════
 // STATE
