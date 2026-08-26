@@ -248,64 +248,36 @@ const ROTATIONS = {
 // WHICH specialty. Without this, every cardiology and neurology consult aggregates
 // together and procedures cannot be counted at all.
 //
-// A picklist rather than free text, deliberately. Free text would recreate exactly
-// the spelling drift that faculty names had — "central line", "Central Line", "CVC"
-// and "central venous catheter" would each count separately. "Other" keeps an escape
-// hatch for anything genuinely missing; if a value shows up under Other repeatedly,
-// add it to the list here rather than leaving it in the tail.
+// A live list rather than free text, deliberately. Free entry would recreate
+// exactly the spelling drift that faculty names had - "central line", "Central
+// Line" and "CVC" would each count separately.
 //
-// These lists are a starting point drawn from the procedures already named in the
-// EPA context lines above. They are not faculty-reviewed — edit freely. Adding or
-// removing an option is safe: the value is stored as text on the submission, so an
-// option removed later still displays on the rows that used it.
+// The values are NOT here. They live in the detail_options table and are loaded
+// by shared/detail-options.js, so the list grows when someone types something
+// genuinely new, a near-miss is offered to them first, and duplicates that slip
+// through can be merged by a reviewer. Same shape as the faculty roster.
+//
+// `category` groups rotations onto one list: both Subspecialty rotations share
+// 'subspecialty', because a specialty seen on the wards is plausible in clinic
+// and two lists would drift apart for no benefit.
 //
 // A rotation absent from this object collects no detail and shows no extra field.
 
 const ROTATION_DETAIL = {
   'Procedural Care': {
+    category: 'procedure',
     label: 'Which procedure?',
-    hint: 'One procedure per evaluation. Pick the closest match, or Other to type it in.',
-    options: [
-      'Abscess incision and drainage',
-      'Arthrocentesis / joint injection',
-      'Central venous catheter',
-      'Circumcision',
-      'Colposcopy',
-      'Cryotherapy',
-      'Endometrial biopsy',
-      'IUD insertion or removal',
-      'Nexplanon insertion or removal',
-      'Joint reduction',
-      'Laceration repair',
-      'Lumbar puncture',
-      'Nail removal or nail bed repair',
-      'Paracentesis',
-      'Procedural sedation',
-      'Skin biopsy (punch, shave, or excisional)',
-      'Splinting or casting',
-      'Thoracentesis',
-      'Vasectomy',
-    ],
+    hint: 'Pick from the list, or type a new one and it will be added for next time.',
   },
   'Inpatient Subspecialty Consultation': {
+    category: 'subspecialty',
     label: 'Which subspecialty?',
-    hint: 'The service the resident was consulting on.',
-    options: [
-      'Cardiology', 'Dermatology', 'Endocrinology', 'Gastroenterology',
-      'Hematology / Oncology', 'Infectious Disease', 'Nephrology', 'Neurology',
-      'Ophthalmology', 'Orthopedics', 'Otolaryngology', 'Palliative Care',
-      'Psychiatry', 'Pulmonology / Critical Care', 'Rheumatology', 'Surgery', 'Urology',
-    ],
+    hint: 'The service the resident was consulting on. Type a new one to add it.',
   },
   'Outpatient Subspecialty Clinic': {
+    category: 'subspecialty',
     label: 'Which subspecialty?',
-    hint: 'The clinic the resident was seeing patients in.',
-    options: [
-      'Cardiology', 'Dermatology', 'Endocrinology', 'Gastroenterology',
-      'Hematology / Oncology', 'Infectious Disease', 'Nephrology', 'Neurology',
-      'Ophthalmology', 'Orthopedics', 'Otolaryngology', 'Pain Medicine',
-      'Psychiatry', 'Pulmonology', 'Rheumatology', 'Sports Medicine', 'Urology',
-    ],
+    hint: 'The clinic the resident was seeing patients in. Type a new one to add it.',
   },
 };
 

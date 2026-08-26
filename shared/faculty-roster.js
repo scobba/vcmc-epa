@@ -50,37 +50,14 @@ async function loadFaculty() {
   facultyLoaded = true;
 }
 
-function normalize(name) {
-  return (name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
+// normalize() and damerauLevenshtein() moved to shared/text-matching.js, so the
+// procedure/subspecialty roster can use them without loading this file.
+// Every page loading this one must load text-matching.js first.
 
 function findFacultyMatch(name) {
   const n = normalize(name);
   if (!n) return null;
   return FACULTY.find(f => normalize(f.name) === n) || null;
-}
-
-// Simple edit-distance check — catches typo/spelling variants of an
-// existing name (e.g. "Tipu Kahn" vs. the roster's "Tipu Khan") that
-// findFacultyMatch's exact-normalized comparison would miss, so the
-// resident gets asked before a near-duplicate is created. Damerau-
-// Levenshtein (rather than plain Levenshtein) counts an adjacent-letter
-// swap as a single edit, which is exactly the "Kahn"/"Khan" case.
-function damerauLevenshtein(a, b) {
-  const m = a.length, n = b.length;
-  const d = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-  for (let i = 0; i <= m; i++) d[i][0] = i;
-  for (let j = 0; j <= n; j++) d[0][j] = j;
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
-      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
-        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
-      }
-    }
-  }
-  return d[m][n];
 }
 
 function findCloseMatch(name) {

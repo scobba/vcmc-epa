@@ -973,6 +973,7 @@
       <input type="date" id="filter-proc-date-end" onchange="renderProcedures()" title="Filter to date">
     </div>
     <div id="procedures-container"></div>
+    <div id="detail-list-container" style="margin-top:36px"></div>
   </div>
 </div>
 
@@ -993,13 +994,16 @@
   <div><a href="https://www.venturafamilymed.org" target="_blank">venturafamilymed.org</a></div>
 </footer>
 
-<script src="../shared/definitions.js?v=3"></script>
-<script src="../shared/faculty-roster.js?v=1"></script>
+<script src="../shared/text-matching.js?v=1"></script>
+<script src="../shared/definitions.js?v=4"></script>
+<script src="../shared/faculty-roster.js?v=2"></script>
+<script src="../shared/detail-options.js?v=1"></script>
 <script>
 // Fail visibly rather than silently. Without the shared definitions this page
 // would render its frame and simply show nothing to work with, which reads as
 // "there is no data" instead of "a file is missing".
-if (typeof ROTATIONS === 'undefined' || typeof resolveFacultyIdentity === 'undefined') {
+if (typeof ROTATIONS === 'undefined' || typeof resolveFacultyIdentity === 'undefined'
+    || typeof resolveDetailIdentity === 'undefined' || typeof normalize === 'undefined') {
   document.body.innerHTML = '<div style="max-width:640px;margin:80px auto;padding:0 24px;font-family:Helvetica,Arial,sans-serif;color:#1A2744">'
     + '<h2 style="margin-bottom:12px">This page did not load correctly</h2>'
     + '<p style="color:#4A5568;line-height:1.6">A required file (shared/definitions.js) did not load, so the dashboard cannot be shown. Please reload the page; if this persists, contact the program office.</p></div>';
@@ -1142,6 +1146,7 @@ async function loadSubmissions() {
       evaluatorName:   row.evaluator_name,
       evaluatorId:     row.evaluator_id     || null,
       rotationDetail:  row.rotation_detail  || null,
+      rotationDetailId: row.rotation_detail_id || null,
       dates:           row.date_start || '',
       dateStart:       row.date_start,
       dateEnd:         row.date_end,
@@ -1164,7 +1169,7 @@ async function loadAdminData() {
   if (container) container.innerHTML = '<div class="loading-state"><div class="spinner"></div>Loading evaluation data…</div>';
   // The roster is what turns an evaluator name or id into a person. Loaded
   // alongside the submissions so grouping resolves merges from the first render.
-  const [subs] = await Promise.all([loadSubmissions(), loadFaculty()]);
+  const [subs] = await Promise.all([loadSubmissions(), loadFaculty(), loadDetailOptions()]);
   allSubmissions = subs;
   populateFilterDropdowns();
   renderMilestones();
@@ -1206,7 +1211,7 @@ function switchAdminTab(name, btn) {
   if (name === 'submissions') renderSubmissions();
   if (name === 'residents') renderResidentDetail();
   if (name === 'evaluators') { renderEvaluators(); renderReconcile(); }
-  if (name === 'procedures') renderProcedures();
+  if (name === 'procedures') { renderProcedures(); renderDetailList(); }
 }
 
 // ── Milestones Tab ──
@@ -1459,6 +1464,16 @@ function renderResidentDetail() {
 // undercounts, and the fix would be a quantity field rather than a change here.
 // ══════════════════════════════════════════════════
 
+// The name a submission's detail is counted under: the list's canonical name
+// when it resolves — so a merged duplicate collapses — otherwise exactly what
+// was typed, rather than dropping the row.
+function displayDetailName(s) {
+  const cfg = rotationDetailFor(s.rotation);
+  if (!cfg) return s.rotationDetail;
+  const ident = resolveDetailIdentity(cfg.category, s.rotationDetailId, s.rotationDetail);
+  return ident ? ident.name : s.rotationDetail;
+}
+
 function detailRotations() {
   return Object.keys(ROTATION_DETAIL || {});
 }
@@ -1502,15 +1517,16 @@ function renderProcedures() {
   // rotation -> detail value -> { count, residents }
   const byRotation = {};
   withDetail.forEach(s => {
+    const key = displayDetailName(s);
     (byRotation[s.rotation] = byRotation[s.rotation] || {});
     const b = byRotation[s.rotation];
-    (b[s.rotationDetail] = b[s.rotationDetail] || { count: 0, residents: new Set(), scores: [] });
-    b[s.rotationDetail].count++;
-    b[s.rotationDetail].residents.add(s.resident);
-    Object.values(s.scores || {}).filter(v => v !== 'na').forEach(v => b[s.rotationDetail].scores.push(v));
+    (b[key] = b[key] || { count: 0, residents: new Set(), scores: [] });
+    b[key].count++;
+    b[key].residents.add(s.resident);
+    Object.values(s.scores || {}).filter(v => v !== 'na').forEach(v => b[key].scores.push(v));
   });
 
-  const distinctValues = new Set(withDetail.map(s => s.rotationDetail)).size;
+  const distinctValues = new Set(withDetail.map(displayDetailName)).size;
 
   let html = `
     <div class="stat-row">
@@ -1560,7 +1576,8 @@ function renderProcedures() {
   withDetail.forEach(s => {
     (perResident[s.resident] = perResident[s.resident] || { total: 0, byValue: {} });
     perResident[s.resident].total++;
-    perResident[s.resident].byValue[s.rotationDetail] = (perResident[s.resident].byValue[s.rotationDetail] || 0) + 1;
+    const k = displayDetailName(s);
+    perResident[s.resident].byValue[k] = (perResident[s.resident].byValue[k] || 0) + 1;
   });
   const resRows = Object.keys(perResident).sort((a, b) => perResident[b].total - perResident[a].total || a.localeCompare(b));
 
@@ -1589,6 +1606,152 @@ function renderProcedures() {
     </p>`;
 
   el.innerHTML = html;
+}
+
+// ── Tidying the procedure / subspecialty list ────────────────────────────────
+//
+// The list grows by self-registration, so two spellings of one thing can reach
+// it. Same resolution as the faculty roster: a reviewer records that two options
+// are the same, it resolves at read time, and no submission row is rewritten.
+
+function detailDuplicateCandidates(category) {
+  const rows = pickableDetailOptions(category);
+  const pairs = [];
+  for (let i = 0; i < rows.length; i++) {
+    for (let j = i + 1; j < rows.length; j++) {
+      const a = normalize(rows[i].name), b = normalize(rows[j].name);
+      if (!a || !b) continue;
+      const dist = damerauLevenshtein(a, b);
+      const threshold = Math.max(1, Math.floor(Math.max(a.length, b.length) * 0.2));
+      if (dist <= threshold) {
+        pairs.push({ a: rows[i], b: rows[j], why: 'the spelling differs by ' + dist + ' character' + (dist === 1 ? '' : 's') });
+      }
+    }
+  }
+  return pairs;
+}
+
+function detailUseCount(optionId) {
+  return allSubmissions.filter(s => {
+    const cfg = rotationDetailFor(s.rotation);
+    if (!cfg) return false;
+    const ident = resolveDetailIdentity(cfg.category, s.rotationDetailId, s.rotationDetail);
+    return ident && String(ident.id) === String(optionId);
+  }).length;
+}
+
+function renderDetailList() {
+  const el = document.getElementById('detail-list-container');
+  if (!el) return;
+  if (!detailOptionsLoaded) { el.innerHTML = ''; return; }
+
+  const cats = [['procedure', 'Procedures'], ['subspecialty', 'Subspecialties']];
+  let html = `
+    <div class="merge-section-head">The list itself</div>
+    <p style="font-size:12.5px;color:var(--slate);line-height:1.7;margin-bottom:14px;max-width:820px">
+      Evaluators can add to this list by typing something new, so two spellings of one thing can
+      appear. Merging records that they are the same; evaluations are not modified and any merge
+      can be undone.
+    </p>`;
+
+  cats.forEach(([cat, title]) => {
+    const merged = allDetailOptions(cat).filter(o => o.merged_into !== null && o.merged_into !== undefined);
+    const cands = detailDuplicateCandidates(cat);
+    const opts = pickableDetailOptions(cat).slice().sort((a, b) => a.name.localeCompare(b.name))
+      .map(o => `<option value="${o.id}">${escFaculty(o.name)}</option>`).join('');
+
+    html += `<div class="merge-section-head" style="margin-top:20px">${title} &mdash; ${pickableDetailOptions(cat).length} on the list, ${merged.length} merged</div>`;
+
+    html += cands.length ? cands.map(p => {
+      const ca = detailUseCount(p.a.id), cb = detailUseCount(p.b.id);
+      return `<div class="merge-card">
+          <div class="merge-pair">
+            <div><div class="merge-name">${escFaculty(p.a.name)}</div>
+                 <div class="merge-meta">id ${p.a.id} &middot; used ${ca} time${ca === 1 ? '' : 's'}</div></div>
+            <div class="merge-arrow">&harr;</div>
+            <div><div class="merge-name">${escFaculty(p.b.name)}</div>
+                 <div class="merge-meta">id ${p.b.id} &middot; used ${cb} time${cb === 1 ? '' : 's'}</div></div>
+          </div>
+          <div class="merge-note">These look related &mdash; ${escFaculty(p.why)}.</div>
+          <div class="merge-actions">
+            <button class="btn btn-secondary" onclick="mergeDetailOption(${p.a.id}, ${p.b.id})">Merge into &ldquo;${escFaculty(p.b.name)}&rdquo;</button>
+            <button class="btn btn-secondary" onclick="mergeDetailOption(${p.b.id}, ${p.a.id})">Merge into &ldquo;${escFaculty(p.a.name)}&rdquo;</button>
+          </div>
+        </div>`;
+    }).join('') : '<div class="merge-empty">No likely duplicates.</div>';
+
+    html += `<div class="merge-card">
+        <div class="merge-note">Merge any two manually.</div>
+        <div class="merge-actions">
+          <select id="dmerge-source-${cat}"><option value="">&mdash; this one &mdash;</option>${opts}</select>
+          <span class="merge-meta">is the same as</span>
+          <select id="dmerge-target-${cat}"><option value="">&mdash; this one &mdash;</option>${opts}</select>
+          <button class="btn btn-primary" onclick="mergeDetailFromSelects('${cat}')">Merge</button>
+        </div>
+      </div>`;
+
+    if (merged.length) {
+      html += merged.map(o => {
+        const t = detailOptionById(o.merged_into);
+        return `<div class="merged-row"><strong>${escFaculty(o.name)}</strong>
+            <span class="merge-arrow">&rarr;</span>
+            <strong>${escFaculty(t ? t.name : 'id ' + o.merged_into)}</strong>
+            <button class="btn btn-secondary" style="margin-left:auto;padding:5px 12px;font-size:11.5px" onclick="unmergeDetailOption(${o.id})">Undo</button>
+          </div>`;
+      }).join('');
+    }
+  });
+
+  el.innerHTML = html;
+}
+
+function mergeDetailFromSelects(cat) {
+  const s = document.getElementById('dmerge-source-' + cat).value;
+  const t = document.getElementById('dmerge-target-' + cat).value;
+  if (!s || !t) { alert('Choose both first.'); return; }
+  if (s === t) { alert('Those are the same entry.'); return; }
+  mergeDetailOption(Number(s), Number(t));
+}
+
+async function mergeDetailOption(sourceId, targetId) {
+  const src = detailOptionById(sourceId), tgt = detailOptionById(targetId);
+  if (!src || !tgt) { alert('Could not find those entries. Reload and try again.'); return; }
+  const dest = canonicalDetailOption(tgt);
+  if (!dest || String(dest.id) === String(src.id)) {
+    alert('That would point these two at each other. Pick the other direction.');
+    return;
+  }
+  const moving = detailUseCount(src.id);
+  if (!confirm(`Record that "${src.name}" is the same as "${dest.name}"?\n\n`
+    + `${moving} evaluation${moving === 1 ? '' : 's'} will be counted under "${dest.name}".\n`
+    + `"${src.name}" stops being offered on the form. No evaluation is changed, and you can undo this.`)) return;
+  await writeDetailMerge(src.id, dest.id, new Date().toISOString());
+}
+
+async function unmergeDetailOption(id) {
+  const row = detailOptionById(id);
+  if (!row) return;
+  if (!confirm(`Undo the merge for "${row.name}"?\n\nIt becomes a separate entry again and reappears on the form.`)) return;
+  await writeDetailMerge(id, null, null);
+}
+
+async function writeDetailMerge(id, mergedInto, mergedAt) {
+  try {
+    const headers = await getAuthHeader();
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/detail_options?id=eq.${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: Object.assign({ 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, headers),
+      body: JSON.stringify({ merged_into: mergedInto, merged_at: mergedAt }),
+    });
+    if (!res.ok) throw new Error(res.status + ' ' + (await res.text()));
+    await loadDetailOptions();
+    renderProcedures();
+    renderDetailList();
+  } catch (e) {
+    console.error(e);
+    alert('Could not save that change.\n\n' + e.message
+      + '\n\nIf this says permission denied, the policies and grants from sql/009 have not been applied yet.');
+  }
 }
 
 // ── Reconciling evaluator names that predate the roster picker ──

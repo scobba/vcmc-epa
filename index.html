@@ -786,6 +786,22 @@
 <!-- Shown when a typed evaluator name is close to, but not exactly, one already
      on the roster. The evaluation is already complete and held in memory at this
      point; only which name gets saved with it is still open. -->
+<!-- Shown when a typed procedure or subspecialty is close to, but not exactly,
+     one already on the list. Answering "add as new" is a legitimate outcome —
+     the list is meant to grow — so neither button is discouraged. -->
+<div class="dup-modal-overlay" id="detail-dup-modal">
+  <div class="dup-modal">
+    <h3>Is This the Same Thing?</h3>
+    <p>You entered "<strong id="detail-dup-typed"></strong>", which isn't on the list yet, but it's very close to something that is:</p>
+    <div class="dup-existing-name" id="detail-dup-existing"></div>
+    <p>If they're the same <span id="detail-dup-label">thing</span>, use the existing one so they count together. If it's genuinely different, add it and it will be on the list from now on.</p>
+    <div class="dup-modal-actions">
+      <button class="btn btn-secondary" onclick="resolveDetailDup(false)">Different &mdash; Add as New</button>
+      <button class="btn btn-primary" onclick="resolveDetailDup(true)">Same &mdash; Use Existing</button>
+    </div>
+  </div>
+</div>
+
 <div class="dup-modal-overlay" id="eval-dup-modal">
   <div class="dup-modal">
     <h3>Is This You?</h3>
@@ -805,13 +821,15 @@
   <div><a href="https://www.venturafamilymed.org" target="_blank">venturafamilymed.org</a></div>
 </footer>
 
-<script src="shared/definitions.js?v=3"></script>
-<script src="shared/faculty-roster.js?v=1"></script>
+<script src="shared/text-matching.js?v=1"></script>
+<script src="shared/definitions.js?v=4"></script>
+<script src="shared/faculty-roster.js?v=2"></script>
+<script src="shared/detail-options.js?v=1"></script>
 <script>
 // Fail visibly rather than silently. Without the shared definitions this page
 // would render its frame and simply show nothing to work with, which reads as
 // "there is no data" instead of "a file is missing".
-if (typeof ROTATIONS === 'undefined' || typeof loadFaculty === 'undefined') {
+if (typeof ROTATIONS === 'undefined' || typeof loadFaculty === 'undefined' || typeof normalize === 'undefined') {
   document.body.innerHTML = '<div style="max-width:640px;margin:80px auto;padding:0 24px;font-family:Helvetica,Arial,sans-serif;color:#1A2744">'
     + '<h2 style="margin-bottom:12px">This page did not load correctly</h2>'
     + '<p style="color:#4A5568;line-height:1.6">A required file (shared/definitions.js) did not load, so the evaluation form cannot be shown. Please reload the page; if this persists, contact the program office.</p></div>';
@@ -1079,46 +1097,36 @@ function renderEPAForm(rotationName) {
 //
 // Three rotations describe a shape of encounter rather than a subject, so they
 // ask one extra question. Everything else renders nothing here.
+//
+// A type-ahead over a live list rather than a fixed dropdown: typing something
+// genuinely new adds it for the next person, and a near-miss is offered before a
+// second spelling is created. Same contract as the evaluator field.
 
 function detailFieldMarkup(rotationName) {
   const cfg = rotationDetailFor(rotationName);
   if (!cfg) return '';
-  const opts = cfg.options.map(o => `<option value="${escFaculty(o)}">${escFaculty(o)}</option>`).join('');
+  const n = pickableDetailOptions(cfg.category).length;
+  const status = detailOptionsLoaded
+    ? `<div class="roster-status">${escFaculty(cfg.hint)} &middot; ${n} on the list</div>`
+    : `<div class="roster-status">Loading the list&hellip;</div>`;
   return `
         <div class="form-group">
           <label>${escFaculty(cfg.label)} *</label>
-          <select id="field-rotation-detail" required onchange="onRotationDetailChange()">
-            <option value="">&mdash; Select &mdash;</option>
-            ${opts}
-            <option value="__other">Other (type it in)</option>
-          </select>
-          <input type="text" id="field-rotation-detail-other" placeholder="Type it in&hellip;"
-                 style="display:none; margin-top:8px">
-          <div class="roster-status">${escFaculty(cfg.hint)}</div>
+          <input type="text" id="field-rotation-detail" list="rotationDetailList" autocomplete="off"
+                 placeholder="Start typing&hellip;" required>
+          <datalist id="rotationDetailList">${detailDatalistOptions(cfg.category)}</datalist>
+          ${status}
         </div>`;
 }
 
-function onRotationDetailChange() {
-  const sel = document.getElementById('field-rotation-detail');
-  const other = document.getElementById('field-rotation-detail-other');
-  if (!sel || !other) return;
-  const isOther = sel.value === '__other';
-  other.style.display = isOther ? 'block' : 'none';
-  if (isOther) other.focus(); else other.value = '';
-}
-
-// The value to store, or null when this rotation collects no detail.
-// Returns undefined when the rotation needs a value and none was given, which
-// the caller treats as a validation failure — distinct from "not applicable".
+// The typed value, or null when this rotation collects no detail. Returns
+// undefined when the rotation asks and nothing was entered, which the caller
+// treats as a validation failure — distinct from "not applicable".
 function readRotationDetail(rotationName) {
   if (!rotationDetailFor(rotationName)) return null;
-  const sel = document.getElementById('field-rotation-detail');
-  if (!sel || !sel.value) return undefined;
-  if (sel.value === '__other') {
-    const typed = (document.getElementById('field-rotation-detail-other')?.value || '').trim();
-    return typed || undefined;
-  }
-  return sel.value;
+  const el = document.getElementById('field-rotation-detail');
+  const v = (el?.value || '').trim();
+  return v || undefined;
 }
 
 // ══════════════════════════════════════════════════
@@ -1167,6 +1175,7 @@ async function submitForm(rotationName) {
     evaluatorName,
     evaluatorId: null,   // filled in at save time once the roster row is resolved
     rotationDetail,
+    rotationDetailId: null,   // filled in at save time once the list entry resolves
     dates,
     dateStart,
     dateEnd: dateStart,
@@ -1177,12 +1186,55 @@ async function submitForm(rotationName) {
     formVersion: FORM_VERSION,
   };
 
-  // Evaluator identity is a typed string, so the same attending can arrive as
-  // "Tipu Khan", "Tipu Kahn" and "T. Khan" across three evaluations and split
-  // into three people on the dashboard. If the typed name is not already on the
-  // roster, offer the closest existing name before letting it self-register.
-  // Deliberately after every other validation: showing this and then rejecting
-  // the form for a missing narrative would be a worse experience than either.
+  // Two things on this form are typed and must not fragment: the procedure or
+  // subspecialty, and the evaluator. Each gets a near-miss check before it is
+  // allowed to create a new entry, asked one after the other. Deliberately after
+  // every other validation — prompting and then rejecting the form for a missing
+  // narrative would be worse than either.
+  await checkDetailThenEvaluator(submission, rotationName);
+}
+
+// Step 1 of 2: is this typed procedure/subspecialty a variant of one already on
+// the list? Rotations that collect no detail fall straight through.
+async function checkDetailThenEvaluator(submission, rotationName) {
+  const cfg = rotationDetailFor(rotationName);
+  const typed = submission.rotationDetail;
+  if (cfg && typed && !findDetailMatch(cfg.category, typed)) {
+    const close = findCloseDetailMatch(cfg.category, typed);
+    if (close) {
+      pendingEvaluation = { submission, rotationName };
+      detailDupCandidate = close;
+      document.getElementById('detail-dup-typed').textContent = typed;
+      document.getElementById('detail-dup-existing').textContent = close.name;
+      document.getElementById('detail-dup-label').textContent =
+        (cfg.category === 'procedure' ? 'procedure' : 'subspecialty');
+      document.getElementById('detail-dup-modal').classList.add('open');
+      return; // wait for resolveDetailDup()
+    }
+  }
+  await checkEvaluatorThenSave(submission, rotationName);
+}
+
+let detailDupCandidate = null;
+
+function resolveDetailDup(useExisting) {
+  document.getElementById('detail-dup-modal').classList.remove('open');
+  if (!pendingEvaluation) return;
+  const { submission, rotationName } = pendingEvaluation;
+  if (useExisting && detailDupCandidate) {
+    submission.rotationDetail = detailDupCandidate.name;
+    const field = document.getElementById('field-rotation-detail');
+    if (field) field.value = detailDupCandidate.name;
+  }
+  pendingEvaluation = null;
+  detailDupCandidate = null;
+  checkEvaluatorThenSave(submission, rotationName);
+}
+
+// Step 2 of 2: is this typed evaluator a variant of someone already on the
+// faculty roster?
+async function checkEvaluatorThenSave(submission, rotationName) {
+  const evaluatorName = submission.evaluatorName;
   if (!findFacultyMatch(evaluatorName)) {
     const close = findCloseMatch(evaluatorName);
     if (close) {
@@ -1194,8 +1246,8 @@ async function submitForm(rotationName) {
       return; // wait for resolveEvaluatorDup()
     }
   }
-
   await proceedWithEvaluation(submission, rotationName);
+
 }
 
 // Holds the finished evaluation while the "is this the same person?" prompt is
@@ -1222,6 +1274,23 @@ function resolveEvaluatorDup(useExisting) {
 async function proceedWithEvaluation(submission, rotationName) {
   const submitBtn = document.querySelector('.btn-primary');
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
+
+  // Resolve the procedure/subspecialty to a list entry, adding it if genuinely
+  // new so the next evaluator picks it instead of retyping a variant. Same
+  // best-effort contract as the evaluator below: a list problem leaves the id
+  // null and the evaluation keeps the typed text.
+  const detailCfg = rotationDetailFor(rotationName);
+  if (detailCfg && submission.rotationDetail) {
+    try {
+      const opt = await registerDetailOption(detailCfg.category, submission.rotationDetail);
+      if (opt && opt.id != null) {
+        submission.rotationDetailId = opt.id;
+        submission.rotationDetail = opt.name;   // store the list's spelling, not the typed one
+      }
+    } catch (e) {
+      console.error('Could not resolve the rotation detail to a list entry:', e);
+    }
+  }
 
   // Resolve the evaluator to a roster row so the evaluation points at a person
   // and not just a spelling, creating the row if this name is genuinely new.
@@ -1296,7 +1365,8 @@ async function saveSubmission(sub) {
     rotation:        sub.rotation,
     evaluator_name:  sub.evaluatorName,
     evaluator_id:    sub.evaluatorId ?? null,
-    rotation_detail: sub.rotationDetail ?? null,
+    rotation_detail:    sub.rotationDetail ?? null,
+    rotation_detail_id: sub.rotationDetailId ?? null,
     date_start:      sub.dateStart || '',
     date_end:        sub.dateStart || '',
     scores:          sub.scores,
@@ -1549,7 +1619,7 @@ async function init() {
   renderFormLanding();
   // Both rosters in parallel. Neither blocks the other, and a failure in either
   // leaves a visible placeholder rather than an empty picker.
-  await Promise.all([loadResidents(), loadFaculty()]);
+  await Promise.all([loadResidents(), loadFaculty(), loadDetailOptions()]);
   renderFormLanding(); // re-render after residents load
 }
 
