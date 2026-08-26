@@ -627,18 +627,32 @@ function resolveDupModal(useExisting) {
 }
 
 async function proceedWithSubmit(facultyName, department) {
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  // Resolve the attending to a roster row so the evaluation points at a person
+  // rather than a spelling, creating the row if this name is genuinely new.
+  // Before the save, because the id is part of the payload — but best-effort:
+  // any failure leaves faculty_id null and the evaluation is written with the
+  // name alone rather than lost.
+  let facultyId = null;
+  try {
+    const record = await registerNewFaculty(facultyName, department);
+    if (record && record.id != null) facultyId = record.id;
+  } catch (e) {
+    console.error('Could not resolve faculty to a roster row:', e);
+  }
+
   const payload = {
     faculty_name:     facultyName,
+    faculty_id:       facultyId,
     department:       department,
     ratings:          QUESTIONS.map((q, i) => ({ item: q, rating: ratings[i] })),
     comments:         QUESTIONS.map((q, i) => ({ item: q, comment: comments[i] || '' })).filter(c => c.comment.trim() !== ''),
     overall_rating:   overall,
     overall_feedback: overallFeedback || '',
   };
-
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = true;
-  btn.textContent = 'Submitting…';
 
   try {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/faculty_submissions`, {
@@ -655,7 +669,6 @@ async function proceedWithSubmit(facultyName, department) {
       const err = await response.text();
       throw new Error(`Submission failed: ${response.status} ${err}`);
     }
-    await registerNewFaculty(facultyName, department);
     showSuccess();
   } catch (e) {
     console.error(e);

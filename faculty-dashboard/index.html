@@ -498,6 +498,7 @@ async function loadSubmissions() {
       id: row.id,
       timestamp: row.created_at,
       facultyName: row.faculty_name,
+      facultyId: row.faculty_id || null,
       department: row.department || 'Unknown',
       ratings: row.ratings || [],
       comments: row.comments || [],
