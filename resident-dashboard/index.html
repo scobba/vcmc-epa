@@ -532,6 +532,17 @@
 
   /* Table */
   .table-wrap { background: var(--white); border: 1px solid var(--border); overflow: hidden; }
+
+  /* Reconciling evaluator names against the roster (mirrors faculty-dashboard) */
+  .merge-card { border: 1px solid var(--border); background: var(--white); padding: 16px 18px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .merge-pair { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .merge-name { font-size: 14px; font-weight: 700; color: var(--navy); }
+  .merge-meta { font-size: 11.5px; color: var(--slate-light); }
+  .merge-note { font-size: 12.5px; color: var(--slate); line-height: 1.6; margin-bottom: 12px; }
+  .merge-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .merge-actions .btn { padding: 7px 14px; font-size: 11.5px; }
+  .merge-actions select { padding: 7px 10px; font-size: 12.5px; font-family: inherit; border: 1px solid var(--border); background: var(--white); color: var(--navy); max-width: 240px; }
+  .merge-section-head { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--slate-light); margin: 26px 0 14px; }
   table { width: 100%; border-collapse: collapse; }
   th {
     background: var(--navy);
@@ -946,6 +957,7 @@
       <input type="date" id="filter-eval-date-end" onchange="renderEvaluators()" title="Filter to date">
     </div>
     <div id="evaluators-container"></div>
+    <div id="reconcile-container" style="margin-top:32px"></div>
   </div>
 </div>
 
@@ -1177,7 +1189,7 @@ function switchAdminTab(name, btn) {
   document.getElementById('admin-tab-' + name).style.display = 'block';
   if (name === 'submissions') renderSubmissions();
   if (name === 'residents') renderResidentDetail();
-  if (name === 'evaluators') renderEvaluators();
+  if (name === 'evaluators') { renderEvaluators(); renderReconcile(); }
 }
 
 // ── Milestones Tab ──
@@ -1418,6 +1430,154 @@ function renderResidentDetail() {
         }).join('') || '<div style="color:var(--slate-light); font-size:13px; font-style:italic">No narrative comments on file.</div>'}
     </div>
   `;
+}
+
+// ── Reconciling evaluator names that predate the roster picker ──
+//
+// Evaluations submitted through the old free-text field carry a name and no id,
+// and some of those names never reached the faculty roster. Each one needs a
+// person attached, and only a human can say which.
+//
+// Both actions below work through the roster, never through the submissions:
+//
+//   "Add to roster"  creates a row with that exact name, so evaluations
+//                    carrying it resolve to a real person from then on.
+//   "Same as ..."    creates that row and immediately merges it into the
+//                    person chosen. The typed spelling stays on the roster as a
+//                    hidden alias — that alias is precisely what lets an old
+//                    evaluation find its author — while the pickers only ever
+//                    offer the canonical name.
+//
+// Submission rows are never touched, and both actions are undoable from the
+// faculty dashboard's Roster tab.
+
+function unresolvedEvaluators(subs) {
+  const byName = new Map();
+  subs.forEach(s => {
+    if (resolveFacultyIdentity(s.evaluatorId, s.evaluatorName)) return;
+    const name = (s.evaluatorName || '').trim();
+    if (!name) return;
+    if (!byName.has(name)) byName.set(name, { name: name, count: 0, residents: new Set(), last: '' });
+    const e = byName.get(name);
+    e.count++;
+    e.residents.add(s.resident);
+    if ((s.dateStart || '') > e.last) e.last = s.dateStart || '';
+  });
+  return [...byName.values()]
+    .map(e => ({ name: e.name, count: e.count, residents: e.residents.size, last: e.last,
+                 suggestion: findCloseMatch(e.name) }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+
+function renderReconcile() {
+  const el = document.getElementById('reconcile-container');
+  if (!el) return;
+  const pending = unresolvedEvaluators(allSubmissions);
+  if (pending.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+  const options = pickableFaculty().slice().sort((a, b) => a.name.localeCompare(b.name))
+    .map(f => `<option value="${f.id}">${escFaculty(f.name)}</option>`).join('');
+
+  el.innerHTML = `
+    <div class="merge-section-head">Evaluator names not on the roster (${pending.length})</div>
+    <p style="font-size:12.5px;color:var(--slate);line-height:1.7;margin-bottom:14px;max-width:820px">
+      These were typed into the old free-text field. Attaching each to a person makes their
+      past evaluations count under that person everywhere. No evaluation is modified, and
+      anything here can be undone from the faculty dashboard's Roster tab.
+    </p>
+    ${pending.map(p => `
+      <div class="merge-card">
+        <div class="merge-pair">
+          <div>
+            <div class="merge-name">${escFaculty(p.name)}</div>
+            <div class="merge-meta">${p.count} evaluation${p.count === 1 ? '' : 's'} &middot;
+              ${p.residents} resident${p.residents === 1 ? '' : 's'}${
+              p.last ? ' &middot; most recent ' + new Date(p.last + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}</div>
+          </div>
+        </div>
+        ${p.suggestion ? `
+          <div class="merge-note">Close to <strong>${escFaculty(p.suggestion.name)}</strong> already on the roster.
+            If that is the same person, link them &mdash; otherwise add this name as someone new.</div>
+          <div class="merge-actions">
+            <button class="btn btn-primary" onclick="linkEvaluator(${JSON.stringify(p.name).replace(/"/g, '&quot;')}, ${p.suggestion.id})">Same as &ldquo;${escFaculty(p.suggestion.name)}&rdquo;</button>
+            <button class="btn btn-secondary" onclick="addEvaluator(${JSON.stringify(p.name).replace(/"/g, '&quot;')})">Add as a new person</button>
+            <span class="merge-meta">or</span>
+            <select id="recon-target-${escFaculty(p.name).replace(/[^A-Za-z0-9]/g, '')}"><option value="">&mdash; someone else &mdash;</option>${options}</select>
+            <button class="btn btn-secondary" onclick="linkEvaluatorFromSelect(${JSON.stringify(p.name).replace(/"/g, '&quot;')})">Link</button>
+          </div>`
+        : `
+          <div class="merge-note">No similar name on the roster. Add them, or link them to someone if this is a spelling you recognise.</div>
+          <div class="merge-actions">
+            <button class="btn btn-primary" onclick="addEvaluator(${JSON.stringify(p.name).replace(/"/g, '&quot;')})">Add as a new person</button>
+            <span class="merge-meta">or</span>
+            <select id="recon-target-${escFaculty(p.name).replace(/[^A-Za-z0-9]/g, '')}"><option value="">&mdash; same as &mdash;</option>${options}</select>
+            <button class="btn btn-secondary" onclick="linkEvaluatorFromSelect(${JSON.stringify(p.name).replace(/"/g, '&quot;')})">Link</button>
+          </div>`}
+      </div>`).join('')}
+  `;
+}
+
+function reconSelectId(name) {
+  return 'recon-target-' + escFaculty(name).replace(/[^A-Za-z0-9]/g, '');
+}
+
+function linkEvaluatorFromSelect(name) {
+  const sel = document.getElementById(reconSelectId(name));
+  const id = sel && sel.value;
+  if (!id) { alert('Choose who this is first.'); return; }
+  linkEvaluator(name, Number(id));
+}
+
+async function addEvaluator(name) {
+  const n = unresolvedEvaluators(allSubmissions).find(p => p.name === name);
+  const count = n ? n.count : 0;
+  if (!confirm(`Add "${name}" to the faculty roster as a new person?\n\n`
+    + `${count} evaluation${count === 1 ? '' : 's'} will be counted under this name.\n`
+    + `If they are already on the roster under a different spelling, use "Same as" instead.`)) return;
+  const rec = await registerNewFaculty(name);
+  if (!rec) { alert('Could not add that name to the roster. Check your connection and try again.'); return; }
+  await refreshAfterRosterChange();
+}
+
+async function linkEvaluator(name, targetId) {
+  const target = facultyById(targetId);
+  if (!target) { alert('Could not find that person on the roster. Reload and try again.'); return; }
+  const dest = canonicalFaculty(target) || target;
+  const n = unresolvedEvaluators(allSubmissions).find(p => p.name === name);
+  const count = n ? n.count : 0;
+  if (!confirm(`Record that "${name}" is "${dest.name}"?\n\n`
+    + `${count} evaluation${count === 1 ? '' : 's'} will be counted under "${dest.name}".\n`
+    + `"${name}" is kept on the roster as a hidden alias so those evaluations can find him or her, `
+    + `and will not appear on the forms. This can be undone from the faculty dashboard.`)) return;
+
+  const rec = await registerNewFaculty(name);
+  if (!rec || rec.id == null) { alert('Could not add that name to the roster, so it was not linked.'); return; }
+  // Already the same person (the name resolved to the target on insert) — nothing to merge.
+  if (String(rec.id) === String(dest.id)) { await refreshAfterRosterChange(); return; }
+
+  try {
+    const headers = await getAuthHeader();
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/faculty?id=eq.${encodeURIComponent(rec.id)}`, {
+      method: 'PATCH',
+      headers: Object.assign({ 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, headers),
+      body: JSON.stringify({ merged_into: dest.id, merged_at: new Date().toISOString() }),
+    });
+    if (!res.ok) throw new Error(res.status + ' ' + (await res.text()));
+    await refreshAfterRosterChange();
+  } catch (e) {
+    console.error(e);
+    alert('"' + name + '" was added to the roster but could not be linked to ' + dest.name + '.\n\n'
+      + e.message + '\n\nYou can finish the link from the faculty dashboard\'s Roster tab.');
+    await refreshAfterRosterChange();
+  }
+}
+
+async function refreshAfterRosterChange() {
+  await loadFaculty();
+  renderEvaluators();
+  renderReconcile();
 }
 
 // ══════════════════════════════════════════════════
