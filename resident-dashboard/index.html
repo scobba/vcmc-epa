@@ -1100,6 +1100,7 @@ async function loadSubmissions() {
       resident:        row.resident,
       rotation:        row.rotation,
       evaluatorName:   row.evaluator_name,
+      evaluatorId:     row.evaluator_id     || null,
       dates:           row.date_start || '',
       dateStart:       row.date_start,
       dateEnd:         row.date_end,

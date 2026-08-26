@@ -26,13 +26,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Faculty roster loaded dynamically from Supabase `faculty` table
-let FACULTY = [];          // [{name, department}]
+let FACULTY = [];          // [{id, name, department}]
 let facultyLoaded = false;
 
 async function loadFaculty() {
   try {
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/faculty?select=name,department&active=eq.true&order=sort_order.asc,name.asc`,
+      `${SUPABASE_URL}/rest/v1/faculty?select=id,name,department&active=eq.true&order=sort_order.asc,name.asc`,
       { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
     );
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -99,9 +99,13 @@ function departmentOptions() {
   return depts;
 }
 
-// Adds a newly-typed faculty name to the roster so it appears for the next
-// person immediately — no admin action required. Best-effort: failures are
-// logged but never block the evaluation submission.
+// Resolves a typed name to a roster record, creating one if the name is new, so
+// a caller can store `id` rather than only a spelling. Returns {id, name,
+// department}, or null when no id could be established — the caller then stores
+// the name alone rather than failing.
+//
+// Best-effort by contract: every failure path returns null and logs. A roster
+// problem must never cost an evaluation.
 //
 // `department` is optional. The EPA form asks who evaluated a resident but not
 // what department they sit in, so it passes nothing and the roster row is
@@ -112,8 +116,12 @@ async function registerNewFaculty(name, department) {
   // would append a duplicate of someone who was already there. Silence is the
   // safe answer: the evaluation is saved either way, and the roster is only a
   // convenience.
-  if (!facultyLoaded || realFaculty().length === 0) return;
-  if (findFacultyMatch(name)) return; // already on the roster
+  if (!facultyLoaded || realFaculty().length === 0) return null;
+
+  const existing = findFacultyMatch(name);
+  if (existing) return existing; // already on the roster — hand back its id
+
+  const dept = (!department || department === 'Unknown') ? null : department;
   try {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/faculty`, {
       method: 'POST',
@@ -121,19 +129,36 @@ async function registerNewFaculty(name, department) {
         'Content-Type':  'application/json',
         'apikey':        SUPABASE_ANON,
         'Authorization': `Bearer ${SUPABASE_ANON}`,
-        'Prefer':        'return=minimal',
+        // representation, not minimal: the caller needs the generated id so the
+        // evaluation can point at the roster row rather than only at a spelling.
+        'Prefer':        'return=representation',
       },
       body: JSON.stringify({
         name: name.trim(),
-        department: (!department || department === 'Unknown') ? null : department,
+        department: dept,
         active: true,
         sort_order: 0,
       }),
     });
-    if (!response.ok) console.error('Could not register new faculty:', await response.text());
-    else FACULTY.push({ name: name.trim(), department: (!department || department === 'Unknown') ? null : department });
+    if (!response.ok) {
+      console.error('Could not register new faculty:', await response.text());
+      return null;
+    }
+    // The row was created either way. If the body cannot be read back the
+    // registration still counted — only the id is unavailable, and a caller
+    // that gets null simply stores no id.
+    let created = null;
+    try {
+      const rows = await response.json();
+      created = Array.isArray(rows) ? rows[0] : rows;
+    } catch (e) { /* created but unreadable */ }
+
+    const record = { id: created ? created.id : undefined, name: name.trim(), department: dept };
+    FACULTY.push(record);
+    return record.id == null ? null : record;
   } catch (e) {
     console.error('Could not register new faculty:', e);
+    return null;
   }
 }
 

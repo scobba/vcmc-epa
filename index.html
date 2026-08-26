@@ -1111,6 +1111,7 @@ async function submitForm(rotationName) {
     resident,
     rotation: rotationName,
     evaluatorName,
+    evaluatorId: null,   // filled in at save time once the roster row is resolved
     dates,
     dateStart,
     dateEnd: dateStart,
@@ -1167,12 +1168,20 @@ async function proceedWithEvaluation(submission, rotationName) {
   const submitBtn = document.querySelector('.btn-primary');
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
 
+  // Resolve the evaluator to a roster row so the evaluation points at a person
+  // and not just a spelling, creating the row if this name is genuinely new.
+  // This has to happen BEFORE the save, because the id is part of what gets
+  // saved — but it is still best-effort: any failure leaves evaluatorId null
+  // and the evaluation is written with the name alone rather than lost.
+  try {
+    const record = await registerNewFaculty(submission.evaluatorName);
+    if (record && record.id != null) submission.evaluatorId = record.id;
+  } catch (e) {
+    console.error('Could not resolve evaluator to a roster row:', e);
+  }
+
   try {
     await saveSubmission(submission);
-    // Roster growth is best-effort and deliberately after the save: the
-    // evaluation is the record that matters and must never be lost because a
-    // convenience write failed.
-    await registerNewFaculty(submission.evaluatorName);
     showSuccess(submission.resident, rotationName);
   } catch (e) {
     if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Evaluation'; }
@@ -1231,6 +1240,7 @@ async function saveSubmission(sub) {
     resident:        sub.resident,
     rotation:        sub.rotation,
     evaluator_name:  sub.evaluatorName,
+    evaluator_id:    sub.evaluatorId ?? null,
     date_start:      sub.dateStart || '',
     date_end:        sub.dateStart || '',
     scores:          sub.scores,
