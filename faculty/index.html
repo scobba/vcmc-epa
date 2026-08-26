@@ -342,11 +342,12 @@
 </footer>
 
 <script src="../shared/definitions.js?v=1"></script>
+<script src="../shared/faculty-roster.js?v=1"></script>
 <script>
 // Fail visibly rather than silently. Without the shared definitions this page
 // would render its frame and simply show nothing to work with, which reads as
 // "there is no data" instead of "a file is missing".
-if (typeof QUESTIONS === 'undefined') {
+if (typeof QUESTIONS === 'undefined' || typeof loadFaculty === 'undefined') {
   document.body.innerHTML = '<div style="max-width:640px;margin:80px auto;padding:0 24px;font-family:Helvetica,Arial,sans-serif;color:#1A2744">'
     + '<h2 style="margin-bottom:12px">This page did not load correctly</h2>'
     + '<p style="color:#4A5568;line-height:1.6">A required file (shared/definitions.js) did not load, so the evaluation form cannot be shown. Please reload the page; if this persists, contact the program office.</p></div>';
@@ -384,107 +385,8 @@ const OVERALL_OPTS = [
   { val: 5, label: 'Excellent' },
 ];
 
-// Faculty roster loaded dynamically from Supabase `faculty` table
-let FACULTY = [];          // [{name, department}]
-let facultyLoaded = false;
-
-async function loadFaculty() {
-  try {
-    const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/faculty?select=name,department&active=eq.true&order=sort_order.asc,name.asc`,
-      { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const rows = await response.json();
-    FACULTY = rows.filter(r => r.name && r.name.trim());
-    if (FACULTY.length === 0) FACULTY = [{ name: '[No faculty found — check Supabase faculty table]', department: '' }];
-  } catch (e) {
-    console.error('Failed to load faculty:', e);
-    FACULTY = [{ name: '[Could not load faculty — check Supabase connection]', department: '' }];
-  }
-  facultyLoaded = true;
-}
-
-function normalize(name) {
-  return (name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
-
-function findFacultyMatch(name) {
-  const n = normalize(name);
-  if (!n) return null;
-  return FACULTY.find(f => normalize(f.name) === n) || null;
-}
-
-// Simple edit-distance check — catches typo/spelling variants of an
-// existing name (e.g. "Tipu Kahn" vs. the roster's "Tipu Khan") that
-// findFacultyMatch's exact-normalized comparison would miss, so the
-// resident gets asked before a near-duplicate is created. Damerau-
-// Levenshtein (rather than plain Levenshtein) counts an adjacent-letter
-// swap as a single edit, which is exactly the "Kahn"/"Khan" case.
-function damerauLevenshtein(a, b) {
-  const m = a.length, n = b.length;
-  const d = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-  for (let i = 0; i <= m; i++) d[i][0] = i;
-  for (let j = 0; j <= n; j++) d[0][j] = j;
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
-      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
-        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
-      }
-    }
-  }
-  return d[m][n];
-}
-
-function findCloseMatch(name) {
-  const target = normalize(name);
-  if (!target || target.length < 3) return null;
-  let best = null, bestDist = Infinity;
-  FACULTY.forEach(f => {
-    if (f.name.startsWith('[')) return; // skip "could not load" placeholders
-    const candidate = normalize(f.name);
-    if (candidate === target) return; // exact matches are handled elsewhere
-    const dist = damerauLevenshtein(target, candidate);
-    const threshold = Math.max(1, Math.floor(Math.max(target.length, candidate.length) * 0.2));
-    if (dist <= threshold && dist < bestDist) { best = f; bestDist = dist; }
-  });
-  return best;
-}
-
-function departmentOptions() {
-  const depts = [...new Set(FACULTY.map(f => f.department).filter(d => d && d.trim()))].sort();
-  return depts;
-}
-
-// Adds a newly-typed faculty name to the roster so it appears for the
-// next resident immediately — no admin action required. Best-effort:
-// failures are logged but never block the evaluation submission.
-async function registerNewFaculty(name, department) {
-  if (findFacultyMatch(name)) return; // already on the roster
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/faculty`, {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'apikey':        SUPABASE_ANON,
-        'Authorization': `Bearer ${SUPABASE_ANON}`,
-        'Prefer':        'return=minimal',
-      },
-      body: JSON.stringify({
-        name: name.trim(),
-        department: department === 'Unknown' ? null : department,
-        active: true,
-        sort_order: 0,
-      }),
-    });
-    if (!response.ok) console.error('Could not register new faculty:', await response.text());
-    else FACULTY.push({ name: name.trim(), department: department === 'Unknown' ? null : department });
-  } catch (e) {
-    console.error('Could not register new faculty:', e);
-  }
-}
+// The faculty roster, name matching and self-registration now live in
+// shared/faculty-roster.js, shared with the EPA form in index.html.
 
 // ══════════════════════════════════════════════════
 // STATE
@@ -500,9 +402,7 @@ let overallFeedback = "";
 function renderForm() {
   const el = document.getElementById('form-content');
 
-  const facultyStatus = !facultyLoaded
-    ? `<div class="roster-status">Loading faculty roster&hellip;</div>`
-    : `<div class="roster-status">${FACULTY.filter(f => !f.name.startsWith('[')).length} faculty loaded</div>`;
+  const facultyStatus = facultyRosterStatus();
 
   el.innerHTML = `
     <div class="form-header">
@@ -521,7 +421,7 @@ function renderForm() {
             placeholder="Start typing a name&hellip;" required
             oninput="onFacultyInput(this.value)">
           <datalist id="facultyList">
-            ${FACULTY.filter(f => !f.name.startsWith('[')).map(f => `<option value="${f.name}">`).join('')}
+            ${facultyDatalistOptions()}
           </datalist>
           ${facultyStatus}
         </div>
@@ -529,7 +429,7 @@ function renderForm() {
           <label>Department *</label>
           <select id="field-department" required onchange="onDepartmentChange()">
             <option value="">&mdash; Select Department &mdash;</option>
-            ${departmentOptions().map(d => `<option value="${d}">${d}</option>`).join('')}
+            ${departmentOptions().map(d => `<option value="${escFaculty(d)}">${escFaculty(d)}</option>`).join('')}
             <option value="Unknown">Unknown / Not Sure</option>
           </select>
           <div class="roster-status">Don't see this attending's department? Choose "Unknown" — core faculty can correct it later.</div>

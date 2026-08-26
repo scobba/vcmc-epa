@@ -37,6 +37,19 @@
     --shadow-lg: 0 4px 24px rgba(26,39,68,0.12);
   }
 
+  /* Roster picker + duplicate-name prompt (mirrors faculty/index.html) */
+  .roster-status { font-size: 11px; color: var(--slate-light); letter-spacing: 0.04em; margin-top: 4px; }
+  .dup-modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(26,39,68,0.45);
+    z-index: 500; align-items: center; justify-content: center; padding: 20px;
+  }
+  .dup-modal-overlay.open { display: flex; }
+  .dup-modal { background: var(--white); max-width: 440px; width: 100%; padding: 28px 26px; box-shadow: 0 8px 32px rgba(26,39,68,0.2); }
+  .dup-modal h3 { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 12px; }
+  .dup-modal p { font-size: 13.5px; color: var(--slate); line-height: 1.6; margin-bottom: 6px; }
+  .dup-existing-name { font-size: 15px; font-weight: 700; color: var(--navy); background: var(--bg-soft); border: 1px solid var(--border); padding: 10px 14px; margin: 10px 0 22px; }
+  .dup-modal-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
@@ -770,6 +783,22 @@
   </div>
 </div>
 
+<!-- Shown when a typed evaluator name is close to, but not exactly, one already
+     on the roster. The evaluation is already complete and held in memory at this
+     point; only which name gets saved with it is still open. -->
+<div class="dup-modal-overlay" id="eval-dup-modal">
+  <div class="dup-modal">
+    <h3>Is This You?</h3>
+    <p>You entered "<strong id="eval-dup-typed"></strong>", which isn't an exact match on the faculty roster, but it's very close to a name already on file:</p>
+    <div class="dup-existing-name" id="eval-dup-existing"></div>
+    <p>Choosing an option below won't change your ratings &mdash; it only affects which name is saved as the evaluator.</p>
+    <div class="dup-modal-actions">
+      <button class="btn btn-secondary" onclick="resolveEvaluatorDup(false)">No &mdash; Add as New</button>
+      <button class="btn btn-primary" onclick="resolveEvaluatorDup(true)">Yes &mdash; That's Me</button>
+    </div>
+  </div>
+</div>
+
 <footer class="app-footer">
   <div>Ventura County Medical Center · Family Medicine Residency Program</div>
   <div>300 Hillmont Ave, Building 340, Ventura, CA 93003 · (805) 652-6228</div>
@@ -777,11 +806,12 @@
 </footer>
 
 <script src="shared/definitions.js?v=1"></script>
+<script src="shared/faculty-roster.js?v=1"></script>
 <script>
 // Fail visibly rather than silently. Without the shared definitions this page
 // would render its frame and simply show nothing to work with, which reads as
 // "there is no data" instead of "a file is missing".
-if (typeof ROTATIONS === 'undefined') {
+if (typeof ROTATIONS === 'undefined' || typeof loadFaculty === 'undefined') {
   document.body.innerHTML = '<div style="max-width:640px;margin:80px auto;padding:0 24px;font-family:Helvetica,Arial,sans-serif;color:#1A2744">'
     + '<h2 style="margin-bottom:12px">This page did not load correctly</h2>'
     + '<p style="color:#4A5568;line-height:1.6">A required file (shared/definitions.js) did not load, so the evaluation form cannot be shown. Please reload the page; if this persists, contact the program office.</p></div>';
@@ -918,6 +948,9 @@ function activeEpas(rotationName) {
 // ══════════════════════════════════════════════════
 // FORM — EPA Form
 // ══════════════════════════════════════════════════
+// DEAD CODE - not called. selectRotation() is defined twice and the later definition
+// delegates to selectRotationForm() -> renderEPAFormInto(), so this renderer and the
+// #form-body element it targets are unreachable. Edit renderEPAFormInto() instead.
 function renderEPAForm(rotationName) {
   const rotation = ROTATIONS[rotationName];
   const epas = activeEpas(rotationName);
@@ -1072,10 +1105,6 @@ async function submitForm(rotationName) {
   if (!allAnswered) { alert('Please answer all EPA questions before submitting.'); return; }
   if (!narrative) { alert('Please provide narrative comments.'); return; }
 
-  const submitBtn = document.querySelector('.btn-primary');
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Submitting…';
-
   const submission = {
     id: Date.now().toString(),
     timestamp: new Date().toISOString(),
@@ -1092,15 +1121,67 @@ async function submitForm(rotationName) {
     formVersion: FORM_VERSION,
   };
 
+  // Evaluator identity is a typed string, so the same attending can arrive as
+  // "Tipu Khan", "Tipu Kahn" and "T. Khan" across three evaluations and split
+  // into three people on the dashboard. If the typed name is not already on the
+  // roster, offer the closest existing name before letting it self-register.
+  // Deliberately after every other validation: showing this and then rejecting
+  // the form for a missing narrative would be a worse experience than either.
+  if (!findFacultyMatch(evaluatorName)) {
+    const close = findCloseMatch(evaluatorName);
+    if (close) {
+      pendingEvaluation = { submission, rotationName };
+      evaluatorDupCandidate = close;
+      document.getElementById('eval-dup-typed').textContent = evaluatorName;
+      document.getElementById('eval-dup-existing').textContent = close.name;
+      document.getElementById('eval-dup-modal').classList.add('open');
+      return; // wait for resolveEvaluatorDup()
+    }
+  }
+
+  await proceedWithEvaluation(submission, rotationName);
+}
+
+// Holds the finished evaluation while the "is this the same person?" prompt is
+// open. The evaluation is complete at this point — only the name is in question.
+let pendingEvaluation = null;
+let evaluatorDupCandidate = null;
+
+function resolveEvaluatorDup(useExisting) {
+  document.getElementById('eval-dup-modal').classList.remove('open');
+  if (!pendingEvaluation) return;
+  const { submission, rotationName } = pendingEvaluation;
+
+  if (useExisting && evaluatorDupCandidate) {
+    submission.evaluatorName = evaluatorDupCandidate.name;
+    const field = document.getElementById('field-evaluator-name');
+    if (field) field.value = evaluatorDupCandidate.name;
+  }
+
+  pendingEvaluation = null;
+  evaluatorDupCandidate = null;
+  proceedWithEvaluation(submission, rotationName);
+}
+
+async function proceedWithEvaluation(submission, rotationName) {
+  const submitBtn = document.querySelector('.btn-primary');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
+
   try {
     await saveSubmission(submission);
-    showSuccess(resident, rotationName);
+    // Roster growth is best-effort and deliberately after the save: the
+    // evaluation is the record that matters and must never be lost because a
+    // convenience write failed.
+    await registerNewFaculty(submission.evaluatorName);
+    showSuccess(submission.resident, rotationName);
   } catch (e) {
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Submit Evaluation';
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Evaluation'; }
     alert('There was an error submitting. Please try again.');
   }
 }
+
+// Clears a stale "roster" hint as soon as the evaluator edits the field.
+function onEvaluatorInput() { /* reserved for future inline feedback */ }
 
 // Captures the wording and milestone mapping of each EPA as it stood at the
 // moment of submission, so a historical evaluation always renders with the
@@ -1287,7 +1368,11 @@ function renderEPAFormInto(rotationName, el) {
         </div>
         <div class="form-group">
           <label>Your Full Name *</label>
-          <input type="text" id="field-evaluator-name" placeholder="e.g. Dr. Jane Smith, PA-C" required>
+          <input type="text" id="field-evaluator-name" list="evaluatorList" autocomplete="off"
+            placeholder="Start typing your name&hellip;" required
+            oninput="onEvaluatorInput()">
+          <datalist id="evaluatorList">${facultyDatalistOptions()}</datalist>
+          ${facultyRosterStatus()}
         </div>
         <div class="form-group">
           <label>Supervision Date *</label>
@@ -1395,7 +1480,9 @@ function checkConfiguration() {
 
 async function init() {
   renderFormLanding();
-  await loadResidents();
+  // Both rosters in parallel. Neither blocks the other, and a failure in either
+  // leaves a visible placeholder rather than an empty picker.
+  await Promise.all([loadResidents(), loadFaculty()]);
   renderFormLanding(); // re-render after residents load
 }
 
