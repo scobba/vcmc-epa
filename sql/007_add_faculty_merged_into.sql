@@ -53,5 +53,19 @@ grant update (merged_into, merged_at) on public.faculty to authenticated;
 -- intended -- the policy decides which rows, the grant decides which columns.
 --
 -- VERIFY after applying:
+--
 --   select id, name, merged_into from public.faculty where name ilike '%raujo%' order by id;
---   select has_table_privilege('authenticated','public.faculty','UPDATE');  -- expect t
+--
+-- Use has_COLUMN_privilege, not has_table_privilege. The grant above is
+-- column-scoped, and has_table_privilege(...,'UPDATE') asks about the whole
+-- table -- it returns FALSE here, which is the desired result, not a failure:
+--
+--   select has_column_privilege('authenticated','public.faculty','merged_into','UPDATE') as merged_into_ok,
+--          has_column_privilege('authenticated','public.faculty','merged_at','UPDATE')   as merged_at_ok,
+--          has_column_privilege('authenticated','public.faculty','name','UPDATE')        as name_must_be_false;
+--
+-- Expect t, t, f. The f is the point: a dashboard login can record a merge and
+-- cannot rename anyone.
+--
+--   select policyname, cmd, roles from pg_policies
+--    where schemaname = 'public' and tablename = 'faculty';
