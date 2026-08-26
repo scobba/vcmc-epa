@@ -1,0 +1,59 @@
+-- 004_revoke_anon_select_camp_hope.sql
+--
+-- ############################################################################
+-- ##  PROJECT: zwfbppgkodhlpgsxcdry   (the CAMP HOPE project)               ##
+-- ##  Migrations 001-003 ran against ubqecdyhgejqoweltagl. This one does    ##
+-- ##  NOT. Check the project ref in the SQL editor URL before running.      ##
+-- ############################################################################
+--
+-- WHY
+--   Two independent things stand between an anonymous visitor and this table:
+--
+--     1. the GRANT layer - may the anon role SELECT from it at all?
+--     2. the RLS layer   - if so, which rows may it see?
+--
+--   camp_hope_responses currently passes layer 1 (anon holds a table-level
+--   SELECT grant) and is stopped at layer 2 (no SELECT policy applies to anon,
+--   so zero rows are returned). epa_submissions on the other project is stopped
+--   at layer 1 outright - that is the 42501 "permission denied for table" an
+--   anonymous request gets there.
+--
+--   Both are secure. The difference is how many mistakes it takes to break
+--   them. If RLS were disabled on this table - a routine thing to do while
+--   debugging - all responses would become readable by anyone holding the anon
+--   key, which is published in the page source by design. After this change
+--   that would require two deliberate acts rather than one absent-minded one.
+--
+--   This is not fixing a hole. Verified 2026-08-25: an anonymous count returns
+--   0 of 16 rows, so RLS is filtering correctly today.
+--
+-- SAFETY
+--   Nothing uses this grant:
+--     - camphope/index.html and camphope/partner/index.html only POST, with
+--       'Prefer: return=minimal', so the insert returns no body and needs no
+--       SELECT. The "anon can submit" INSERT policy is untouched by this file.
+--     - camphope/dashboard/index.html is the only reader and sends a session
+--       access token, so it runs as `authenticated` and is covered by the
+--       existing "authenticated can read" policy.
+
+revoke select on public.camp_hope_responses from anon;
+
+-- VERIFY - expect f (false):
+--
+--   select has_table_privilege('anon', 'public.camp_hope_responses', 'SELECT')
+--     as anon_can_select;
+--
+-- Then load camphope/dashboard/ and confirm the responses still appear. It
+-- reads as `authenticated` and should be unaffected, but that is the one thing
+-- worth checking rather than assuming.
+--
+-- An anonymous request should now fail at the grant layer instead of returning
+-- an empty array, matching how epa_submissions behaves:
+--
+--   curl -s "https://zwfbppgkodhlpgsxcdry.supabase.co/rest/v1/camp_hope_responses?select=id&limit=1" \
+--        -H "apikey: <anon key>"
+--   -> {"code":"42501","message":"permission denied for table camp_hope_responses"}
+--
+-- ROLLBACK, if submissions or the dashboard misbehave:
+--
+--   grant select on public.camp_hope_responses to anon;
