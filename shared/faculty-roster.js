@@ -32,7 +32,11 @@ let facultyLoaded = false;
 async function loadFaculty() {
   try {
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/faculty?select=id,name,department&active=eq.true&order=sort_order.asc,name.asc`,
+      // Every row, including inactive and merged ones. A dashboard must be able
+      // to resolve an id or a typed name that is no longer offered on a form —
+      // filtering here would make old submissions unresolvable. Pickers narrow
+      // the list themselves via pickableFaculty().
+      `${SUPABASE_URL}/rest/v1/faculty?select=id,name,department,active,merged_into&order=sort_order.asc,name.asc`,
       { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
     );
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -83,7 +87,9 @@ function findCloseMatch(name) {
   const target = normalize(name);
   if (!target || target.length < 3) return null;
   let best = null, bestDist = Infinity;
-  FACULTY.forEach(f => {
+  // Suggests only names a person could legitimately pick. Offering a merged
+  // alias back to someone would rebuild the duplicate a reviewer just resolved.
+  pickableFaculty().forEach(f => {
     if (f.name.startsWith('[')) return; // skip "could not load" placeholders
     const candidate = normalize(f.name);
     if (candidate === target) return; // exact matches are handled elsewhere
@@ -119,7 +125,11 @@ async function registerNewFaculty(name, department) {
   if (!facultyLoaded || realFaculty().length === 0) return null;
 
   const existing = findFacultyMatch(name);
-  if (existing) return existing; // already on the roster — hand back its id
+  if (existing) {
+    // A merged alias still identifies its person. Typing "Araujo" after that row
+    // has been merged resolves to David Araujo rather than creating a third row.
+    return canonicalFaculty(existing) || existing;
+  }
 
   const dept = (!department || department === 'Unknown') ? null : department;
   try {
@@ -153,7 +163,8 @@ async function registerNewFaculty(name, department) {
       created = Array.isArray(rows) ? rows[0] : rows;
     } catch (e) { /* created but unreadable */ }
 
-    const record = { id: created ? created.id : undefined, name: name.trim(), department: dept };
+    const record = { id: created ? created.id : undefined, name: name.trim(),
+                     department: dept, active: true, merged_into: null };
     FACULTY.push(record);
     return record.id == null ? null : record;
   } catch (e) {
@@ -172,15 +183,61 @@ function escFaculty(s) {
 }
 
 // Real roster entries, excluding the "[Could not load...]" placeholders that
-// loadFaculty() substitutes when the fetch fails.
+// loadFaculty() substitutes when the fetch fails. Includes inactive and merged
+// rows — this is the set used to RESOLVE an identity, not to offer one.
 function realFaculty() {
   return FACULTY.filter(function (f) { return f.name && !f.name.startsWith('['); });
+}
+
+// The subset a person may actually choose on a form: real, not deactivated, and
+// not merged into someone else.
+function pickableFaculty() {
+  return realFaculty().filter(function (f) {
+    return f.active !== false && (f.merged_into === null || f.merged_into === undefined);
+  });
+}
+
+function facultyById(id) {
+  if (id === null || id === undefined) return null;
+  return realFaculty().find(function (f) { return String(f.id) === String(id); }) || null;
+}
+
+// Follows a merge chain to the row that actually represents the person. Guarded
+// against cycles (A merged into B merged into A) and runaway depth, both of
+// which are possible if merges are recorded by hand in the SQL editor; either
+// way it returns something usable rather than hanging the page.
+function canonicalFaculty(row) {
+  let cur = row, hops = 0;
+  const seen = {};
+  while (cur && cur.merged_into !== null && cur.merged_into !== undefined && hops < 20) {
+    if (seen[cur.id]) break;          // cycle — stop on the row we already saw
+    seen[cur.id] = true;
+    const next = facultyById(cur.merged_into);
+    if (!next) break;                 // target missing — keep what we have
+    cur = next; hops++;
+  }
+  return cur || null;
+}
+
+// The identity a submission should be counted under. Prefers the id captured at
+// submission time, falls back to an EXACT name match for rows written before
+// ids existed, and returns null when neither resolves — the caller then groups
+// by the raw typed name rather than dropping the row.
+//
+// Exact matching only, deliberately. Fuzzy matching is right when a human is
+// present to confirm it; silently merging assessment records on a guess is not.
+function resolveFacultyIdentity(id, name) {
+  let row = facultyById(id);
+  if (!row && name) row = findFacultyMatch(name);
+  if (!row) return null;
+  const canon = canonicalFaculty(row);
+  return canon ? { id: canon.id, name: canon.name, department: canon.department } : null;
 }
 
 // <datalist> options for the roster. Both pages render the same list, so the
 // escaping lives here once and cannot drift between them.
 function facultyDatalistOptions() {
-  return realFaculty().map(function (f) {
+  return pickableFaculty().map(function (f) {
     return '<option value="' + escFaculty(f.name) + '">';
   }).join('');
 }
@@ -188,6 +245,6 @@ function facultyDatalistOptions() {
 // The small line under the name box telling the user whether the roster arrived.
 function facultyRosterStatus() {
   return facultyLoaded
-    ? '<div class="roster-status">' + realFaculty().length + ' faculty loaded</div>'
+    ? '<div class="roster-status">' + pickableFaculty().length + ' faculty loaded</div>'
     : '<div class="roster-status">Loading faculty roster&hellip;</div>';
 }

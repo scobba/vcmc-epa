@@ -69,6 +69,20 @@
   .admin-tab.active { color: var(--navy); border-bottom-color: var(--navy); }
   .admin-tab-content { display: none; }
 
+  /* Roster / merge review */
+  .merge-card { border: 1px solid var(--border); background: var(--white); padding: 16px 18px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .merge-pair { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .merge-name { font-size: 14px; font-weight: 700; color: var(--navy); }
+  .merge-meta { font-size: 11.5px; color: var(--slate-light); }
+  .merge-arrow { color: var(--slate-light); font-size: 16px; }
+  .merge-note { font-size: 12.5px; color: var(--slate); line-height: 1.6; margin-bottom: 12px; }
+  .merge-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .merge-actions .btn { padding: 7px 14px; font-size: 11.5px; }
+  .merge-actions select { padding: 7px 10px; font-size: 12.5px; font-family: inherit; border: 1px solid var(--border); background: var(--white); color: var(--navy); max-width: 260px; }
+  .merged-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border: 1px solid var(--border-light); background: var(--bg-soft); margin-bottom: 8px; font-size: 13px; }
+  .merge-empty { color: var(--slate-light); font-size: 13px; font-style: italic; padding: 12px 0; }
+  .merge-section-head { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--slate-light); margin: 26px 0 14px; }
+
   .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
   .filter-bar select, .filter-bar input { border: 1px solid var(--border); border-radius: 0; padding: 8px 12px; font-size: 13px; color: var(--navy); background: var(--white); outline: none; min-width: 170px; font-family: inherit; }
   .filter-bar select:focus, .filter-bar input:focus { border-color: var(--navy); }
@@ -298,6 +312,7 @@
     <button class="admin-tab" onclick="switchAdminTab('submissions', this)">All Submissions</button>
     <button class="admin-tab" onclick="switchAdminTab('faculty', this)">By Faculty</button>
     <button class="admin-tab" onclick="switchAdminTab('department', this)">By Department</button>
+    <button class="admin-tab" onclick="switchAdminTab('roster', this)">Roster</button>
   </div>
 
   <div id="admin-tab-summary" class="admin-tab-content" style="display:block">
@@ -350,6 +365,10 @@
     </div>
     <div id="department-detail-container"></div>
   </div>
+
+  <div id="admin-tab-roster" class="admin-tab-content">
+    <div id="roster-container"></div>
+  </div>
 </div>
 </div>
 
@@ -370,11 +389,12 @@
 </footer>
 
 <script src="../shared/definitions.js?v=1"></script>
+<script src="../shared/faculty-roster.js?v=1"></script>
 <script>
 // Fail visibly rather than silently. Without the shared definitions this page
 // would render its frame and simply show nothing to work with, which reads as
 // "there is no data" instead of "a file is missing".
-if (typeof QUESTIONS === 'undefined') {
+if (typeof QUESTIONS === 'undefined' || typeof resolveFacultyIdentity === 'undefined') {
   document.body.innerHTML = '<div style="max-width:640px;margin:80px auto;padding:0 24px;font-family:Helvetica,Arial,sans-serif;color:#1A2744">'
     + '<h2 style="margin-bottom:12px">This page did not load correctly</h2>'
     + '<p style="color:#4A5568;line-height:1.6">A required file (shared/definitions.js) did not load, so the dashboard cannot be shown. Please reload the page; if this persists, contact the program office.</p></div>';
@@ -514,13 +534,19 @@ async function loadSubmissions() {
 async function loadAdminData() {
   const container = document.getElementById('summary-grid-container');
   if (container) container.innerHTML = '<div class="loading-state"><div class="spinner"></div>Loading evaluation data&hellip;</div>';
-  allSubmissions = await loadSubmissions();
+  // The roster is needed before rendering, not just for the Roster tab: every
+  // view resolves a submission's identity through it, and without it a merged
+  // duplicate would still show up as two people.
+  const [subs] = await Promise.all([loadSubmissions(), loadFaculty()]);
+  allSubmissions = subs;
   populateFilterDropdowns();
   renderSummary();
 }
 
 function populateFilterDropdowns() {
-  const facultyNames = [...new Set(allSubmissions.map(s => s.facultyName))].sort();
+  // Group by resolved identity, so a merged duplicate collapses into one entry
+  // and a name the roster does not know still appears under itself.
+  const facultyNames = [...new Set(allSubmissions.map(s => displayFacultyName(s)))].sort();
   const departments = [...new Set(allSubmissions.map(s => s.department))].sort();
 
   const facultySelects = ['filter-faculty-summary', 'filter-faculty-submissions', 'filter-faculty-detail'];
@@ -530,7 +556,7 @@ function populateFilterDropdowns() {
     const el = document.getElementById(id);
     if (!el) return;
     const cur = el.value, placeholder = el.options[0].text;
-    el.innerHTML = `<option value="">${placeholder}</option>` + facultyNames.map(f => `<option value="${f}" ${f===cur?'selected':''}>${f}</option>`).join('');
+    el.innerHTML = `<option value="">${placeholder}</option>` + facultyNames.map(f => `<option value="${escFaculty(f)}" ${f===cur?'selected':''}>${escFaculty(f)}</option>`).join('');
   });
 
   departmentSelects.forEach(id => {
@@ -549,9 +575,19 @@ function switchAdminTab(name, btn) {
   if (name === 'submissions') renderSubmissions();
   if (name === 'faculty') renderFacultyDetail();
   if (name === 'department') renderDepartmentDetail();
+  if (name === 'roster') renderRoster();
 }
 
 function avgOf(vals) { return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null; }
+
+// The name a submission is counted and displayed under. Prefers the roster's
+// canonical name — so a merged duplicate collapses into the person it belongs
+// to — and falls back to exactly what was typed when the roster cannot resolve
+// it, rather than dropping the row.
+function displayFacultyName(s) {
+  const ident = resolveFacultyIdentity(s.facultyId, s.facultyName);
+  return ident ? ident.name : s.facultyName;
+}
 
 // The canonical ordered question list for a set of submissions. Starts from the
 // current QUESTIONS, so the intended order holds and an item nobody has answered
@@ -585,8 +621,8 @@ function itemAveragesFor(subs) {
 function commentsFor(subs) {
   const out = [];
   subs.forEach(s => {
-    (s.comments || []).forEach(c => { if (c.comment && c.comment.trim()) out.push({ tag: c.item, txt: c.comment, faculty: s.facultyName }); });
-    if (s.overallFeedback && s.overallFeedback.trim()) out.push({ tag: 'Overall narrative feedback', txt: s.overallFeedback, faculty: s.facultyName });
+    (s.comments || []).forEach(c => { if (c.comment && c.comment.trim()) out.push({ tag: c.item, txt: c.comment, faculty: displayFacultyName(s) }); });
+    if (s.overallFeedback && s.overallFeedback.trim()) out.push({ tag: 'Overall narrative feedback', txt: s.overallFeedback, faculty: displayFacultyName(s) });
   });
   return out;
 }
@@ -597,7 +633,7 @@ function renderSummary() {
   const deptFilter = document.getElementById('filter-department-summary')?.value || '';
 
   let subs = allSubmissions;
-  if (facultyFilter) subs = subs.filter(s => s.facultyName === facultyFilter);
+  if (facultyFilter) subs = subs.filter(s => displayFacultyName(s) === facultyFilter);
   if (deptFilter) subs = subs.filter(s => s.department === deptFilter);
 
   const statsEl = document.getElementById('summary-stats');
@@ -607,7 +643,7 @@ function renderSummary() {
     <div class="stat-row">
       <div class="stat-card"><div class="stat-label">Responses</div><div class="stat-value">${subs.length}</div></div>
       <div class="stat-card"><div class="stat-label">Overall Rating (avg / 5)</div><div class="stat-value">${overallAvg ? overallAvg.toFixed(2) : '&mdash;'}</div></div>
-      <div class="stat-card"><div class="stat-label">Faculty Represented</div><div class="stat-value">${new Set(subs.map(s=>s.facultyName)).size}</div></div>
+      <div class="stat-card"><div class="stat-label">Faculty Represented</div><div class="stat-value">${new Set(subs.map(displayFacultyName)).size}</div></div>
     </div>`;
 
   const container = document.getElementById('summary-grid-container');
@@ -640,7 +676,7 @@ function renderSummary() {
     ? '<div class="empty-state"><div class="empty-icon">&#128172;</div><p>No written comments yet.</p></div>'
     : comments.map(c => `
       <div class="comment-item">
-        <div class="ci-tag">${c.tag}${!facultyFilter ? ' &middot; ' + c.faculty : ''}</div>
+        <div class="ci-tag">${escFaculty(c.tag)}${!facultyFilter ? ' &middot; ' + escFaculty(c.faculty) : ''}</div>
         <div class="ci-txt">"${escapeHtml(c.txt)}"</div>
       </div>`).join('');
 }
@@ -652,8 +688,8 @@ function renderSubmissions() {
   const deptFilter = document.getElementById('filter-department-submissions')?.value || '';
 
   let subs = allSubmissions;
-  if (search) subs = subs.filter(s => s.facultyName.toLowerCase().includes(search));
-  if (facultyFilter) subs = subs.filter(s => s.facultyName === facultyFilter);
+  if (search) subs = subs.filter(s => (s.facultyName + " " + displayFacultyName(s)).toLowerCase().includes(search));
+  if (facultyFilter) subs = subs.filter(s => displayFacultyName(s) === facultyFilter);
   if (deptFilter) subs = subs.filter(s => s.department === deptFilter);
   subs = [...subs].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
 
@@ -668,7 +704,10 @@ function renderSubmissions() {
     return `
       <tr>
         <td>${date}</td>
-        <td style="font-weight:600; color:var(--navy)">${s.facultyName}</td>
+        <td style="font-weight:600; color:var(--navy)">${escFaculty(displayFacultyName(s))}${
+          displayFacultyName(s) !== s.facultyName
+            ? `<div style="font-size:11px;font-weight:400;color:var(--slate-light)">submitted as &ldquo;${escFaculty(s.facultyName)}&rdquo;</div>`
+            : ''}</td>
         <td><span class="badge badge-navy">${s.department}</span></td>
         <td><span class="badge ${scoreClass}">${s.overallRating ?? '&mdash;'}</span></td>
         <td><button class="btn btn-secondary" style="padding:6px 14px; font-size:12px" onclick='openModal(${JSON.stringify(s).replace(/'/g,"&#39;")})'>View</button></td>
@@ -684,9 +723,9 @@ function renderFacultyDetail() {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">&#128100;</div><p>Select a faculty member above to view their evaluation summary.</p></div>`;
     return;
   }
-  const subs = allSubmissions.filter(s => s.facultyName === facultyFilter);
+  const subs = allSubmissions.filter(s => displayFacultyName(s) === facultyFilter);
   if (subs.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">&#128203;</div><p>No evaluations found for ${facultyFilter}.</p></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">&#128203;</div><p>No evaluations found for ${escFaculty(facultyFilter)}.</p></div>`;
     return;
   }
   const dept = subs[0].department;
@@ -697,7 +736,7 @@ function renderFacultyDetail() {
 
   container.innerHTML = `
     <div style="margin-bottom:24px">
-      <h3 style="font-size:18px; font-weight:700; color:var(--navy); margin-bottom:4px">${facultyFilter}</h3>
+      <h3 style="font-size:18px; font-weight:700; color:var(--navy); margin-bottom:4px">${escFaculty(facultyFilter)}</h3>
       <p style="font-size:13px; color:var(--slate)">${subs.length} evaluation${subs.length!==1?'s':''} &middot; <span class="badge badge-navy">${dept}</span></p>
     </div>
     <div class="stat-row">
@@ -742,11 +781,11 @@ function renderDepartmentDetail() {
   container.innerHTML = departments.map(dept => {
     const subs = allSubmissions.filter(s => s.department === dept);
     if (subs.length === 0) return '';
-    const facultyInDept = [...new Set(subs.map(s => s.facultyName))].sort();
+    const facultyInDept = [...new Set(subs.map(displayFacultyName))].sort();
     const overallAvg = avgOf(subs.map(s => s.overallRating).filter(Boolean));
 
     const rows = facultyInDept.map(fac => {
-      const facSubs = subs.filter(s => s.facultyName === fac);
+      const facSubs = subs.filter(s => displayFacultyName(s) === fac);
       const facAvg = avgOf(facSubs.map(s => s.overallRating).filter(Boolean));
       const itemAvg = avgOf(itemAveragesFor(facSubs).map(it => it.avg).filter(v => v !== null));
       return { fac, count: facSubs.length, facAvg, itemAvg };
@@ -824,6 +863,167 @@ function escapeHtml(s) {
   return d.innerHTML;
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ROSTER — reviewing and merging duplicate faculty
+//
+// The program never decides that two names are one person. It proposes
+// candidates and a reviewer confirms each one; that confirmation is stored on
+// the roster as faculty.merged_into and resolved at read time. Submission rows
+// are never modified — a merge is a statement about the roster, not a rewrite
+// of what anyone submitted — so every merge is undoable and nothing is lost.
+// ══════════════════════════════════════════════════════════════════
+
+// How many submissions currently resolve to a given roster row. Shown beside
+// each candidate so a reviewer can see what a merge would actually move.
+function submissionCountFor(id) {
+  return allSubmissions.filter(function (s) {
+    const ident = resolveFacultyIdentity(s.facultyId, s.facultyName);
+    return ident && String(ident.id) === String(id);
+  }).length;
+}
+
+// Pairs worth a reviewer's attention. Proposed only — nothing merges on its own.
+function duplicateCandidates() {
+  const rows = pickableFaculty();
+  const pairs = [];
+  for (let i = 0; i < rows.length; i++) {
+    for (let j = i + 1; j < rows.length; j++) {
+      const a = normalize(rows[i].name), b = normalize(rows[j].name);
+      if (!a || !b) continue;
+      let why = null;
+      const aw = a.split('-'), bw = b.split('-');
+      const shared = aw.filter(function (w) { return w.length > 2 && bw.indexOf(w) !== -1; });
+      if (shared.length && (aw.length === 1 || bw.length === 1)) {
+        why = 'one is just "' + shared.join(' ') + '", the other has a fuller name';
+      }
+      if (!why) {
+        const dist = damerauLevenshtein(a, b);
+        const threshold = Math.max(1, Math.floor(Math.max(a.length, b.length) * 0.2));
+        if (dist <= threshold) why = 'the spelling differs by ' + dist + ' character' + (dist === 1 ? '' : 's');
+      }
+      if (why) pairs.push({ a: rows[i], b: rows[j], why: why });
+    }
+  }
+  return pairs;
+}
+
+function renderRoster() {
+  const el = document.getElementById('roster-container');
+  if (!el) return;
+  if (!facultyLoaded) { el.innerHTML = '<div class="loading-state"><div class="spinner"></div>Loading roster&hellip;</div>'; return; }
+
+  const merged = realFaculty().filter(function (f) { return f.merged_into !== null && f.merged_into !== undefined; });
+  const candidates = duplicateCandidates();
+  const options = pickableFaculty().slice().sort(function (x, y) { return x.name.localeCompare(y.name); });
+
+  let html = '<p style="font-size:13px;color:var(--slate);line-height:1.7;margin-bottom:8px;max-width:760px">'
+    + 'When the same person reached the roster twice, merging records that they are one person. '
+    + 'Evaluations are not modified &mdash; both names keep resolving to whoever you choose, and any '
+    + 'merge can be undone.</p>'
+    + '<div class="merge-section-head">Possible duplicates (' + candidates.length + ')</div>';
+
+  html += candidates.length ? candidates.map(function (p) {
+    const ca = submissionCountFor(p.a.id), cb = submissionCountFor(p.b.id);
+    return '<div class="merge-card">'
+      + '<div class="merge-pair">'
+      +   '<div><div class="merge-name">' + escFaculty(p.a.name) + '</div>'
+      +   '<div class="merge-meta">id ' + p.a.id + ' &middot; ' + escFaculty(p.a.department || 'no department')
+      +   ' &middot; ' + ca + ' evaluation' + (ca === 1 ? '' : 's') + '</div></div>'
+      +   '<div class="merge-arrow">&harr;</div>'
+      +   '<div><div class="merge-name">' + escFaculty(p.b.name) + '</div>'
+      +   '<div class="merge-meta">id ' + p.b.id + ' &middot; ' + escFaculty(p.b.department || 'no department')
+      +   ' &middot; ' + cb + ' evaluation' + (cb === 1 ? '' : 's') + '</div></div>'
+      + '</div>'
+      + '<div class="merge-note">These look related &mdash; ' + escFaculty(p.why)
+      + '. If they are the same person, keep the fuller name and merge the other into it.</div>'
+      + '<div class="merge-actions">'
+      +   '<button class="btn btn-secondary" onclick="mergeFaculty(' + p.a.id + ',' + p.b.id + ')">Merge &ldquo;' + escFaculty(p.a.name) + '&rdquo; into &ldquo;' + escFaculty(p.b.name) + '&rdquo;</button>'
+      +   '<button class="btn btn-secondary" onclick="mergeFaculty(' + p.b.id + ',' + p.a.id + ')">Merge &ldquo;' + escFaculty(p.b.name) + '&rdquo; into &ldquo;' + escFaculty(p.a.name) + '&rdquo;</button>'
+      + '</div></div>';
+  }).join('') : '<div class="merge-empty">No likely duplicates found on the roster.</div>';
+
+  const opts = options.map(function (f) { return '<option value="' + f.id + '">' + escFaculty(f.name) + '</option>'; }).join('');
+  html += '<div class="merge-section-head">Merge any two manually</div>'
+    + '<div class="merge-card">'
+    + '<div class="merge-note">For a duplicate too dissimilar to be suggested above.</div>'
+    + '<div class="merge-actions">'
+    +   '<select id="merge-source"><option value="">&mdash; this person &mdash;</option>' + opts + '</select>'
+    +   '<span class="merge-meta">is the same as</span>'
+    +   '<select id="merge-target"><option value="">&mdash; this person &mdash;</option>' + opts + '</select>'
+    +   '<button class="btn btn-primary" onclick="mergeFromSelects()">Merge</button>'
+    + '</div></div>'
+    + '<div class="merge-section-head">Already merged (' + merged.length + ')</div>';
+
+  html += merged.length ? merged.map(function (f) {
+    const target = facultyById(f.merged_into);
+    return '<div class="merged-row"><strong>' + escFaculty(f.name) + '</strong>'
+      + '<span class="merge-arrow">&rarr;</span>'
+      + '<strong>' + escFaculty(target ? target.name : 'id ' + f.merged_into) + '</strong>'
+      + '<span class="merge-meta">' + (f.merged_at ? new Date(f.merged_at).toLocaleDateString('en-US') : '') + '</span>'
+      + '<button class="btn btn-secondary" style="margin-left:auto;padding:5px 12px;font-size:11.5px" onclick="unmergeFaculty(' + f.id + ')">Undo</button>'
+      + '</div>';
+  }).join('') : '<div class="merge-empty">Nothing has been merged.</div>';
+
+  el.innerHTML = html;
+}
+
+function mergeFromSelects() {
+  const s = document.getElementById('merge-source').value;
+  const t = document.getElementById('merge-target').value;
+  if (!s || !t) { alert('Choose both people first.'); return; }
+  if (s === t) { alert('Those are the same roster entry.'); return; }
+  mergeFaculty(Number(s), Number(t));
+}
+
+// Records that `sourceId` is the same person as `targetId`. Writes only
+// merged_into/merged_at on the roster; submissions are untouched.
+async function mergeFaculty(sourceId, targetId) {
+  const src = facultyById(sourceId), tgt = facultyById(targetId);
+  if (!src || !tgt) { alert('Could not find those roster entries. Reload and try again.'); return; }
+
+  // Merging into a row that is itself merged would strand this one behind a
+  // second hop, so resolve the real destination first.
+  const dest = canonicalFaculty(tgt);
+  if (!dest || String(dest.id) === String(src.id)) {
+    alert('That would point these two at each other. Pick the other direction.');
+    return;
+  }
+  const moving = submissionCountFor(src.id);
+  if (!confirm('Record that "' + src.name + '" is the same person as "' + dest.name + '"?\n\n'
+    + moving + ' evaluation' + (moving === 1 ? '' : 's') + ' will be counted under "' + dest.name + '".\n'
+    + '"' + src.name + '" stops appearing on the forms. No evaluation is changed, and you can undo this.')) return;
+
+  await writeMerge(src.id, dest.id, new Date().toISOString());
+}
+
+async function unmergeFaculty(id) {
+  const row = facultyById(id);
+  if (!row) return;
+  if (!confirm('Undo the merge for "' + row.name + '"?\n\nIt becomes a separate person again and reappears on the forms.')) return;
+  await writeMerge(id, null, null);
+}
+
+async function writeMerge(id, mergedInto, mergedAt) {
+  try {
+    const headers = await getAuthHeader();
+    const res = await fetch(SUPABASE_URL + '/rest/v1/faculty?id=eq.' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: Object.assign({ 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, headers),
+      body: JSON.stringify({ merged_into: mergedInto, merged_at: mergedAt }),
+    });
+    if (!res.ok) throw new Error(res.status + ' ' + (await res.text()));
+    await loadFaculty();          // re-read so every view resolves against the new state
+    renderRoster();
+    populateFilterDropdowns();
+    renderSummary();
+  } catch (e) {
+    console.error(e);
+    alert('Could not save that change.\n\n' + e.message
+      + '\n\nIf this says permission denied, the UPDATE policy and column grant from '
+      + 'sql/007 have not been applied yet.');
+  }
+}
+
 // ── Export CSV ──
 function exportCSV() {
   if (allSubmissions.length === 0) { alert('No submissions to export.'); return; }
@@ -831,13 +1031,16 @@ function exportCSV() {
   // text, so a row answered under older wording lands in its own column rather
   // than being shifted into a neighbouring question's.
   const qs = questionIndex(allSubmissions);
-  const header = ['Date','Faculty','Department', ...qs.map((q,i)=>`Q${i+1} Rating`), ...qs.map((q,i)=>`Q${i+1} Comment`), 'Overall Rating','Overall Feedback'];
+  // Faculty = the resolved identity a row is counted under; Submitted As = the
+  // name actually typed. Both, so a merge is visible in the export rather than
+  // silently rewriting what someone submitted.
+  const header = ['Date','Faculty','Submitted As','Department', ...qs.map((q,i)=>`Q${i+1} Rating`), ...qs.map((q,i)=>`Q${i+1} Comment`), 'Overall Rating','Overall Feedback'];
   const rows = allSubmissions.map(s => {
     const date = new Date(s.timestamp).toLocaleDateString('en-US');
     const ratingsMap = {}; (s.ratings||[]).forEach(r=>{ if (r && r.item) ratingsMap[r.item]=r.rating; });
     const commentsMap = {}; (s.comments||[]).forEach(c=>{ if (c && c.item) commentsMap[c.item]=c.comment; });
     const row = [
-      date, s.facultyName, s.department,
+      date, displayFacultyName(s), s.facultyName, s.department,
       ...qs.map(q=> ratingsMap[q] ?? ''),
       ...qs.map(q=> commentsMap[q] ?? ''),
       s.overallRating ?? '', s.overallFeedback || ''
