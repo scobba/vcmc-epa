@@ -805,7 +805,7 @@
   <div><a href="https://www.venturafamilymed.org" target="_blank">venturafamilymed.org</a></div>
 </footer>
 
-<script src="shared/definitions.js?v=2"></script>
+<script src="shared/definitions.js?v=3"></script>
 <script src="shared/faculty-roster.js?v=1"></script>
 <script>
 // Fail visibly rather than silently. Without the shared definitions this page
@@ -1075,6 +1075,52 @@ function renderEPAForm(rotationName) {
   `;
 }
 
+// ── Which procedure / which subspecialty ─────────────────────────────────────
+//
+// Three rotations describe a shape of encounter rather than a subject, so they
+// ask one extra question. Everything else renders nothing here.
+
+function detailFieldMarkup(rotationName) {
+  const cfg = rotationDetailFor(rotationName);
+  if (!cfg) return '';
+  const opts = cfg.options.map(o => `<option value="${escFaculty(o)}">${escFaculty(o)}</option>`).join('');
+  return `
+        <div class="form-group">
+          <label>${escFaculty(cfg.label)} *</label>
+          <select id="field-rotation-detail" required onchange="onRotationDetailChange()">
+            <option value="">&mdash; Select &mdash;</option>
+            ${opts}
+            <option value="__other">Other (type it in)</option>
+          </select>
+          <input type="text" id="field-rotation-detail-other" placeholder="Type it in&hellip;"
+                 style="display:none; margin-top:8px">
+          <div class="roster-status">${escFaculty(cfg.hint)}</div>
+        </div>`;
+}
+
+function onRotationDetailChange() {
+  const sel = document.getElementById('field-rotation-detail');
+  const other = document.getElementById('field-rotation-detail-other');
+  if (!sel || !other) return;
+  const isOther = sel.value === '__other';
+  other.style.display = isOther ? 'block' : 'none';
+  if (isOther) other.focus(); else other.value = '';
+}
+
+// The value to store, or null when this rotation collects no detail.
+// Returns undefined when the rotation needs a value and none was given, which
+// the caller treats as a validation failure — distinct from "not applicable".
+function readRotationDetail(rotationName) {
+  if (!rotationDetailFor(rotationName)) return null;
+  const sel = document.getElementById('field-rotation-detail');
+  if (!sel || !sel.value) return undefined;
+  if (sel.value === '__other') {
+    const typed = (document.getElementById('field-rotation-detail-other')?.value || '').trim();
+    return typed || undefined;
+  }
+  return sel.value;
+}
+
 // ══════════════════════════════════════════════════
 // FORM — Submit
 // ══════════════════════════════════════════════════
@@ -1087,6 +1133,14 @@ async function submitForm(rotationName) {
   if (!resident) { alert('Please select a resident.'); return; }
   if (!evaluatorName) { alert('Please enter your name.'); return; }
   if (!dateStart) { alert('Please select a supervision date.'); return; }
+
+  // undefined means "this rotation asks, and nothing was chosen"; null means
+  // "this rotation does not ask".
+  const rotationDetail = readRotationDetail(rotationName);
+  if (rotationDetail === undefined) {
+    alert('Please answer "' + rotationDetailFor(rotationName).label + '"');
+    return;
+  }
 
   // Format date for display
   const fmt = d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -1112,6 +1166,7 @@ async function submitForm(rotationName) {
     rotation: rotationName,
     evaluatorName,
     evaluatorId: null,   // filled in at save time once the roster row is resolved
+    rotationDetail,
     dates,
     dateStart,
     dateEnd: dateStart,
@@ -1241,6 +1296,7 @@ async function saveSubmission(sub) {
     rotation:        sub.rotation,
     evaluator_name:  sub.evaluatorName,
     evaluator_id:    sub.evaluatorId ?? null,
+    rotation_detail: sub.rotationDetail ?? null,
     date_start:      sub.dateStart || '',
     date_end:        sub.dateStart || '',
     scores:          sub.scores,
@@ -1388,6 +1444,7 @@ function renderEPAFormInto(rotationName, el) {
           <label>Supervision Date *</label>
           <input type="date" id="field-date-start" required>
         </div>
+        ${detailFieldMarkup(rotationName)}
       </div>
     </div>
 

@@ -240,6 +240,79 @@ const ROTATIONS = {
 
 };
 
+
+// ── What a generic rotation was actually about ───────────────────────────────
+//
+// Three rotations describe a shape of encounter rather than a subject: Procedural
+// Care does not say WHICH procedure, and the two Subspecialty rotations do not say
+// WHICH specialty. Without this, every cardiology and neurology consult aggregates
+// together and procedures cannot be counted at all.
+//
+// A picklist rather than free text, deliberately. Free text would recreate exactly
+// the spelling drift that faculty names had — "central line", "Central Line", "CVC"
+// and "central venous catheter" would each count separately. "Other" keeps an escape
+// hatch for anything genuinely missing; if a value shows up under Other repeatedly,
+// add it to the list here rather than leaving it in the tail.
+//
+// These lists are a starting point drawn from the procedures already named in the
+// EPA context lines above. They are not faculty-reviewed — edit freely. Adding or
+// removing an option is safe: the value is stored as text on the submission, so an
+// option removed later still displays on the rows that used it.
+//
+// A rotation absent from this object collects no detail and shows no extra field.
+
+const ROTATION_DETAIL = {
+  'Procedural Care': {
+    label: 'Which procedure?',
+    hint: 'One procedure per evaluation. Pick the closest match, or Other to type it in.',
+    options: [
+      'Abscess incision and drainage',
+      'Arthrocentesis / joint injection',
+      'Central venous catheter',
+      'Circumcision',
+      'Colposcopy',
+      'Cryotherapy',
+      'Endometrial biopsy',
+      'IUD insertion or removal',
+      'Nexplanon insertion or removal',
+      'Joint reduction',
+      'Laceration repair',
+      'Lumbar puncture',
+      'Nail removal or nail bed repair',
+      'Paracentesis',
+      'Procedural sedation',
+      'Skin biopsy (punch, shave, or excisional)',
+      'Splinting or casting',
+      'Thoracentesis',
+      'Vasectomy',
+    ],
+  },
+  'Inpatient Subspecialty Consultation': {
+    label: 'Which subspecialty?',
+    hint: 'The service the resident was consulting on.',
+    options: [
+      'Cardiology', 'Dermatology', 'Endocrinology', 'Gastroenterology',
+      'Hematology / Oncology', 'Infectious Disease', 'Nephrology', 'Neurology',
+      'Ophthalmology', 'Orthopedics', 'Otolaryngology', 'Palliative Care',
+      'Psychiatry', 'Pulmonology / Critical Care', 'Rheumatology', 'Surgery', 'Urology',
+    ],
+  },
+  'Outpatient Subspecialty Clinic': {
+    label: 'Which subspecialty?',
+    hint: 'The clinic the resident was seeing patients in.',
+    options: [
+      'Cardiology', 'Dermatology', 'Endocrinology', 'Gastroenterology',
+      'Hematology / Oncology', 'Infectious Disease', 'Nephrology', 'Neurology',
+      'Ophthalmology', 'Orthopedics', 'Otolaryngology', 'Pain Medicine',
+      'Psychiatry', 'Pulmonology', 'Rheumatology', 'Sports Medicine', 'Urology',
+    ],
+  },
+};
+
+// The detail configuration for a rotation, or null if it collects none.
+function rotationDetailFor(rotationName) {
+  return ROTATION_DETAIL[rotationName] || null;
+}
 // ── Faculty evaluation items (faculty/ and faculty-dashboard/) ──
 // The wording stored on each rating row is what the dashboard counts by;
 // this list only decides what is asked and in what order. Reordering is
