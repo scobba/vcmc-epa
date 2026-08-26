@@ -883,6 +883,7 @@
     <button class="admin-tab active" onclick="switchAdminTab('milestones', this)">Milestone Summary</button>
     <button class="admin-tab" onclick="switchAdminTab('submissions', this)">All Submissions</button>
     <button class="admin-tab" onclick="switchAdminTab('residents', this)">By Resident</button>
+    <button class="admin-tab" onclick="switchAdminTab('evaluators', this)">By Evaluator</button>
   </div>
 
   <div id="admin-tab-milestones" class="admin-tab-content">
@@ -935,6 +936,17 @@
     </div>
     <div id="resident-detail-container"></div>
   </div>
+
+  <div id="admin-tab-evaluators" class="admin-tab-content" style="display:none">
+    <div class="filter-bar" style="flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <select id="filter-eval-rotation" onchange="renderEvaluators()">
+        <option value="">All Rotations</option>
+      </select>
+      <input type="date" id="filter-eval-date-start" onchange="renderEvaluators()" title="Filter from date">
+      <input type="date" id="filter-eval-date-end" onchange="renderEvaluators()" title="Filter to date">
+    </div>
+    <div id="evaluators-container"></div>
+  </div>
 </div>
 
 <!-- ── Submission Detail Modal ── -->
@@ -955,11 +967,12 @@
 </footer>
 
 <script src="../shared/definitions.js?v=1"></script>
+<script src="../shared/faculty-roster.js?v=1"></script>
 <script>
 // Fail visibly rather than silently. Without the shared definitions this page
 // would render its frame and simply show nothing to work with, which reads as
 // "there is no data" instead of "a file is missing".
-if (typeof ROTATIONS === 'undefined') {
+if (typeof ROTATIONS === 'undefined' || typeof resolveFacultyIdentity === 'undefined') {
   document.body.innerHTML = '<div style="max-width:640px;margin:80px auto;padding:0 24px;font-family:Helvetica,Arial,sans-serif;color:#1A2744">'
     + '<h2 style="margin-bottom:12px">This page did not load correctly</h2>'
     + '<p style="color:#4A5568;line-height:1.6">A required file (shared/definitions.js) did not load, so the dashboard cannot be shown. Please reload the page; if this persists, contact the program office.</p></div>';
@@ -1121,7 +1134,10 @@ async function loadSubmissions() {
 async function loadAdminData() {
   const container = document.getElementById('milestone-grid-container');
   if (container) container.innerHTML = '<div class="loading-state"><div class="spinner"></div>Loading evaluation data…</div>';
-  allSubmissions = await loadSubmissions();
+  // The roster is what turns an evaluator name or id into a person. Loaded
+  // alongside the submissions so grouping resolves merges from the first render.
+  const [subs] = await Promise.all([loadSubmissions(), loadFaculty()]);
+  allSubmissions = subs;
   populateFilterDropdowns();
   renderMilestones();
 }
@@ -1131,7 +1147,7 @@ function populateFilterDropdowns() {
   const rotations = [...new Set(allSubmissions.map(s => s.rotation))].sort();
 
   const residentSelects = ['filter-resident-milestones', 'filter-resident-submissions', 'filter-resident-detail'];
-  const rotationSelects = ['filter-rotation-milestones', 'filter-rotation-submissions'];
+  const rotationSelects = ['filter-rotation-milestones', 'filter-rotation-submissions', 'filter-eval-rotation'];
 
   residentSelects.forEach(id => {
     const el = document.getElementById(id);
@@ -1161,6 +1177,7 @@ function switchAdminTab(name, btn) {
   document.getElementById('admin-tab-' + name).style.display = 'block';
   if (name === 'submissions') renderSubmissions();
   if (name === 'residents') renderResidentDetail();
+  if (name === 'evaluators') renderEvaluators();
 }
 
 // ── Milestones Tab ──
@@ -1221,7 +1238,7 @@ function renderSubmissions() {
   let subs = allSubmissions;
   if (search) subs = subs.filter(s =>
     s.resident.toLowerCase().includes(search) ||
-    s.evaluatorName.toLowerCase().includes(search));
+    (s.evaluatorName + " " + displayEvaluatorName(s)).toLowerCase().includes(search));
   if (rotFilter) subs = subs.filter(s => s.rotation === rotFilter);
   if (resFilter) subs = subs.filter(s => s.resident === resFilter);
 
@@ -1245,7 +1262,7 @@ function renderSubmissions() {
         <td>${date}</td>
         <td style="font-weight:600; color:var(--navy)">${s.resident}</td>
         <td><span class="badge badge-navy">${s.rotation}</span></td>
-        <td>${s.evaluatorName}</td>
+        <td>${escFaculty(displayEvaluatorName(s))}${displayEvaluatorName(s) !== s.evaluatorName ? `<div style="font-size:11px;color:var(--slate-light)">typed as &ldquo;${escFaculty(s.evaluatorName)}&rdquo;</div>` : ''}</td>
         <td><span class="badge ${scoreClass}">${avg}</span></td>
         <td><button class="btn btn-secondary" style="padding:6px 14px; font-size:12px" onclick="openModal('${s.id}')">View</button></td>
       </tr>
@@ -1296,7 +1313,7 @@ function renderResidentDetail() {
   if (dateStart) subs = subs.filter(s => s.dateStart >= dateStart);
   if (dateEnd)   subs = subs.filter(s => s.dateStart <= dateEnd);
   if (rotFilter) subs = subs.filter(s => s.rotation === rotFilter);
-  if (evalFilter) subs = subs.filter(s => s.evaluatorName?.toLowerCase().includes(evalFilter));
+  if (evalFilter) subs = subs.filter(s => ((s.evaluatorName || "") + " " + displayEvaluatorName(s)).toLowerCase().includes(evalFilter));
 
   if (subs.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>No evaluations found for ${resFilter} with the current filters.</p></div>`;
@@ -1370,7 +1387,7 @@ function renderResidentDetail() {
               <tr>
                 <td>${date}</td>
                 <td><span class="badge badge-navy">${s.rotation}</span></td>
-                <td>${s.evaluatorName}</td>
+                <td>${escFaculty(displayEvaluatorName(s))}${displayEvaluatorName(s) !== s.evaluatorName ? `<div style="font-size:11px;color:var(--slate-light)">typed as &ldquo;${escFaculty(s.evaluatorName)}&rdquo;</div>` : ''}</td>
                 <td><span class="badge badge-teal">${avg}</span></td>
                 <td><button class="btn btn-secondary" style="padding:6px 14px; font-size:12px" onclick="openModal('${s.id}')">View</button></td>
               </tr>
@@ -1391,7 +1408,7 @@ function renderResidentDetail() {
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px">
                 <div style="display:flex; align-items:center; gap:10px">
                   <span class="badge badge-navy">${s.rotation}</span>
-                  <span style="font-size:13px; font-weight:600; color:var(--navy)">${s.evaluatorName}</span>
+                  <span style="font-size:13px; font-weight:600; color:var(--navy)">${escFaculty(displayEvaluatorName(s))}</span>
                 </div>
                 <span style="font-size:12px; color:var(--slate-light)">${date} · ${s.dates}</span>
               </div>
@@ -1403,6 +1420,139 @@ function renderResidentDetail() {
   `;
 }
 
+// ══════════════════════════════════════════════════
+// EVALUATORS
+//
+// Groups evaluations by the person who wrote them rather than by the string
+// they typed, resolving through the faculty roster so a merged duplicate
+// collapses and an unknown name still appears under itself.
+// ══════════════════════════════════════════════════
+
+// The evaluator a submission is counted under. Prefers the id captured at
+// submission, falls back to an exact roster name match for older rows, and
+// finally to the typed name so nothing is dropped.
+function displayEvaluatorName(s) {
+  const ident = resolveFacultyIdentity(s.evaluatorId, s.evaluatorName);
+  return ident ? ident.name : (s.evaluatorName || '(no evaluator recorded)');
+}
+
+function evaluatorStats(subs) {
+  const byPerson = new Map();
+  subs.forEach(s => {
+    const key = displayEvaluatorName(s);
+    if (!byPerson.has(key)) byPerson.set(key, { name: key, subs: [], typed: new Set(), resolved: false });
+    const e = byPerson.get(key);
+    e.subs.push(s);
+    if (s.evaluatorName) e.typed.add(s.evaluatorName);
+    if (resolveFacultyIdentity(s.evaluatorId, s.evaluatorName)) e.resolved = true;
+  });
+
+  const rows = [...byPerson.values()].map(e => {
+    const scores = e.subs.flatMap(s => Object.values(s.scores || {}).filter(v => v !== 'na'));
+    const dates = e.subs.map(s => s.dateStart).filter(Boolean).sort();
+    return {
+      name: e.name,
+      count: e.subs.length,
+      residents: new Set(e.subs.map(s => s.resident)).size,
+      rotations: new Set(e.subs.map(s => s.rotation)).size,
+      avg: scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null,
+      naRate: (() => {
+        const all = e.subs.flatMap(s => Object.values(s.scores || {}));
+        return all.length ? all.filter(v => v === 'na').length / all.length : 0;
+      })(),
+      narratives: e.subs.filter(s => s.narrative && s.narrative.trim()).length,
+      first: dates[0] || '',
+      last: dates[dates.length - 1] || '',
+      typed: [...e.typed],
+      resolved: e.resolved,
+    };
+  });
+  rows.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  return rows;
+}
+
+function renderEvaluators() {
+  const el = document.getElementById('evaluators-container');
+  if (!el) return;
+
+  const rot = document.getElementById('filter-eval-rotation')?.value || '';
+  const from = document.getElementById('filter-eval-date-start')?.value || '';
+  const to = document.getElementById('filter-eval-date-end')?.value || '';
+
+  let subs = allSubmissions;
+  if (rot) subs = subs.filter(s => s.rotation === rot);
+  if (from) subs = subs.filter(s => s.dateStart >= from);
+  if (to) subs = subs.filter(s => s.dateStart <= to);
+
+  if (subs.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">&#128100;</div><p>No evaluations match these filters.</p></div>`;
+    return;
+  }
+
+  const rows = evaluatorStats(subs);
+  const allScores = subs.flatMap(s => Object.values(s.scores || {}).filter(v => v !== 'na'));
+  const overall = allScores.length ? allScores.reduce((a, b) => a + b, 0) / allScores.length : null;
+  const unresolved = rows.filter(r => !r.resolved).length;
+
+  el.innerHTML = `
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">Evaluators</div><div class="stat-value">${rows.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Evaluations</div><div class="stat-value">${subs.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Median per Evaluator</div><div class="stat-value">${
+        (() => { const c = rows.map(r => r.count).sort((a, b) => a - b); const m = Math.floor(c.length / 2);
+                 return c.length % 2 ? c[m] : ((c[m - 1] + c[m]) / 2).toFixed(1); })()}</div></div>
+      <div class="stat-card"><div class="stat-label">Overall Avg Score</div><div class="stat-value">${overall !== null ? overall.toFixed(2) : '&mdash;'}</div></div>
+    </div>
+
+    ${unresolved ? `<div style="font-size:12.5px;color:var(--slate);background:var(--amber-pale);border:1px solid var(--gold-border);padding:10px 14px;margin-bottom:16px">
+      ${unresolved} evaluator${unresolved === 1 ? '' : 's'} could not be matched to the faculty roster and ${unresolved === 1 ? 'is' : 'are'} grouped by the name typed at submission. Marked below.
+    </div>` : ''}
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Evaluator</th><th>Evaluations</th><th>Residents</th><th>Rotations</th>
+            <th>Avg Score</th><th>vs. All</th><th>N/A Rate</th><th>Narratives</th><th>Most Recent</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => {
+            const delta = (r.avg !== null && overall !== null) ? r.avg - overall : null;
+            const deltaTxt = delta === null ? '&mdash;' : (delta > 0 ? '+' : '') + delta.toFixed(2);
+            const deltaColor = delta === null ? 'var(--slate-light)'
+              : Math.abs(delta) < 0.25 ? 'var(--slate-light)'
+              : delta > 0 ? 'var(--scale-4)' : 'var(--scale-2)';
+            const alsoTyped = r.typed.filter(t => t !== r.name);
+            return `
+              <tr>
+                <td style="font-weight:600;color:var(--navy)">
+                  ${escFaculty(r.name)}
+                  ${!r.resolved ? '<span class="badge" style="background:var(--amber-pale);color:var(--amber);margin-left:6px;font-size:9px">not on roster</span>' : ''}
+                  ${alsoTyped.length ? `<div style="font-size:11px;font-weight:400;color:var(--slate-light)">also submitted as ${alsoTyped.map(t => '&ldquo;' + escFaculty(t) + '&rdquo;').join(', ')}</div>` : ''}
+                </td>
+                <td><span class="badge badge-navy">${r.count}</span></td>
+                <td>${r.residents}</td>
+                <td>${r.rotations}</td>
+                <td>${r.avg !== null ? r.avg.toFixed(2) : '&mdash;'}</td>
+                <td style="color:${deltaColor};font-weight:600">${deltaTxt}</td>
+                <td>${(r.naRate * 100).toFixed(0)}%</td>
+                <td>${r.narratives}/${r.count}</td>
+                <td style="white-space:nowrap">${r.last ? new Date(r.last + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '&mdash;'}</td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <p style="font-size:12px;color:var(--slate-light);line-height:1.7;margin-top:14px;max-width:820px">
+      &ldquo;vs. All&rdquo; compares an evaluator's mean entrustment score against every evaluation in
+      the current filter. It is not a measure of accuracy &mdash; it is confounded by which residents and
+      rotations a person supervised, and by how many evaluations they submitted. Read a large gap as a
+      question worth asking, not an answer.
+    </p>
+  `;
+}
 // ══════════════════════════════════════════════════
 // MODAL — Submission Detail
 // ══════════════════════════════════════════════════
@@ -1442,7 +1592,7 @@ function openModal(sub) {
     <div class="modal-section">
       <h4>Submission Info</h4>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:13px">
-        <div><span style="color:var(--slate-light)">Evaluator:</span><br><strong>${sub.evaluatorName}</strong></div>
+        <div><span style="color:var(--slate-light)">Evaluator:</span><br><strong>${escFaculty(displayEvaluatorName(sub))}</strong>${displayEvaluatorName(sub) !== sub.evaluatorName ? `<div style="font-size:11px;font-weight:400;color:var(--slate-light)">typed as &ldquo;${escFaculty(sub.evaluatorName)}&rdquo;</div>` : ''}</div>
         <div><span style="color:var(--slate-light)">Submitted:</span><br><strong>${date}</strong></div>
         <div><span style="color:var(--slate-light)">Dates Supervised:</span><br><strong>${sub.dates}</strong></div>
         <div><span style="color:var(--slate-light)">Rotation:</span><br><strong>${sub.rotation}</strong></div>
@@ -1503,7 +1653,7 @@ function exportCSV() {
   if (allSubmissions.length === 0) { alert('No submissions to export.'); return; }
 
   const milestones = Object.keys(MILESTONE_DEFS);
-  const headers = ['Date', 'Resident', 'Rotation', 'Evaluator', 'Supervision Date', 'Form Version', 'Avg Score', 'Narrative', ...milestones];
+  const headers = ['Date', 'Resident', 'Rotation', 'Evaluator', 'Evaluator Typed As', 'Supervision Date', 'Form Version', 'Avg Score', 'Narrative', ...milestones];
 
   const rows = allSubmissions.map(s => {
     const numericScores = Object.values(s.scores).filter(v => v !== 'na');
@@ -1513,7 +1663,7 @@ function exportCSV() {
     const milestoneVals = milestones.map(m =>
       s.milestoneScores[m] !== undefined ? s.milestoneScores[m].toFixed(2) : '');
     const narrative = `"${(s.narrative || '').replace(/"/g, '""')}"`;
-    return [date, s.resident, s.rotation, s.evaluatorName, s.dates, s.formVersion || '', avg, narrative, ...milestoneVals].join(',');
+    return [date, s.resident, s.rotation, displayEvaluatorName(s), s.evaluatorName, s.dates, s.formVersion || '', avg, narrative, ...milestoneVals].join(',');
   });
 
   const csv = [headers.join(','), ...rows].join('\n');
