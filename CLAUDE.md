@@ -91,6 +91,44 @@ Each rating is stored as `{ item, rating }` with the question wording attached, 
 
 **Camp HOPE surveys** — [camphope/index.html](camphope/index.html) (clinical team) and [camphope/partner/index.html](camphope/partner/index.html) (Family Justice Center partners) are two copies of the *same* survey engine differing only in the `SURVEY` object; [camphope/dashboard/index.html](camphope/dashboard/index.html) reads both. Item types are `single`, `multi`, `short`, `long`, `likert`, and `note`, with conditional display via `showIf` (either `{ q, in: [...] }` or `{ role }`, where role is derived from the q1 answer by `roleGroup()`). Both surveys write to the same `camp_hope_responses` table, discriminated by `survey` (`clinical_team` / `partner_fjc`) and `camp_year`.
 
+## Adding a second training program
+
+The EPA app assumes one learner population — Family Medicine residents — and one
+milestone vocabulary. Adding another (Addiction Medicine fellows, say) is not a
+copy-paste job, and the obvious move is the wrong one.
+
+**Milestone codes will collide, silently.** The 19 codes in `MILESTONE_DEFS` are the
+ACGME *Family Medicine* residency milestones. Other programs use the same-shaped
+codes — `PC1`, `MK2`, `ICS1` — for entirely different competencies. `milestone_scores`
+is an untyped JSON object, so a fellow's `PC1` and a resident's `PC1` land in the same
+key and average together happily. Nothing errors, the dashboard renders, and the
+number is wrong in a way no one will notice. Any design has to make that impossible:
+a `program` discriminator on `epa_submissions`, namespaced codes, or program-keyed
+`MILESTONE_DEFS`. Decide this **before** any evaluation is submitted — it cannot be
+untangled afterwards, because the rows do not record which vocabulary they meant.
+
+**Do not fork `index.html`.** A second copy of the form reintroduces exactly the
+duplication that `shared/` exists to prevent, and the two copies will diverge. Prefer
+program-keyed definitions (`ROTATIONS`, `MILESTONE_DEFS`, `FORM_VERSION`) over a
+second page. If a separate page is genuinely needed, it must still load the shared
+modules and hold nothing but its own configuration.
+
+**Share these outright** — the same attendings supervise both populations and the same
+name-drift and spelling problems apply, so there is nothing to gain from a second copy:
+
+- [shared/faculty-roster.js](shared/faculty-roster.js) and the `faculty` table
+- [shared/detail-options.js](shared/detail-options.js) and the `detail_options` table
+- [shared/text-matching.js](shared/text-matching.js)
+- `escFaculty()` for rendering any human-entered name
+
+**Learners are not shared.** Fellows do not belong in `residents` as-is. Either add a
+`program` column there or give them their own roster; either way the dashboard must
+filter by it, or a fellow appears in the residents list.
+
+**Everything else in this file still applies** — ids stay append-only, `scores_detail`
+is never rewritten, migrations run before the page that needs them is pushed, and no
+id column is ever backfilled by name matching.
+
 ## The duplication that will bite you
 
 These pages share no framework and little code. The data definitions have been extracted, but plenty of duplication remains:
