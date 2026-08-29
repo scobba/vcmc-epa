@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Draft entrustable professional activities for the VCMC Addiction Medicine Fellowship, circulated for review.">
+<title>Addiction Medicine EPAs &mdash; VCMC Fellowship (Draft)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#F4F6F9; --surface:#FFFFFF; --surface-2:#FAFBFD;
+  --ink:#131C29; --navy:#1E2D4D; --slate:#4E5A6B; --slate-dim:#7E8998;
+  --rule:#DCE2EA; --rule-soft:#EAEEF3;
+  --flag:#7E6218; --flag-bg:#FAF3E0; --flag-rule:#E2CE96;
+  --chip-bg:#EDF1F6; --chip-ink:#2C3E5F; --chip-rule:#D5DEE9;
+  --cover-rgb:30,45,77;
+  --shadow:0 1px 2px rgba(19,28,41,.05), 0 8px 24px -12px rgba(19,28,41,.14);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F141C; --surface:#161D27; --surface-2:#1B232E;
+    --ink:#E9EDF2; --navy:#AEC2E6; --slate:#A6B1BF; --slate-dim:#79838F;
+    --rule:#293240; --rule-soft:#212934;
+    --flag:#DCB45F; --flag-bg:#272014; --flag-rule:#4A3C1C;
+    --chip-bg:#222C3B; --chip-ink:#B9CAE6; --chip-rule:#2E3A4B;
+    --cover-rgb:174,194,230;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F141C; --surface:#161D27; --surface-2:#1B232E;
+  --ink:#E9EDF2; --navy:#AEC2E6; --slate:#A6B1BF; --slate-dim:#79838F;
+  --rule:#293240; --rule-soft:#212934;
+  --flag:#DCB45F; --flag-bg:#272014; --flag-rule:#4A3C1C;
+  --chip-bg:#222C3B; --chip-ink:#B9CAE6; --chip-rule:#2E3A4B;
+  --cover-rgb:174,194,230;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:"Public Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:16px; line-height:1.6; margin:0;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px; margin:0 auto; padding:0 28px 96px}
+.col{max-width:68ch}
+
+/* ── Masthead ── */
+.masthead{padding:72px 0 40px; border-bottom:1px solid var(--rule)}
+.eyebrow{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11px; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--slate-dim); margin:0 0 20px;
+}
+h1{
+  font-family:Newsreader,Georgia,"Times New Roman",serif;
+  font-weight:500; font-size:clamp(2.4rem,5.5vw,3.6rem); line-height:1.08;
+  letter-spacing:-.015em; margin:0 0 22px; color:var(--navy);
+  text-wrap:balance;
+}
+.standfirst{font-size:1.125rem; line-height:1.62; color:var(--slate); margin:0}
+.meta{
+  display:flex; flex-wrap:wrap; gap:8px 28px; margin-top:30px;
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px;
+  letter-spacing:.05em; color:var(--slate-dim);
+}
+.meta b{color:var(--slate); font-weight:500}
+
+/* ── Sections ── */
+section{padding-top:60px}
+h2{
+  font-family:Newsreader,Georgia,serif; font-weight:500;
+  font-size:1.85rem; line-height:1.2; letter-spacing:-.01em;
+  color:var(--navy); margin:0 0 8px; text-wrap:balance;
+}
+.sect-note{color:var(--slate); margin:0 0 28px; max-width:68ch}
+h3{
+  font-family:"Public Sans",sans-serif; font-weight:700;
+  font-size:.82rem; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--slate-dim); margin:0 0 14px;
+}
+p{margin:0 0 16px}
+a{color:var(--navy)}
+
+/* ── Callout ── */
+.ask{
+  background:var(--surface); border:1px solid var(--rule);
+  border-left:3px solid var(--navy);
+  padding:26px 28px; margin:34px 0 0; box-shadow:var(--shadow);
+}
+.ask h3{margin-bottom:12px}
+.ask ol{margin:0; padding-left:20px; color:var(--slate)}
+.ask li{margin-bottom:9px}
+.ask li:last-child{margin-bottom:0}
+.ask strong{color:var(--ink); font-weight:600}
+
+/* ── Notes ── */
+.notes{display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule); margin-top:8px}
+.note{background:var(--surface); padding:22px 24px}
+.note h4{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-weight:500;
+  font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--slate-dim); margin:0 0 10px;
+}
+.note p{font-size:.94rem; color:var(--slate); margin:0}
+.note strong{color:var(--ink); font-weight:600}
+@media(min-width:820px){ .notes{grid-template-columns:repeat(3,1fr)} }
+
+/* ── Coverage grid ── */
+.cover{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(148px,1fr));
+  gap:1px; background:var(--rule); border:1px solid var(--rule);
+}
+.cell{background:var(--surface); padding:14px 15px; position:relative}
+.cell .code{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-weight:600;
+  font-size:13px; color:var(--ink); letter-spacing:.02em;
+}
+.cell .n{
+  float:right; font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:13px; font-weight:600; color:var(--ink);
+  font-variant-numeric:tabular-nums;
+}
+.cell .ttl{
+  display:block; font-size:11.5px; line-height:1.42; color:var(--slate);
+  margin-top:7px; clear:both;
+}
+.cell.thin{background:var(--flag-bg)}
+.cell.thin .code, .cell.thin .n{color:var(--flag)}
+.cell.thin .ttl{color:var(--flag)}
+.bar{height:3px; margin-top:11px; background:var(--rule-soft)}
+.bar i{display:block; height:100%; background:rgb(var(--cover-rgb))}
+
+/* ── Questions ── */
+.qs{display:grid; gap:14px}
+.q{
+  background:var(--surface); border:1px solid var(--rule);
+  padding:22px 24px; box-shadow:var(--shadow);
+}
+.q.flagged{border-color:var(--flag-rule); background:var(--flag-bg)}
+.q h4{
+  font-family:Newsreader,Georgia,serif; font-weight:600; font-size:1.12rem;
+  color:var(--ink); margin:0 0 8px; letter-spacing:-.005em;
+}
+.q.flagged h4{color:var(--flag)}
+.q p{font-size:.95rem; color:var(--slate); margin:0}
+.q .ids{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px;
+  color:var(--slate-dim); margin-top:10px; letter-spacing:.02em;
+}
+
+/* ── Rotations ── */
+.rot{margin-top:52px}
+.rot-head{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:16px; flex-wrap:wrap;
+  border-bottom:2px solid var(--navy); padding-bottom:10px; margin-bottom:0;
+}
+.rot-head h3{
+  font-family:Newsreader,Georgia,serif; font-weight:600; font-size:1.4rem;
+  letter-spacing:-.01em; text-transform:none; color:var(--navy); margin:0;
+}
+.rot-head .count{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px;
+  letter-spacing:.08em; color:var(--slate-dim); text-transform:uppercase;
+}
+.epa{
+  display:grid; grid-template-columns:34px 1fr; gap:0 16px;
+  padding:22px 0; border-bottom:1px solid var(--rule-soft);
+}
+.epa:last-child{border-bottom:none}
+.epa .num{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px;
+  font-weight:500; color:var(--slate-dim); padding-top:3px;
+  font-variant-numeric:tabular-nums;
+}
+.epa .txt{
+  font-size:1.06rem; line-height:1.45; color:var(--ink);
+  font-weight:500; margin:0 0 6px; text-wrap:pretty;
+}
+.epa .id{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px;
+  color:var(--slate-dim); letter-spacing:.02em;
+}
+.epa .ctx{font-size:.9rem; line-height:1.55; color:var(--slate); margin:9px 0 0}
+.chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px}
+.chip{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px;
+  font-weight:500; letter-spacing:.04em;
+  background:var(--chip-bg); color:var(--chip-ink);
+  border:1px solid var(--chip-rule); padding:3px 8px;
+}
+
+/* ── Reference table ── */
+.tablewrap{overflow-x:auto; border:1px solid var(--rule); background:var(--surface)}
+table{border-collapse:collapse; width:100%; min-width:560px}
+th,td{text-align:left; padding:11px 16px; border-bottom:1px solid var(--rule-soft); font-size:.92rem}
+th{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--slate-dim);
+  font-weight:500; background:var(--surface-2);
+}
+tr:last-child td{border-bottom:none}
+td.c{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-weight:600;
+  color:var(--ink); white-space:nowrap; width:1%;
+}
+td.t{color:var(--slate)}
+
+footer{
+  margin-top:72px; padding-top:26px; border-top:1px solid var(--rule);
+  font-size:.86rem; color:var(--slate-dim); max-width:68ch;
+}
+
+:focus-visible{outline:2px solid var(--navy); outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+
+@media print{
+  body{background:#fff; color:#000; font-size:10.5pt}
+  .wrap{max-width:none; padding:0}
+  .masthead{padding-top:0}
+  section{padding-top:26pt; break-inside:avoid}
+  .rot, .q, .epa{break-inside:avoid}
+  .ask, .q, .note, .cell{box-shadow:none}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">VCMC · Addiction Medicine Fellowship</div>
+    <h1>Draft EPAs for Review</h1>
+    <p class="standfirst col">Twenty-nine entrustable professional activities across four rotations, mapped to the ACGME Addiction Medicine Milestones. The structure and milestone mapping have been checked programmatically. The clinical substance has not — that is what we need from you.</p>
+    <div class="meta">
+      <span><b>29</b> EPAs</span>
+      <span><b>4</b> rotations</span>
+      <span><b>16/16</b> milestones covered</span>
+      <span>Milestones <b>v1.2</b> · Jan 2019</span>
+      <span>Form version <b>2026.1</b></span>
+    </div>
+  </header>
+
+  <section>
+    <div class="ask col">
+      <h3>What we need from you</h3>
+      <ol>
+        <li><strong>Is each activity observable and scoreable?</strong> An attending should be able to watch a fellow do this and rate it in one sitting.</li>
+        <li><strong>Is the wording right for our program?</strong> These were drafted from the ACGME milestones, not from how your rotations actually run.</li>
+        <li><strong>Is anything missing, and is anything redundant?</strong> Rotation sizes are uneven by design, but tell us if the balance is wrong.</li>
+        <li><strong>Check the four open questions below</strong> — those are the specific calls we could not make without you.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2>Before you read</h2>
+    <p class="sect-note">Three things that are easy to misread, and one that is permanent.</p>
+    <div class="notes">
+      <div class="note">
+        <h4>The scale is supervision, not level</h4>
+        <p>Faculty score <strong>0–5 entrustment</strong> — "Complete Supervision" through "Aspirational" — not the ACGME's Level 1–5. The two look alike and are not the same number. Do not read a dashboard figure as the level you report in your semi-annual review.</p>
+      </div>
+      <div class="note">
+        <h4>These codes are yours alone</h4>
+        <p>The residency uses 19 milestone codes and the fellowship uses 16, and <strong>15 of them collide</strong>. <code>PC1</code> means one thing for a resident and something entirely different for a fellow. The system keeps them apart; nothing here is shared with the residency.</p>
+      </div>
+      <div class="note">
+        <h4>Revise now, not later</h4>
+        <p>Each EPA has a permanent id. <strong>Once the first evaluation is filed, the wording is frozen</strong> onto that record and ids can never be renamed or reused. Rewriting, merging, renumbering and deleting are all free until then — and effectively impossible afterwards.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Milestone coverage</h2>
+    <p class="sect-note">How many EPAs feed each of the 16 Addiction Medicine milestones. Every milestone is reached by at least one, so no row will render permanently blank. Highlighted cells are reached by exactly one EPA — cut or reword that EPA and the milestone drops to zero.</p>
+    <div class="cover" id="cover"></div>
+  </section>
+
+  <section>
+    <h2>Open questions</h2>
+    <p class="sect-note">Four calls that need your judgment rather than ours.</p>
+    <div class="qs col" id="questions"></div>
+  </section>
+
+  <section>
+    <h2>The rotations</h2>
+    <p class="sect-note">EPAs are numbered as the evaluator sees them on the form. The italic line under each is the prompt shown to faculty while they score — the observable behaviors to consider. Milestone codes follow each activity.</p>
+    <div id="rotations"></div>
+  </section>
+
+  <section>
+    <h2>Milestone reference</h2>
+    <p class="sect-note">The 16 ACGME Addiction Medicine Milestones, Version 1.2, with ACGME's exact titles.</p>
+    <div class="tablewrap"><table id="msTable">
+      <thead><tr><th>Code</th><th>Milestone</th><th>EPAs</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </section>
+
+  <footer>
+    <p><strong>Draft &mdash; not the final instrument.</strong> Snapshot generated 29 August 2026 from the fellowship&rsquo;s definitions file, so this document and the evaluation form cannot disagree. If the EPAs are revised, this page is regenerated rather than edited by hand.</p>
+    <p>Nothing here contains fellow or patient information. Not indexed by search engines.</p>
+    <p><a href="https://www.venturafamilymed.org">Ventura County Medical Center &middot; Family Medicine Residency Program</a></p>
+  </footer>
+
+</div>
+
+<script>
+const MILESTONE_DEFS_AM = {
+  PC1:   'Screening, Evaluation, Differential Diagnosis, and Case Formulation of the Patient with or at Risk of Substance Use, Addictive Disorders, and Comorbidities',
+  PC2:   'Pharmacologic and Non-Pharmacologic Treatment for Substance Use and Addictive Disorders',
+  MK1:   'Neuroscience of Substance Use and Addictive Disorders',
+  MK2:   'Epidemiology and Clinical Presentation of Substance Use and Addictive Disorders',
+  MK3:   'Treatment Modalities and Interventions in Heterogenous Patient Populations',
+  SBP1:  'Patient Safety and Quality Improvement in Addiction Medicine',
+  SBP2:  'System Navigation for Patient-Centered Care in Addiction Medicine',
+  SBP3:  'The Addiction Medicine Physician Role in Health Care Systems',
+  PBLI1: 'Evidence-Based and Informed Practice',
+  PBLI2: 'Reflective Practice and Commitment to Personal Growth in Addiction Medicine',
+  PROF1: 'Professional Behavior and Ethical Principles',
+  PROF2: 'Accountability/Conscientiousness in Addiction Medicine',
+  PROF3: 'Self-Awareness and Help-Seeking',
+  ICS1:  'Patient- and Family-Centered Communication',
+  ICS2:  'Interprofessional and Team Communication',
+  ICS3:  'Communication within Health Care Systems',
+};
+const ROTATIONS_AM = {
+  'Outpatient Addiction Medicine Clinic': {
+    epas: [
+      { id: 'amclin1', text: 'Perform a comprehensive addiction-focused assessment of a new outpatient', context: 'Consider: substance use history across all classes; DSM-5 severity criteria; withdrawal risk; psychiatric and medical comorbidity; social determinants and recovery capital; corroborating history and records; formulating the case rather than listing findings.', milestones: ['PC1','MK2'] },
+      { id: 'amclin2', text: 'Initiate and manage medication for opioid use disorder', context: 'Consider: selecting among buprenorphine, methadone, and naltrexone with the patient; induction planning and precipitated withdrawal risk; dose adjustment against craving and continued use; managing the patient who keeps using; regulatory and pharmacy logistics.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amclin3', text: 'Initiate and manage pharmacotherapy for alcohol use disorder', context: 'Consider: naltrexone, acamprosate, and disulfiram selection; hepatic and renal considerations; goals that may include reduction rather than abstinence; monitoring response; addressing the belief that medication is not real recovery.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amclin4', text: 'Develop and revise an individualized treatment plan with the patient', context: 'Consider: eliciting patient goals and readiness to change; matching treatment intensity to need; negotiating rather than prescribing a plan; revising when the plan is not working; documenting shared decisions.', milestones: ['PC2','ICS1'] },
+      { id: 'amclin5', text: 'Manage co-occurring psychiatric and medical conditions in the patient with a substance use disorder', context: 'Consider: sequencing versus concurrent treatment; psychiatric medication choice alongside addiction pharmacotherapy; chronic pain in the patient on MOUD; infectious complications; avoiding attribution of every symptom to substance use.', milestones: ['PC1','MK3'] },
+      { id: 'amclin6', text: 'Deliver harm reduction counseling and provide overdose prevention', context: 'Consider: naloxone prescribing and training; safer use counseling; fentanyl and xylazine test strips; syringe services referral; engaging the patient who is not ready to stop; framing that reduces rather than reinforces shame.', milestones: ['SBP3','ICS1'] },
+      { id: 'amclin7', text: 'Coordinate longitudinal care across behavioral health, primary care, and community recovery resources', context: 'Consider: warm handoffs; communication with counselors and peer support specialists; mutual-help and recovery community linkage; re-engaging the patient lost to follow-up; navigating insurance and treatment-program access.', milestones: ['SBP2','ICS2'] },
+      { id: 'amclin8', text: 'Apply current evidence and guidelines to an addiction treatment decision', context: 'Consider: formulating an answerable clinical question; appraising evidence where the literature is thin or conflicting; applying guidelines to a patient who does not resemble the trial population; explaining the reasoning to the patient and the team.', milestones: ['PBLI1','MK3'] },
+      { id: 'amclin9', text: 'Recognize personal reactions and the limits of expertise, and seek supervision appropriately', context: 'Consider: naming stigma and countertransference rather than acting on them; recognizing frustration when a patient returns to use; awareness of how personal or family recovery experience shapes judgment; asking for help before rather than after a decision; using feedback to change practice.', milestones: ['PROF3','PBLI2'] },
+    ]
+  },
+
+  'Inpatient Detox Unit': {
+    epas: [
+      { id: 'amipd1', text: 'Assess and risk-stratify a patient admitted for medically supervised withdrawal', context: 'Consider: substances used, quantity, and time of last use; prior withdrawal history including seizure and delirium; ASAM level-of-care reasoning; medical instability requiring a higher level of care; validated withdrawal scales and their limits.', milestones: ['PC1','MK2'] },
+      { id: 'amipd2', text: 'Manage alcohol withdrawal, including complicated withdrawal', context: 'Consider: symptom-triggered versus fixed-dose benzodiazepine protocols; recognizing and treating delirium tremens; seizure prophylaxis; thiamine and electrolyte repletion; phenobarbital and adjunctive agents; recognizing when protocol-driven care is no longer sufficient.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amipd3', text: 'Manage opioid withdrawal and transition the patient to maintenance treatment', context: 'Consider: buprenorphine induction timing and low-dose approaches; methadone initiation and titration limits; adjunctive symptom management; loss of tolerance and overdose risk after withdrawal; starting maintenance before discharge rather than after.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amipd4', text: 'Manage sedative-hypnotic and benzodiazepine withdrawal', context: 'Consider: protracted withdrawal timelines; cross-tolerance and equivalent dosing; taper design; seizure and delirium risk; polysubstance withdrawal where presentations overlap.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amipd5', text: 'Recognize and respond to clinical deterioration or a safety event on the unit', context: 'Consider: escalation criteria and transfer thresholds; oversedation and respiratory depression; occult medical illness presenting as withdrawal; reporting through institutional systems; identifying the system factors rather than only the individual error.', milestones: ['PC1','SBP1'] },
+      { id: 'amipd6', text: 'Lead interdisciplinary rounds on the withdrawal management unit', context: 'Consider: synthesizing input from nursing, counseling, social work, and pharmacy; resolving disagreement about readiness or behavior; setting a unified plan the team can carry out; supporting staff after a difficult event.', milestones: ['ICS2','SBP2'] },
+      { id: 'amipd7', text: 'Plan discharge and transition to ongoing treatment', context: 'Consider: securing the next appointment before discharge; medication continuity and prescription logistics; naloxone at discharge; housing, transportation, and benefits; communicating the plan to the receiving clinician; planning for departure against medical advice.', milestones: ['SBP2','ICS3'] },
+      { id: 'amipd8', text: 'Complete documentation, handoffs, and controlled-substance requirements accurately and on time', context: 'Consider: notes that support the level of care billed; prescription monitoring program checks; handoff content that survives a shift change; timeliness without templating away the clinical reasoning; confidentiality rules specific to substance use records.', milestones: ['PROF2','ICS3'] },
+    ]
+  },
+
+  'Sober Living Facility Rounds': {
+    epas: [
+      { id: 'amslf1', text: 'Conduct a recovery-focused check-in and assess relapse risk', context: 'Consider: eliciting an honest report without interrogation; recognizing early warning signs; assessing craving, mood, sleep, and social stressors; distinguishing a lapse from escalating use; keeping the visit clinically useful in a setting with no exam room.', milestones: ['PC1','ICS1'] },
+      { id: 'amslf2', text: 'Manage medications and monitor adherence in a residential, non-clinical setting', context: 'Consider: MOUD continuity and diversion concerns; medication storage and house policy; psychiatric medication adherence; coordinating with the prescribing clinician; adjusting when the setting cannot support the regimen.', milestones: ['PC2','SBP2'] },
+      { id: 'amslf3', text: 'Respond to a return to use without abandoning the patient', context: 'Consider: clinical reassessment rather than discharge as the default; renegotiating level of care; overdose risk after a period of abstinence; working within house rules that may require exit; treating recurrence as a feature of the illness while still taking it seriously.', milestones: ['PC2','PROF1'] },
+      { id: 'amslf4', text: 'Navigate confidentiality, boundaries, and dual relationships in a community residence', context: 'Consider: 42 CFR Part 2 and what may be shared with house staff; discussing clinical matters where others can overhear; requests from family or management for information; maintaining a clinical role in a peer-oriented environment.', milestones: ['PROF1','ICS3'] },
+      { id: 'amslf5', text: 'Collaborate with non-clinical recovery staff and house management', context: 'Consider: translating clinical reasoning for staff without medical training; respecting peer expertise; handling disagreement about a resident who is struggling; teaching overdose recognition and naloxone use; supporting staff without taking over their role.', milestones: ['ICS2','SBP3'] },
+      { id: 'amslf6', text: 'Advocate for resident access to housing, benefits, and continuing care', context: 'Consider: benefits and disability applications; discrimination against patients on MOUD in housing or employment; transportation to treatment; identifying when the housing situation is itself the clinical problem; escalating beyond the individual case.', milestones: ['SBP3','SBP2'] },
+    ]
+  },
+
+  'Outpatient Detox Unit': {
+    epas: [
+      { id: 'amopd1', text: 'Determine whether ambulatory withdrawal management is appropriate for this patient', context: 'Consider: ASAM criteria applied to a real case; withdrawal severity and prior complicated withdrawal; medical and psychiatric comorbidity; home environment, supervision, and access to substances; declining to treat in the ambulatory setting when it is not safe.', milestones: ['PC1','SBP2'] },
+      { id: 'amopd2', text: 'Manage ambulatory alcohol withdrawal with scheduled monitoring', context: 'Consider: taper regimens suitable for unsupervised use; quantity dispensed and diversion risk; daily or near-daily reassessment; thiamine repletion; criteria that trigger escalation to inpatient care.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amopd3', text: 'Manage ambulatory opioid withdrawal and bridge the patient to maintenance', context: 'Consider: home buprenorphine induction instructions; adjunctive symptom relief; the window in which the patient is most likely to disengage; loss of tolerance and overdose risk; naloxone provided at the outset rather than at completion.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amopd4', text: 'Establish monitoring, safety planning, and escalation criteria for the ambulatory patient', context: 'Consider: written instructions the patient and family can act on; what to do overnight and at weekends; explicit return or call thresholds; recognizing early rather than late that the plan has failed; documenting the safety plan.', milestones: ['SBP1','PC1'] },
+      { id: 'amopd5', text: 'Engage family or support persons in the ambulatory withdrawal plan', context: 'Consider: obtaining consent before involving others; teaching what to watch for; naloxone training for the household; managing family expectations about the course; recognizing when family involvement is unsafe or unwanted.', milestones: ['ICS1','ICS2'] },
+      { id: 'amopd6', text: 'Transition the patient from withdrawal management into ongoing treatment', context: 'Consider: the next appointment scheduled before withdrawal is complete; medication continuity; re-engaging the patient who does not return; communicating with the receiving clinician; recognizing that completing withdrawal is not itself treatment.', milestones: ['SBP2','ICS3'] },
+    ]
+  },
+};
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// ── Counts, derived from the definitions rather than written by hand ──────────
+const counts = {};
+Object.keys(MILESTONE_DEFS_AM).forEach(m => counts[m] = []);
+for (const [rot, cfg] of Object.entries(ROTATIONS_AM))
+  for (const e of cfg.epas)
+    for (const m of e.milestones) counts[m].push(e.id);
+
+const max = Math.max(...Object.values(counts).map(a => a.length));
+
+// ── Coverage grid ────────────────────────────────────────────────────────────
+document.getElementById('cover').innerHTML = Object.entries(MILESTONE_DEFS_AM).map(([code, title]) => {
+  const n = counts[code].length;
+  const thin = n === 1;
+  // Trim ACGME's long titles to the distinguishing part for the grid; the full
+  // wording is in the reference table below.
+  const short = title.length > 62 ? title.slice(0, 60).replace(/[,\s]+\S*$/, '') + '…' : title;
+  return `
+    <div class="cell${thin ? ' thin' : ''}">
+      <span class="n">${n}</span>
+      <span class="code">${esc(code)}</span>
+      <span class="ttl">${esc(short)}</span>
+      <div class="bar"><i style="width:${Math.round(n / max * 100)}%"></i></div>
+    </div>`;
+}).join('');
+
+// ── Open questions ───────────────────────────────────────────────────────────
+const QUESTIONS = [
+  { flagged: true,
+    h: 'Is amclin9 something an attending can actually observe?',
+    p: 'It is the only EPA carrying PROF3 (Self-Awareness and Help-Seeking) and PBLI2 (Reflective Practice). It was written partly because nothing else reached those two milestones, which is a slightly artificial reason for an EPA to exist. Stigma and countertransference are real competencies in addiction medicine — but can a supervisor rate them in clinic, and would they?',
+    ids: 'amclin9 · PROF3, PBLI2' },
+  { flagged: false,
+    h: 'Is Sober Living Facility Rounds weighted correctly?',
+    p: 'Four of its six EPAs sit in Professionalism, Communication and Systems-Based Practice. That may reflect the setting honestly — much of what happens on those rounds is boundaries, collaboration and advocacy — but it means the rotation contributes very little to Patient Care and Medical Knowledge averages.',
+    ids: 'amslf1–amslf6' },
+  { flagged: false,
+    h: 'Are 9 EPAs too many for one sitting?',
+    p: 'Rotation sizes are 9, 8, 6 and 6. The residency averages 6–7. Uneven is fine if it reflects real scope, but the Outpatient Clinic form is the longest thing an attending will be asked to complete, and completion rates fall off with length.',
+    ids: 'Outpatient Addiction Medicine Clinic' },
+  { flagged: false,
+    h: 'Should MK2 be mapped more widely?',
+    p: 'Epidemiology and Clinical Presentation is reached by only two EPAs, both initial assessments. It is arguably in play for most assessment work — amslf1 (recovery check-in) and amopd1 (level-of-care determination) are both plausible additions if you want it better represented.',
+    ids: 'MK2 · currently amclin1, amipd1' },
+];
+
+document.getElementById('questions').innerHTML = QUESTIONS.map(q => `
+  <div class="q${q.flagged ? ' flagged' : ''}">
+    <h4>${esc(q.h)}</h4>
+    <p>${esc(q.p)}</p>
+    <div class="ids">${esc(q.ids)}</div>
+  </div>`).join('');
+
+// ── Rotations ────────────────────────────────────────────────────────────────
+document.getElementById('rotations').innerHTML = Object.entries(ROTATIONS_AM).map(([rot, cfg]) => `
+  <div class="rot">
+    <div class="rot-head">
+      <h3>${esc(rot)}</h3>
+      <span class="count">${cfg.epas.length} EPAs</span>
+    </div>
+    ${cfg.epas.map((e, i) => `
+      <div class="epa">
+        <div class="num">${i + 1}</div>
+        <div>
+          <p class="txt">I trust this fellow to… ${esc(e.text)}</p>
+          <span class="id">${esc(e.id)}</span>
+          <p class="ctx">${esc(e.context)}</p>
+          <div class="chips">
+            ${e.milestones.map(m => `<span class="chip" title="${esc(MILESTONE_DEFS_AM[m] || '')}">${esc(m)}</span>`).join('')}
+          </div>
+        </div>
+      </div>`).join('')}
+  </div>`).join('');
+
+// ── Milestone reference ──────────────────────────────────────────────────────
+document.querySelector('#msTable tbody').innerHTML = Object.entries(MILESTONE_DEFS_AM).map(([code, title]) => `
+  <tr>
+    <td class="c">${esc(code)}</td>
+    <td class="t">${esc(title)}</td>
+    <td class="c">${counts[code].length}</td>
+  </tr>`).join('');
+</script>
+</body>
+</html>

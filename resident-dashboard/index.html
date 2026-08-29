@@ -995,14 +995,14 @@
 </footer>
 
 <script src="../shared/text-matching.js?v=1"></script>
-<script src="../shared/definitions.js?v=4"></script>
+<script src="../shared/definitions.js?v=6"></script>
 <script src="../shared/faculty-roster.js?v=2"></script>
 <script src="../shared/detail-options.js?v=1"></script>
 <script>
 // Fail visibly rather than silently. Without the shared definitions this page
 // would render its frame and simply show nothing to work with, which reads as
 // "there is no data" instead of "a file is missing".
-if (typeof ROTATIONS === 'undefined' || typeof resolveFacultyIdentity === 'undefined'
+if (typeof ROTATIONS_BY_PROGRAM === 'undefined' || typeof resolveFacultyIdentity === 'undefined'
     || typeof resolveDetailIdentity === 'undefined' || typeof normalize === 'undefined') {
   document.body.innerHTML = '<div style="max-width:640px;margin:80px auto;padding:0 24px;font-family:Helvetica,Arial,sans-serif;color:#1A2744">'
     + '<h2 style="margin-bottom:12px">This page did not load correctly</h2>'
@@ -1128,12 +1128,18 @@ async function getAuthHeader() {
 // (SCALE_LABELS -> shared/definitions.js)
 
 // ── State ──────────────────────────────────────────────────────────
+// The dashboard shows one program at a time. Every milestone code on screen is
+// read through milestoneDefs(currentProgram), and loadSubmissions() filters the
+// fetch, so a row from the other program cannot reach an aggregate. Milestone
+// codes collide between the two vocabularies and would average together
+// silently — see PROGRAMS in shared/definitions.js.
+let currentProgram = DEFAULT_PROGRAM;
 let allSubmissions = [];
 
 // ── Storage — load from Supabase ──────────────────────────────────
 async function loadSubmissions() {
   try {
-    const url = `${SUPABASE_URL}/rest/v1/epa_submissions?select=*&order=created_at.desc&limit=10000`;
+    const url = `${SUPABASE_URL}/rest/v1/epa_submissions?select=*&program=eq.${currentProgram}&order=created_at.desc&limit=10000`;
     const headers = await getAuthHeader();
     const response = await fetch(url, { headers });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1143,6 +1149,7 @@ async function loadSubmissions() {
       timestamp:       row.created_at,
       resident:        row.resident,
       rotation:        row.rotation,
+      program:         row.program || DEFAULT_PROGRAM,
       evaluatorName:   row.evaluator_name,
       evaluatorId:     row.evaluator_id     || null,
       rotationDetail:  row.rotation_detail  || null,
@@ -1252,7 +1259,7 @@ function renderMilestones() {
     return;
   }
 
-  const milestoneOrder = Object.keys(MILESTONE_DEFS);
+  const milestoneOrder = Object.keys(milestoneDefs(currentProgram));
   container.innerHTML = `
     <div class="milestone-grid">
       ${milestoneOrder.map(code => {
@@ -1264,7 +1271,7 @@ function renderMilestones() {
         return `
           <div class="milestone-card">
             <div class="mc-code">${code}</div>
-            <div class="mc-desc">${MILESTONE_DEFS[code]}</div>
+            <div class="mc-desc">${milestoneDefs(currentProgram)[code]}</div>
             <div class="mc-bar-bg"><div class="mc-bar-fill" style="width:${pct}%; background:${barColor}"></div></div>
             <div style="display:flex; align-items:baseline; gap:6px">
               <div class="mc-score">${avg !== null ? avg.toFixed(1) : '—'} <span>/ 5.0</span></div>
@@ -1385,7 +1392,7 @@ function renderResidentDetail() {
     return { rot, count: rotSubs.length, avg };
   });
 
-  const milestoneOrder = Object.keys(MILESTONE_DEFS);
+  const milestoneOrder = Object.keys(milestoneDefs(currentProgram));
   container.innerHTML = `
     <div style="margin-bottom:24px">
       <h3 style="font-size:18px; font-weight:700; color:var(--navy); margin-bottom:4px">${resFilter}</h3>
@@ -1413,7 +1420,7 @@ function renderResidentDetail() {
         return `
           <div class="milestone-card">
             <div class="mc-code">${code}</div>
-            <div class="mc-desc">${MILESTONE_DEFS[code]}</div>
+            <div class="mc-desc">${milestoneDefs(currentProgram)[code]}</div>
             <div class="mc-bar-bg"><div class="mc-bar-fill" style="width:${pct}%; background:${barColor}"></div></div>
             <div class="mc-score">${avg !== null ? avg.toFixed(1) : '—'} <span>/ 5.0 ${vals.length ? `(${vals.length})` : ''}</span></div>
           </div>
@@ -1484,14 +1491,14 @@ function renderResidentDetail() {
 // when it resolves — so a merged duplicate collapses — otherwise exactly what
 // was typed, rather than dropping the row.
 function displayDetailName(s) {
-  const cfg = rotationDetailFor(s.rotation);
+  const cfg = rotationDetailFor(s.program, s.rotation);
   if (!cfg) return s.rotationDetail;
   const ident = resolveDetailIdentity(cfg.category, s.rotationDetailId, s.rotationDetail);
   return ident ? ident.name : s.rotationDetail;
 }
 
 function detailRotations() {
-  return Object.keys(ROTATION_DETAIL || {});
+  return rotationsWithDetail(currentProgram);
 }
 
 // Rows from rotations that record a detail. `unlabelled` counts rows submitted
@@ -1570,7 +1577,7 @@ function renderProcedures() {
       <div class="merge-section-head">${escFaculty(rot)} &mdash; ${total} logged</div>
       <div class="table-wrap" style="margin-bottom:8px">
         <table>
-          <thead><tr><th>${escFaculty((rotationDetailFor(rot) || {}).label || 'Detail')}</th>
+          <thead><tr><th>${escFaculty((rotationDetailFor(currentProgram, rot) || {}).label || 'Detail')}</th>
             <th style="width:110px">Count</th><th style="width:110px">Residents</th><th style="width:130px">Avg Score</th></tr></thead>
           <tbody>
             ${rows.map(r => {
@@ -1649,7 +1656,7 @@ function detailDuplicateCandidates(category) {
 
 function detailUseCount(optionId) {
   return allSubmissions.filter(s => {
-    const cfg = rotationDetailFor(s.rotation);
+    const cfg = rotationDetailFor(s.program, s.rotation);
     if (!cfg) return false;
     const ident = resolveDetailIdentity(cfg.category, s.rotationDetailId, s.rotationDetail);
     return ident && String(ident.id) === String(optionId);
@@ -2063,7 +2070,7 @@ function epaRows(sub) {
   if (Array.isArray(sub.scoresDetail) && sub.scoresDetail.length) {
     return sub.scoresDetail.map(r => ({ text: r.text || r.id, score: r.score }));
   }
-  const defs = ROTATIONS[sub.rotation]?.epas || [];
+  const defs = epaDefsFor(sub.program, sub.rotation);
   const rows = [];
   const seen = new Set();
   defs.forEach(epa => {
@@ -2150,7 +2157,7 @@ function closeModal(e) {
 function exportCSV() {
   if (allSubmissions.length === 0) { alert('No submissions to export.'); return; }
 
-  const milestones = Object.keys(MILESTONE_DEFS);
+  const milestones = Object.keys(milestoneDefs(currentProgram));
   const headers = ['Date', 'Resident', 'Rotation', 'Procedure / Subspecialty', 'Evaluator', 'Evaluator Typed As', 'Supervision Date', 'Form Version', 'Avg Score', 'Narrative', ...milestones];
 
   const rows = allSubmissions.map(s => {

@@ -6,24 +6,35 @@
 // Loaded as a plain <script> before each page's own script; top-level const
 // declarations here are visible to the scripts that follow.
 //
+// TWO PROGRAMS
+//   Everything that describes a measurement - milestones, rotations, EPAs,
+//   rotation detail, form version - is keyed by program (see the PROGRAMS
+//   section below). There is deliberately no unkeyed MILESTONE_DEFS or
+//   ROTATIONS to reach for: the ACGME codes collide between Family Medicine
+//   and Addiction Medicine, so a code is only meaningful once you have said
+//   which program you mean. Reach for milestoneDefs(program) and friends.
+//
 // EDITING RULES
-//   - EPA ids are APPEND-ONLY. Never rename one and never reuse one. 31 of the
-//     35 evaluations on file predate scores_detail and resolve their labels
-//     from ROTATIONS below; a renamed id silently unlabels them.
+//   - EPA ids are APPEND-ONLY, per program. Never rename one and never reuse
+//     one. 31 of the evaluations on file predate scores_detail and resolve
+//     their labels from ROTATIONS_FM below; a renamed id silently unlabels
+//     them.
 //   - To remove an EPA from the form, mark it `retired: true`. activeEpas()
 //     drops it from the form, buildScoresDetail() and computeMilestoneScores(),
 //     while its definition stays here to label older rows. Never delete an entry.
-//   - Milestone codes in `milestones` must exist in MILESTONE_DEFS.
-//   - Changing anything that alters the measurement means bumping FORM_VERSION
-//     in index.html, which is deliberately NOT here: it versions the form, not
-//     the definitions.
+//   - Milestone codes in an EPA's `milestones` must exist in that program's
+//     entry in MILESTONE_DEFS_BY_PROGRAM. A code that is valid for one program
+//     is not automatically valid for the other, and the overlap is not an
+//     invitation to share.
+//   - Changing anything that alters the measurement means bumping that
+//     program's `formVersion` in PROGRAMS - and only that program's. A change
+//     to the fellowship's EPAs says nothing about the residency's.
 //   - After editing, bump the ?v= query string on every <script src> that loads
 //     this file, or browsers will keep serving the cached copy.
 //
 // Pages that load this file:
 //   index.html, resident-dashboard/, faculty/, faculty-dashboard/
 // ─────────────────────────────────────────────────────────────────────────────
-
 const SCALE_LABELS = {
   0: "Not Yet Entrustable",
   1: "Complete Supervision",
@@ -34,7 +45,7 @@ const SCALE_LABELS = {
   na: "N/A"
 };
 
-const MILESTONE_DEFS = {
+const MILESTONE_DEFS_FM = {
   PC1: 'Care of the Acutely Ill Patient',
   PC2: 'Care of Patients with Chronic Illness',
   PC3: 'Health Promotion and Wellness',
@@ -56,7 +67,7 @@ const MILESTONE_DEFS = {
   ICS3: 'Communication within Health Care Systems'
 };
 
-const ROTATIONS = {
+const ROTATIONS_FM = {
   'Inpatient Medicine': {
     epas: [
       { id: 'med1', text: 'Evaluate and manage an adult patient admitted with an acute medical illness', context: 'Consider: prioritized differential diagnosis for acute presentations; appropriate diagnostic workup; management plan for common and complex acute conditions; recognizing clinical deterioration; incorporating psychosocial factors.', milestones: ['PC1','MK2'] },
@@ -263,7 +274,7 @@ const ROTATIONS = {
 //
 // A rotation absent from this object collects no detail and shows no extra field.
 
-const ROTATION_DETAIL = {
+const ROTATION_DETAIL_FM = {
   'Procedural Care': {
     category: 'procedure',
     label: 'Which procedure?',
@@ -281,10 +292,208 @@ const ROTATION_DETAIL = {
   },
 };
 
-// The detail configuration for a rotation, or null if it collects none.
-function rotationDetailFor(rotationName) {
-  return ROTATION_DETAIL[rotationName] || null;
+// ═════════════════════════════════════════════════════════════════════════════
+// PROGRAMS
+// ═════════════════════════════════════════════════════════════════════════════
+//
+// Two learner populations with two ACGME milestone vocabularies that collide.
+// Fifteen of the nineteen Family Medicine codes also exist in the sixteen-code
+// Addiction Medicine set. Four of them (PC1, PC2, MK1, MK2) mean something
+// entirely unrelated in each. The other eleven are titled almost identically -
+// PBLI1 is word-for-word the same - which is the more dangerous half, because
+// the similarity invites the conclusion that they can be shared. They cannot:
+// the AM level anchors are addiction-contextualised, and milestones are
+// reported to the ACGME per program, so a code averaged across both
+// populations belongs to neither program's report.
+//
+// milestone_scores is an untyped JSON object, so nothing about the storage
+// prevents a fellow's PC1 averaging into a resident's PC1. What prevents it is
+// this: every structure below is keyed by program, there is no unkeyed
+// MILESTONE_DEFS or ROTATIONS to reach for, and every accessor takes a program
+// as its first argument and throws when it is missing or unknown. A caller that
+// has not decided which population it is looking at cannot get a milestone out
+// of this file.
+//
+// The row-level counterpart is epa_submissions.program - see
+// sql/010_add_program_discriminator.sql.
+
+const PROGRAMS = {
+  fm: {
+    key:         'fm',
+    label:       'Family Medicine Residency',
+    learner:     'resident',
+    learners:    'residents',
+    // Bump when the measurement changes for THIS program: an EPA reworded,
+    // added or retired, or a milestone mapping altered. Per program, because a
+    // change to the fellowship's EPAs says nothing about the residency's.
+    formVersion: '2026.2',
+  },
+  am: {
+    key:         'am',
+    label:       'Addiction Medicine Fellowship',
+    learner:     'fellow',
+    learners:    'fellows',
+    formVersion: '2026.1',
+  },
+};
+
+const DEFAULT_PROGRAM = 'fm';
+
+// ── Milestone vocabularies ───────────────────────────────────────────────────
+//
+// FM: 19 codes, ACGME Family Medicine Milestones.
+// AM: 16 codes, ACGME Addiction Medicine Milestones, Version 1.2 (January 2019).
+//     Titles are ACGME's exact wording. Do not shorten them to match the FM
+//     phrasing - the near-identical titles are the trap this file exists to
+//     avoid, and making them identical removes the only on-screen signal that
+//     two different instruments are in play.
+
+const MILESTONE_DEFS_AM = {
+  PC1:   'Screening, Evaluation, Differential Diagnosis, and Case Formulation of the Patient with or at Risk of Substance Use, Addictive Disorders, and Comorbidities',
+  PC2:   'Pharmacologic and Non-Pharmacologic Treatment for Substance Use and Addictive Disorders',
+  MK1:   'Neuroscience of Substance Use and Addictive Disorders',
+  MK2:   'Epidemiology and Clinical Presentation of Substance Use and Addictive Disorders',
+  MK3:   'Treatment Modalities and Interventions in Heterogenous Patient Populations',
+  SBP1:  'Patient Safety and Quality Improvement in Addiction Medicine',
+  SBP2:  'System Navigation for Patient-Centered Care in Addiction Medicine',
+  SBP3:  'The Addiction Medicine Physician Role in Health Care Systems',
+  PBLI1: 'Evidence-Based and Informed Practice',
+  PBLI2: 'Reflective Practice and Commitment to Personal Growth in Addiction Medicine',
+  PROF1: 'Professional Behavior and Ethical Principles',
+  PROF2: 'Accountability/Conscientiousness in Addiction Medicine',
+  PROF3: 'Self-Awareness and Help-Seeking',
+  ICS1:  'Patient- and Family-Centered Communication',
+  ICS2:  'Interprofessional and Team Communication',
+  ICS3:  'Communication within Health Care Systems',
+};
+
+// ── Registries ───────────────────────────────────────────────────────────────
+// ROTATION_DETAIL_AM is deliberately empty. None of the four fellowship
+// rotations is generic the way Procedural Care is - each names a specific
+// setting - so there is no extra question to ask about which one it was. A
+// rotation absent from this object shows no extra field and stores NULL.
+//
+// EPA IDS ARE APPEND-ONLY AND PREFIXED BY ROTATION:
+//   amclin - Outpatient Addiction Medicine Clinic
+//   amipd  - Inpatient Detox Unit
+//   amslf  - Sober Living Facility Rounds
+//   amopd  - Outpatient Detox Unit
+// The `am` prefix is defensive: it keeps a fellowship id recognisable in a raw
+// `scores` blob even when it is read without the program column beside it.
+// Never rename one of these and never reuse one.
+//
+// DRAFT - written from the ACGME Addiction Medicine Milestones v1.2 and not yet
+// reviewed by fellowship faculty. Revise freely until the first evaluation is
+// submitted; after that the ids harden and scores_detail has frozen the wording
+// on every row already filed.
+//
+// Every one of the 16 AM milestones is mapped by at least one EPA, so no
+// milestone row renders permanently blank on the dashboard.
+
+const ROTATIONS_AM = {
+  'Outpatient Addiction Medicine Clinic': {
+    epas: [
+      { id: 'amclin1', text: 'Perform a comprehensive addiction-focused assessment of a new outpatient', context: 'Consider: substance use history across all classes; DSM-5 severity criteria; withdrawal risk; psychiatric and medical comorbidity; social determinants and recovery capital; corroborating history and records; formulating the case rather than listing findings.', milestones: ['PC1','MK2'] },
+      { id: 'amclin2', text: 'Initiate and manage medication for opioid use disorder', context: 'Consider: selecting among buprenorphine, methadone, and naltrexone with the patient; induction planning and precipitated withdrawal risk; dose adjustment against craving and continued use; managing the patient who keeps using; regulatory and pharmacy logistics.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amclin3', text: 'Initiate and manage pharmacotherapy for alcohol use disorder', context: 'Consider: naltrexone, acamprosate, and disulfiram selection; hepatic and renal considerations; goals that may include reduction rather than abstinence; monitoring response; addressing the belief that medication is not real recovery.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amclin4', text: 'Develop and revise an individualized treatment plan with the patient', context: 'Consider: eliciting patient goals and readiness to change; matching treatment intensity to need; negotiating rather than prescribing a plan; revising when the plan is not working; documenting shared decisions.', milestones: ['PC2','ICS1'] },
+      { id: 'amclin5', text: 'Manage co-occurring psychiatric and medical conditions in the patient with a substance use disorder', context: 'Consider: sequencing versus concurrent treatment; psychiatric medication choice alongside addiction pharmacotherapy; chronic pain in the patient on MOUD; infectious complications; avoiding attribution of every symptom to substance use.', milestones: ['PC1','MK3'] },
+      { id: 'amclin6', text: 'Deliver harm reduction counseling and provide overdose prevention', context: 'Consider: naloxone prescribing and training; safer use counseling; fentanyl and xylazine test strips; syringe services referral; engaging the patient who is not ready to stop; framing that reduces rather than reinforces shame.', milestones: ['SBP3','ICS1'] },
+      { id: 'amclin7', text: 'Coordinate longitudinal care across behavioral health, primary care, and community recovery resources', context: 'Consider: warm handoffs; communication with counselors and peer support specialists; mutual-help and recovery community linkage; re-engaging the patient lost to follow-up; navigating insurance and treatment-program access.', milestones: ['SBP2','ICS2'] },
+      { id: 'amclin8', text: 'Apply current evidence and guidelines to an addiction treatment decision', context: 'Consider: formulating an answerable clinical question; appraising evidence where the literature is thin or conflicting; applying guidelines to a patient who does not resemble the trial population; explaining the reasoning to the patient and the team.', milestones: ['PBLI1','MK3'] },
+      { id: 'amclin9', text: 'Recognize personal reactions and the limits of expertise, and seek supervision appropriately', context: 'Consider: naming stigma and countertransference rather than acting on them; recognizing frustration when a patient returns to use; awareness of how personal or family recovery experience shapes judgment; asking for help before rather than after a decision; using feedback to change practice.', milestones: ['PROF3','PBLI2'] },
+    ]
+  },
+
+  'Inpatient Detox Unit': {
+    epas: [
+      { id: 'amipd1', text: 'Assess and risk-stratify a patient admitted for medically supervised withdrawal', context: 'Consider: substances used, quantity, and time of last use; prior withdrawal history including seizure and delirium; ASAM level-of-care reasoning; medical instability requiring a higher level of care; validated withdrawal scales and their limits.', milestones: ['PC1','MK2'] },
+      { id: 'amipd2', text: 'Manage alcohol withdrawal, including complicated withdrawal', context: 'Consider: symptom-triggered versus fixed-dose benzodiazepine protocols; recognizing and treating delirium tremens; seizure prophylaxis; thiamine and electrolyte repletion; phenobarbital and adjunctive agents; recognizing when protocol-driven care is no longer sufficient.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amipd3', text: 'Manage opioid withdrawal and transition the patient to maintenance treatment', context: 'Consider: buprenorphine induction timing and low-dose approaches; methadone initiation and titration limits; adjunctive symptom management; loss of tolerance and overdose risk after withdrawal; starting maintenance before discharge rather than after.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amipd4', text: 'Manage sedative-hypnotic and benzodiazepine withdrawal', context: 'Consider: protracted withdrawal timelines; cross-tolerance and equivalent dosing; taper design; seizure and delirium risk; polysubstance withdrawal where presentations overlap.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amipd5', text: 'Recognize and respond to clinical deterioration or a safety event on the unit', context: 'Consider: escalation criteria and transfer thresholds; oversedation and respiratory depression; occult medical illness presenting as withdrawal; reporting through institutional systems; identifying the system factors rather than only the individual error.', milestones: ['PC1','SBP1'] },
+      { id: 'amipd6', text: 'Lead interdisciplinary rounds on the withdrawal management unit', context: 'Consider: synthesizing input from nursing, counseling, social work, and pharmacy; resolving disagreement about readiness or behavior; setting a unified plan the team can carry out; supporting staff after a difficult event.', milestones: ['ICS2','SBP2'] },
+      { id: 'amipd7', text: 'Plan discharge and transition to ongoing treatment', context: 'Consider: securing the next appointment before discharge; medication continuity and prescription logistics; naloxone at discharge; housing, transportation, and benefits; communicating the plan to the receiving clinician; planning for departure against medical advice.', milestones: ['SBP2','ICS3'] },
+      { id: 'amipd8', text: 'Complete documentation, handoffs, and controlled-substance requirements accurately and on time', context: 'Consider: notes that support the level of care billed; prescription monitoring program checks; handoff content that survives a shift change; timeliness without templating away the clinical reasoning; confidentiality rules specific to substance use records.', milestones: ['PROF2','ICS3'] },
+    ]
+  },
+
+  'Sober Living Facility Rounds': {
+    epas: [
+      { id: 'amslf1', text: 'Conduct a recovery-focused check-in and assess relapse risk', context: 'Consider: eliciting an honest report without interrogation; recognizing early warning signs; assessing craving, mood, sleep, and social stressors; distinguishing a lapse from escalating use; keeping the visit clinically useful in a setting with no exam room.', milestones: ['PC1','ICS1'] },
+      { id: 'amslf2', text: 'Manage medications and monitor adherence in a residential, non-clinical setting', context: 'Consider: MOUD continuity and diversion concerns; medication storage and house policy; psychiatric medication adherence; coordinating with the prescribing clinician; adjusting when the setting cannot support the regimen.', milestones: ['PC2','SBP2'] },
+      { id: 'amslf3', text: 'Respond to a return to use without abandoning the patient', context: 'Consider: clinical reassessment rather than discharge as the default; renegotiating level of care; overdose risk after a period of abstinence; working within house rules that may require exit; treating recurrence as a feature of the illness while still taking it seriously.', milestones: ['PC2','PROF1'] },
+      { id: 'amslf4', text: 'Navigate confidentiality, boundaries, and dual relationships in a community residence', context: 'Consider: 42 CFR Part 2 and what may be shared with house staff; discussing clinical matters where others can overhear; requests from family or management for information; maintaining a clinical role in a peer-oriented environment.', milestones: ['PROF1','ICS3'] },
+      { id: 'amslf5', text: 'Collaborate with non-clinical recovery staff and house management', context: 'Consider: translating clinical reasoning for staff without medical training; respecting peer expertise; handling disagreement about a resident who is struggling; teaching overdose recognition and naloxone use; supporting staff without taking over their role.', milestones: ['ICS2','SBP3'] },
+      { id: 'amslf6', text: 'Advocate for resident access to housing, benefits, and continuing care', context: 'Consider: benefits and disability applications; discrimination against patients on MOUD in housing or employment; transportation to treatment; identifying when the housing situation is itself the clinical problem; escalating beyond the individual case.', milestones: ['SBP3','SBP2'] },
+    ]
+  },
+
+  'Outpatient Detox Unit': {
+    epas: [
+      { id: 'amopd1', text: 'Determine whether ambulatory withdrawal management is appropriate for this patient', context: 'Consider: ASAM criteria applied to a real case; withdrawal severity and prior complicated withdrawal; medical and psychiatric comorbidity; home environment, supervision, and access to substances; declining to treat in the ambulatory setting when it is not safe.', milestones: ['PC1','SBP2'] },
+      { id: 'amopd2', text: 'Manage ambulatory alcohol withdrawal with scheduled monitoring', context: 'Consider: taper regimens suitable for unsupervised use; quantity dispensed and diversion risk; daily or near-daily reassessment; thiamine repletion; criteria that trigger escalation to inpatient care.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amopd3', text: 'Manage ambulatory opioid withdrawal and bridge the patient to maintenance', context: 'Consider: home buprenorphine induction instructions; adjunctive symptom relief; the window in which the patient is most likely to disengage; loss of tolerance and overdose risk; naloxone provided at the outset rather than at completion.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amopd4', text: 'Establish monitoring, safety planning, and escalation criteria for the ambulatory patient', context: 'Consider: written instructions the patient and family can act on; what to do overnight and at weekends; explicit return or call thresholds; recognizing early rather than late that the plan has failed; documenting the safety plan.', milestones: ['SBP1','PC1'] },
+      { id: 'amopd5', text: 'Engage family or support persons in the ambulatory withdrawal plan', context: 'Consider: obtaining consent before involving others; teaching what to watch for; naloxone training for the household; managing family expectations about the course; recognizing when family involvement is unsafe or unwanted.', milestones: ['ICS1','ICS2'] },
+      { id: 'amopd6', text: 'Transition the patient from withdrawal management into ongoing treatment', context: 'Consider: the next appointment scheduled before withdrawal is complete; medication continuity; re-engaging the patient who does not return; communicating with the receiving clinician; recognizing that completing withdrawal is not itself treatment.', milestones: ['SBP2','ICS3'] },
+    ]
+  },
+};
+
+const ROTATION_DETAIL_AM = {};
+
+const MILESTONE_DEFS_BY_PROGRAM  = { fm: MILESTONE_DEFS_FM,  am: MILESTONE_DEFS_AM };
+const ROTATIONS_BY_PROGRAM       = { fm: ROTATIONS_FM,       am: ROTATIONS_AM };
+const ROTATION_DETAIL_BY_PROGRAM = { fm: ROTATION_DETAIL_FM, am: ROTATION_DETAIL_AM };
+
+// ── Accessors ────────────────────────────────────────────────────────────────
+// Every one of these takes the program first and refuses to guess. Throwing is
+// deliberate: a missing program is a programming error that would otherwise
+// surface as a quietly wrong average months later, and a page that fails to
+// render is far cheaper to notice than a dashboard that renders the wrong
+// number. Callers reading stored rows should pass row.program, not a global.
+
+function assertProgram(program) {
+  if (!program || !PROGRAMS[program]) {
+    throw new Error(
+      `Unknown or missing program: ${JSON.stringify(program)}. ` +
+      `Expected one of ${Object.keys(PROGRAMS).join(', ')}. ` +
+      `Milestone codes are only meaningful within a program.`
+    );
+  }
+  return program;
 }
+
+function programInfo(program)  { return PROGRAMS[assertProgram(program)]; }
+function milestoneDefs(program){ return MILESTONE_DEFS_BY_PROGRAM[assertProgram(program)]; }
+function rotationsFor(program) { return ROTATIONS_BY_PROGRAM[assertProgram(program)]; }
+function rotationNamesFor(program) { return Object.keys(rotationsFor(program)); }
+function formVersionFor(program)   { return programInfo(program).formVersion; }
+
+// Every EPA defined for a rotation, retired ones included. This is the label
+// resolver's fallback for rows written before scores_detail; it must keep
+// returning retired entries or those rows lose their wording.
+function epaDefsFor(program, rotationName) {
+  return rotationsFor(program)[rotationName]?.epas || [];
+}
+
+// The EPAs a form should ask about, and the only ones that may be written into
+// scores_detail or averaged into milestone_scores.
+function activeEpas(program, rotationName) {
+  return epaDefsFor(program, rotationName).filter(epa => !epa.retired);
+}
+
+// The detail configuration for a rotation, or null if it collects none.
+function rotationDetailFor(program, rotationName) {
+  return ROTATION_DETAIL_BY_PROGRAM[assertProgram(program)][rotationName] || null;
+}
+
+// Rotation names within a program that collect a rotation_detail value.
+function rotationsWithDetail(program) {
+  return Object.keys(ROTATION_DETAIL_BY_PROGRAM[assertProgram(program)]);
+}
+
 // ── Faculty evaluation items (faculty/ and faculty-dashboard/) ──
 // The wording stored on each rating row is what the dashboard counts by;
 // this list only decides what is asked and in what order. Reordering is
