@@ -238,13 +238,14 @@ footer{
   <header class="masthead">
     <div class="eyebrow">VCMC · Addiction Medicine Fellowship</div>
     <h1>Draft EPAs for Review</h1>
-    <p class="standfirst col">Twenty-nine entrustable professional activities across four rotations, mapped to the ACGME Addiction Medicine Milestones. The structure and milestone mapping have been checked programmatically. The clinical substance has not — that is what we need from you.</p>
+    <p class="standfirst col">Twenty entrustable professional activities across three rotations, mapped to the ACGME Addiction Medicine Milestones. Revised following Dr. Khan&rsquo;s review. The structure and milestone mapping are checked programmatically; the clinical substance is what needs faculty judgment.</p>
     <div class="meta">
-      <span><b>29</b> EPAs</span>
-      <span><b>4</b> rotations</span>
+      <span><b>20</b> EPAs</span>
+      <span><b>3</b> rotations</span>
       <span><b>16/16</b> milestones covered</span>
       <span>Milestones <b>v1.2</b> · Jan 2019</span>
       <span>Form version <b>2026.1</b></span>
+      <span>Revision <b>2</b></span>
     </div>
   </header>
 
@@ -252,11 +253,30 @@ footer{
     <div class="ask col">
       <h3>What we need from you</h3>
       <ol>
-        <li><strong>Is each activity observable and scoreable?</strong> An attending should be able to watch a fellow do this and rate it in one sitting.</li>
-        <li><strong>Is the wording right for our program?</strong> These were drafted from the ACGME milestones, not from how your rotations actually run.</li>
-        <li><strong>Is anything missing, and is anything redundant?</strong> Rotation sizes are uneven by design, but tell us if the balance is wrong.</li>
-        <li><strong>Check the four open questions below</strong> — those are the specific calls we could not make without you.</li>
+        <li><strong>Is each activity observable and scoreable?</strong> An attending should be able to watch a fellow do this and rate it in one sitting, without a chart review.</li>
+        <li><strong>Is the wording right for how our rotations actually run?</strong> These were drafted from the ACGME milestones, then revised against Dr. Khan&rsquo;s notes &mdash; but not yet against anyone else&rsquo;s experience of the services.</li>
+        <li><strong>Is anything missing, and is anything now doing too much?</strong> Three rotations became one shorter set in this revision, so a few EPAs absorbed the work of others.</li>
+        <li><strong>Check the open questions below</strong> &mdash; those are the calls that need clinical judgment rather than ours.</li>
       </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2>What changed in this revision</h2>
+    <p class="sect-note">All four points from Dr. Khan&rsquo;s review are applied. The set went from 29 EPAs across four rotations to 20 across three.</p>
+    <div class="notes">
+      <div class="note">
+        <h4>Rotations renamed</h4>
+        <p><strong>Inpatient Detox Unit</strong> is now <strong>Inpatient Withdrawal Management Service</strong>. <strong>Sober Living Facility Rounds</strong> is now <strong>Community Partners Rotations</strong>, and its six EPAs were reworded to speak to partner sites generally &mdash; withdrawal management, residential, and intensive outpatient &mdash; rather than to sober living homes specifically.</p>
+      </div>
+      <div class="note">
+        <h4>Outpatient Detox absorbed</h4>
+        <p>The rotation is gone. Its distinctive content survived: <strong>level-of-care determination</strong> moved into the clinic&rsquo;s assessment EPA, and <strong>ambulatory withdrawal management</strong> into the clinic&rsquo;s pharmacotherapy EPA. The other four were already covered by the clinic or the inpatient service.</p>
+      </div>
+      <div class="note">
+        <h4>Clinic cut from 9 to 6</h4>
+        <p>Two pharmacotherapy EPAs merged into one; treatment planning merged with care coordination; the standalone evidence-appraisal EPA was dropped and its milestone folded into pharmacotherapy, where guideline choice actually happens. <strong>No milestone lost coverage.</strong></p>
+      </div>
     </div>
   </section>
 
@@ -307,7 +327,7 @@ footer{
   </section>
 
   <footer>
-    <p><strong>Draft &mdash; not the final instrument.</strong> Snapshot generated 29 August 2026 from the fellowship&rsquo;s definitions file, so this document and the evaluation form cannot disagree. If the EPAs are revised, this page is regenerated rather than edited by hand.</p>
+    <p><strong>Draft &mdash; not the final instrument.</strong> Revision 2, generated 29 August 2026 from the fellowship&rsquo;s definitions file, so this document and the evaluation form cannot disagree. If the EPAs are revised again, this page is regenerated rather than edited by hand.</p>
     <p>Nothing here contains fellow or patient information. Not indexed by search engines.</p>
     <p><a href="https://www.venturafamilymed.org">Ventura County Medical Center &middot; Family Medicine Residency Program</a></p>
   </footer>
@@ -336,50 +356,36 @@ const MILESTONE_DEFS_AM = {
 const ROTATIONS_AM = {
   'Outpatient Addiction Medicine Clinic': {
     epas: [
-      { id: 'amclin1', text: 'Perform a comprehensive addiction-focused assessment of a new outpatient', context: 'Consider: substance use history across all classes; DSM-5 severity criteria; withdrawal risk; psychiatric and medical comorbidity; social determinants and recovery capital; corroborating history and records; formulating the case rather than listing findings.', milestones: ['PC1','MK2'] },
-      { id: 'amclin2', text: 'Initiate and manage medication for opioid use disorder', context: 'Consider: selecting among buprenorphine, methadone, and naltrexone with the patient; induction planning and precipitated withdrawal risk; dose adjustment against craving and continued use; managing the patient who keeps using; regulatory and pharmacy logistics.', milestones: ['PC2','MK1','MK3'] },
-      { id: 'amclin3', text: 'Initiate and manage pharmacotherapy for alcohol use disorder', context: 'Consider: naltrexone, acamprosate, and disulfiram selection; hepatic and renal considerations; goals that may include reduction rather than abstinence; monitoring response; addressing the belief that medication is not real recovery.', milestones: ['PC2','MK1','MK3'] },
-      { id: 'amclin4', text: 'Develop and revise an individualized treatment plan with the patient', context: 'Consider: eliciting patient goals and readiness to change; matching treatment intensity to need; negotiating rather than prescribing a plan; revising when the plan is not working; documenting shared decisions.', milestones: ['PC2','ICS1'] },
-      { id: 'amclin5', text: 'Manage co-occurring psychiatric and medical conditions in the patient with a substance use disorder', context: 'Consider: sequencing versus concurrent treatment; psychiatric medication choice alongside addiction pharmacotherapy; chronic pain in the patient on MOUD; infectious complications; avoiding attribution of every symptom to substance use.', milestones: ['PC1','MK3'] },
-      { id: 'amclin6', text: 'Deliver harm reduction counseling and provide overdose prevention', context: 'Consider: naloxone prescribing and training; safer use counseling; fentanyl and xylazine test strips; syringe services referral; engaging the patient who is not ready to stop; framing that reduces rather than reinforces shame.', milestones: ['SBP3','ICS1'] },
-      { id: 'amclin7', text: 'Coordinate longitudinal care across behavioral health, primary care, and community recovery resources', context: 'Consider: warm handoffs; communication with counselors and peer support specialists; mutual-help and recovery community linkage; re-engaging the patient lost to follow-up; navigating insurance and treatment-program access.', milestones: ['SBP2','ICS2'] },
-      { id: 'amclin8', text: 'Apply current evidence and guidelines to an addiction treatment decision', context: 'Consider: formulating an answerable clinical question; appraising evidence where the literature is thin or conflicting; applying guidelines to a patient who does not resemble the trial population; explaining the reasoning to the patient and the team.', milestones: ['PBLI1','MK3'] },
-      { id: 'amclin9', text: 'Recognize personal reactions and the limits of expertise, and seek supervision appropriately', context: 'Consider: naming stigma and countertransference rather than acting on them; recognizing frustration when a patient returns to use; awareness of how personal or family recovery experience shapes judgment; asking for help before rather than after a decision; using feedback to change practice.', milestones: ['PROF3','PBLI2'] },
+      { id: 'amclin1', text: 'Perform a comprehensive addiction-focused assessment and determine the appropriate level of care', context: 'Consider: substance use history across all classes; DSM-5 severity criteria; withdrawal risk; ASAM level-of-care reasoning, including when the ambulatory setting is not safe; psychiatric and medical comorbidity; social determinants and recovery capital; corroborating history and records; formulating the case rather than listing findings.', milestones: ['PC1','MK2','SBP2'] },
+      { id: 'amclin2', text: 'Initiate and manage pharmacotherapy for substance use disorders', context: 'Consider: selecting among buprenorphine, methadone and naltrexone with the patient; induction planning and precipitated withdrawal risk; naltrexone, acamprosate and disulfiram for alcohol use disorder; ambulatory withdrawal management and the criteria that trigger escalation; dose adjustment against craving and continued use; managing the patient who keeps using; applying guidelines to a patient who does not resemble the trial population; regulatory and pharmacy logistics.', milestones: ['PC2','MK1','MK3','PBLI1'] },
+      { id: 'amclin3', text: 'Manage co-occurring psychiatric and medical conditions in the patient with a substance use disorder', context: 'Consider: sequencing versus concurrent treatment; psychiatric medication choice alongside addiction pharmacotherapy; chronic pain in the patient on MOUD; infectious complications; avoiding attribution of every symptom to substance use.', milestones: ['PC1','MK3'] },
+      { id: 'amclin4', text: 'Deliver harm reduction counseling and provide overdose prevention', context: 'Consider: naloxone prescribing and training; safer use counseling; fentanyl and xylazine test strips; syringe services referral; engaging the patient who is not ready to stop; framing that reduces rather than reinforces shame.', milestones: ['SBP3','ICS1'] },
+      { id: 'amclin5', text: 'Build a treatment plan with the patient and coordinate their longitudinal care', context: 'Consider: eliciting patient goals and readiness to change; negotiating rather than prescribing a plan; revising when the plan is not working; warm handoffs; communication with counselors and peer support specialists; mutual-help and recovery community linkage; re-engaging the patient lost to follow-up; navigating insurance and treatment-program access.', milestones: ['PC2','SBP2','ICS1','ICS2'] },
+      { id: 'amclin6', text: 'Recognize personal reactions and the limits of expertise, and seek supervision appropriately', context: 'Consider: naming stigma and countertransference rather than acting on them; recognizing frustration when a patient returns to use; awareness of how personal or family recovery experience shapes judgment; asking for help before rather than after a decision; using feedback to change practice.', milestones: ['PROF3','PBLI2'] },
     ]
   },
 
-  'Inpatient Detox Unit': {
+  'Inpatient Withdrawal Management Service': {
     epas: [
-      { id: 'amipd1', text: 'Assess and risk-stratify a patient admitted for medically supervised withdrawal', context: 'Consider: substances used, quantity, and time of last use; prior withdrawal history including seizure and delirium; ASAM level-of-care reasoning; medical instability requiring a higher level of care; validated withdrawal scales and their limits.', milestones: ['PC1','MK2'] },
-      { id: 'amipd2', text: 'Manage alcohol withdrawal, including complicated withdrawal', context: 'Consider: symptom-triggered versus fixed-dose benzodiazepine protocols; recognizing and treating delirium tremens; seizure prophylaxis; thiamine and electrolyte repletion; phenobarbital and adjunctive agents; recognizing when protocol-driven care is no longer sufficient.', milestones: ['PC2','MK1','MK3'] },
-      { id: 'amipd3', text: 'Manage opioid withdrawal and transition the patient to maintenance treatment', context: 'Consider: buprenorphine induction timing and low-dose approaches; methadone initiation and titration limits; adjunctive symptom management; loss of tolerance and overdose risk after withdrawal; starting maintenance before discharge rather than after.', milestones: ['PC2','MK1','MK3'] },
-      { id: 'amipd4', text: 'Manage sedative-hypnotic and benzodiazepine withdrawal', context: 'Consider: protracted withdrawal timelines; cross-tolerance and equivalent dosing; taper design; seizure and delirium risk; polysubstance withdrawal where presentations overlap.', milestones: ['PC2','MK1','MK3'] },
-      { id: 'amipd5', text: 'Recognize and respond to clinical deterioration or a safety event on the unit', context: 'Consider: escalation criteria and transfer thresholds; oversedation and respiratory depression; occult medical illness presenting as withdrawal; reporting through institutional systems; identifying the system factors rather than only the individual error.', milestones: ['PC1','SBP1'] },
-      { id: 'amipd6', text: 'Lead interdisciplinary rounds on the withdrawal management unit', context: 'Consider: synthesizing input from nursing, counseling, social work, and pharmacy; resolving disagreement about readiness or behavior; setting a unified plan the team can carry out; supporting staff after a difficult event.', milestones: ['ICS2','SBP2'] },
-      { id: 'amipd7', text: 'Plan discharge and transition to ongoing treatment', context: 'Consider: securing the next appointment before discharge; medication continuity and prescription logistics; naloxone at discharge; housing, transportation, and benefits; communicating the plan to the receiving clinician; planning for departure against medical advice.', milestones: ['SBP2','ICS3'] },
-      { id: 'amipd8', text: 'Complete documentation, handoffs, and controlled-substance requirements accurately and on time', context: 'Consider: notes that support the level of care billed; prescription monitoring program checks; handoff content that survives a shift change; timeliness without templating away the clinical reasoning; confidentiality rules specific to substance use records.', milestones: ['PROF2','ICS3'] },
+      { id: 'amwms1', text: 'Assess and risk-stratify a patient admitted for medically supervised withdrawal', context: 'Consider: substances used, quantity, and time of last use; prior withdrawal history including seizure and delirium; ASAM level-of-care reasoning; medical instability requiring a higher level of care; validated withdrawal scales and their limits.', milestones: ['PC1','MK2'] },
+      { id: 'amwms2', text: 'Manage alcohol withdrawal, including complicated withdrawal', context: 'Consider: symptom-triggered versus fixed-dose benzodiazepine protocols; recognizing and treating delirium tremens; seizure prophylaxis; thiamine and electrolyte repletion; phenobarbital and adjunctive agents; recognizing when protocol-driven care is no longer sufficient.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amwms3', text: 'Manage opioid withdrawal and transition the patient to maintenance treatment', context: 'Consider: buprenorphine induction timing and low-dose approaches; methadone initiation and titration limits; adjunctive symptom management; loss of tolerance and overdose risk after withdrawal; starting maintenance before discharge rather than after.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amwms4', text: 'Manage sedative-hypnotic and benzodiazepine withdrawal', context: 'Consider: protracted withdrawal timelines; cross-tolerance and equivalent dosing; taper design; seizure and delirium risk; polysubstance withdrawal where presentations overlap.', milestones: ['PC2','MK1','MK3'] },
+      { id: 'amwms5', text: 'Recognize and respond to clinical deterioration or a safety event on the unit', context: 'Consider: escalation criteria and transfer thresholds; oversedation and respiratory depression; occult medical illness presenting as withdrawal; reporting through institutional systems; identifying the system factors rather than only the individual error.', milestones: ['PC1','SBP1'] },
+      { id: 'amwms6', text: 'Lead interdisciplinary rounds on the withdrawal management service', context: 'Consider: synthesizing input from nursing, counseling, social work, and pharmacy; resolving disagreement about readiness or behavior; setting a unified plan the team can carry out; supporting staff after a difficult event.', milestones: ['ICS2','SBP2'] },
+      { id: 'amwms7', text: 'Plan discharge and transition to ongoing treatment', context: 'Consider: securing the next appointment before discharge; medication continuity and prescription logistics; naloxone at discharge; housing, transportation, and benefits; communicating the plan to the receiving clinician; planning for departure against medical advice.', milestones: ['SBP2','ICS3'] },
+      { id: 'amwms8', text: 'Complete documentation, handoffs, and controlled-substance requirements accurately and on time', context: 'Consider: notes that support the level of care billed; prescription monitoring program checks; handoff content that survives a shift change; timeliness without templating away the clinical reasoning; confidentiality rules specific to substance use records.', milestones: ['PROF2','ICS3'] },
     ]
   },
 
-  'Sober Living Facility Rounds': {
+  'Community Partners Rotations': {
     epas: [
-      { id: 'amslf1', text: 'Conduct a recovery-focused check-in and assess relapse risk', context: 'Consider: eliciting an honest report without interrogation; recognizing early warning signs; assessing craving, mood, sleep, and social stressors; distinguishing a lapse from escalating use; keeping the visit clinically useful in a setting with no exam room.', milestones: ['PC1','ICS1'] },
-      { id: 'amslf2', text: 'Manage medications and monitor adherence in a residential, non-clinical setting', context: 'Consider: MOUD continuity and diversion concerns; medication storage and house policy; psychiatric medication adherence; coordinating with the prescribing clinician; adjusting when the setting cannot support the regimen.', milestones: ['PC2','SBP2'] },
-      { id: 'amslf3', text: 'Respond to a return to use without abandoning the patient', context: 'Consider: clinical reassessment rather than discharge as the default; renegotiating level of care; overdose risk after a period of abstinence; working within house rules that may require exit; treating recurrence as a feature of the illness while still taking it seriously.', milestones: ['PC2','PROF1'] },
-      { id: 'amslf4', text: 'Navigate confidentiality, boundaries, and dual relationships in a community residence', context: 'Consider: 42 CFR Part 2 and what may be shared with house staff; discussing clinical matters where others can overhear; requests from family or management for information; maintaining a clinical role in a peer-oriented environment.', milestones: ['PROF1','ICS3'] },
-      { id: 'amslf5', text: 'Collaborate with non-clinical recovery staff and house management', context: 'Consider: translating clinical reasoning for staff without medical training; respecting peer expertise; handling disagreement about a resident who is struggling; teaching overdose recognition and naloxone use; supporting staff without taking over their role.', milestones: ['ICS2','SBP3'] },
-      { id: 'amslf6', text: 'Advocate for resident access to housing, benefits, and continuing care', context: 'Consider: benefits and disability applications; discrimination against patients on MOUD in housing or employment; transportation to treatment; identifying when the housing situation is itself the clinical problem; escalating beyond the individual case.', milestones: ['SBP3','SBP2'] },
-    ]
-  },
-
-  'Outpatient Detox Unit': {
-    epas: [
-      { id: 'amopd1', text: 'Determine whether ambulatory withdrawal management is appropriate for this patient', context: 'Consider: ASAM criteria applied to a real case; withdrawal severity and prior complicated withdrawal; medical and psychiatric comorbidity; home environment, supervision, and access to substances; declining to treat in the ambulatory setting when it is not safe.', milestones: ['PC1','SBP2'] },
-      { id: 'amopd2', text: 'Manage ambulatory alcohol withdrawal with scheduled monitoring', context: 'Consider: taper regimens suitable for unsupervised use; quantity dispensed and diversion risk; daily or near-daily reassessment; thiamine repletion; criteria that trigger escalation to inpatient care.', milestones: ['PC2','MK1','MK3'] },
-      { id: 'amopd3', text: 'Manage ambulatory opioid withdrawal and bridge the patient to maintenance', context: 'Consider: home buprenorphine induction instructions; adjunctive symptom relief; the window in which the patient is most likely to disengage; loss of tolerance and overdose risk; naloxone provided at the outset rather than at completion.', milestones: ['PC2','MK1','MK3'] },
-      { id: 'amopd4', text: 'Establish monitoring, safety planning, and escalation criteria for the ambulatory patient', context: 'Consider: written instructions the patient and family can act on; what to do overnight and at weekends; explicit return or call thresholds; recognizing early rather than late that the plan has failed; documenting the safety plan.', milestones: ['SBP1','PC1'] },
-      { id: 'amopd5', text: 'Engage family or support persons in the ambulatory withdrawal plan', context: 'Consider: obtaining consent before involving others; teaching what to watch for; naloxone training for the household; managing family expectations about the course; recognizing when family involvement is unsafe or unwanted.', milestones: ['ICS1','ICS2'] },
-      { id: 'amopd6', text: 'Transition the patient from withdrawal management into ongoing treatment', context: 'Consider: the next appointment scheduled before withdrawal is complete; medication continuity; re-engaging the patient who does not return; communicating with the receiving clinician; recognizing that completing withdrawal is not itself treatment.', milestones: ['SBP2','ICS3'] },
+      { id: 'amcp1', text: 'Conduct a recovery-focused check-in and assess relapse risk at a partner site', context: 'Consider: eliciting an honest report without interrogation; recognizing early warning signs; assessing craving, mood, sleep, and social stressors; distinguishing a lapse from escalating use; keeping the encounter clinically useful in a setting with no exam room.', milestones: ['PC1','ICS1'] },
+      { id: 'amcp2', text: 'Manage medications and monitor adherence outside a clinical setting', context: 'Consider: MOUD continuity and diversion concerns; medication storage and site policy; psychiatric medication adherence; coordinating with the prescribing clinician; adjusting when the setting cannot support the regimen.', milestones: ['PC2','SBP2'] },
+      { id: 'amcp3', text: 'Respond to a return to use without abandoning the patient', context: 'Consider: clinical reassessment rather than discharge as the default; renegotiating level of care across withdrawal management, residential, intensive outpatient and recovery housing; overdose risk after a period of abstinence; working within program rules that may require exit; treating recurrence as a feature of the illness while still taking it seriously.', milestones: ['PC2','PROF1'] },
+      { id: 'amcp4', text: 'Navigate confidentiality, boundaries, and dual relationships at a partner site', context: 'Consider: 42 CFR Part 2 and what may be shared with program staff; discussing clinical matters where others can overhear; requests from family or program management for information; maintaining a clinical role in a peer-oriented environment.', milestones: ['PROF1','ICS3'] },
+      { id: 'amcp5', text: 'Collaborate with non-clinical staff and program leadership across partner organizations', context: 'Consider: translating clinical reasoning for staff without medical training; respecting peer and counselor expertise; handling disagreement about a patient who is struggling; teaching overdose recognition and naloxone use; supporting staff without taking over their role.', milestones: ['ICS2','SBP3'] },
+      { id: 'amcp6', text: 'Advocate for patient access to housing, benefits, and continuing care', context: 'Consider: benefits and disability applications; discrimination against patients on MOUD in housing or employment; transportation to treatment; identifying when the living situation is itself the clinical problem; escalating beyond the individual case.', milestones: ['SBP3','SBP2'] },
     ]
   },
 };
@@ -414,21 +420,21 @@ document.getElementById('cover').innerHTML = Object.entries(MILESTONE_DEFS_AM).m
 // ── Open questions ───────────────────────────────────────────────────────────
 const QUESTIONS = [
   { flagged: true,
-    h: 'Is amclin9 something an attending can actually observe?',
-    p: 'It is the only EPA carrying PROF3 (Self-Awareness and Help-Seeking) and PBLI2 (Reflective Practice). It was written partly because nothing else reached those two milestones, which is a slightly artificial reason for an EPA to exist. Stigma and countertransference are real competencies in addiction medicine — but can a supervisor rate them in clinic, and would they?',
-    ids: 'amclin9 · PROF3, PBLI2' },
+    h: 'Five milestones now rest on a single EPA each',
+    p: 'SBP1, PBLI1, PBLI2, PROF2 and PROF3 are each reached by exactly one EPA, and two of them (PBLI2 and PROF3) by the same one. Cut or reword that EPA in a later round and the milestone drops to zero coverage, with nothing to report to the ACGME for it. This is the cost of a shorter set and it is not obviously wrong — but it is worth knowing which EPAs are load-bearing before anyone proposes removing them.',
+    ids: 'amwms5 · amclin2 · amclin6 · amwms8' },
   { flagged: false,
-    h: 'Is Sober Living Facility Rounds weighted correctly?',
-    p: 'Four of its six EPAs sit in Professionalism, Communication and Systems-Based Practice. That may reflect the setting honestly — much of what happens on those rounds is boundaries, collaboration and advocacy — but it means the rotation contributes very little to Patient Care and Medical Knowledge averages.',
-    ids: 'amslf1–amslf6' },
+    h: 'Is the Inpatient Withdrawal Management Service still too long at 8?',
+    p: 'The clinic came down to 6 because 9 was judged too much for one sitting. The inpatient service was not part of that instruction and still has 8. Four of them are withdrawal management by substance class — alcohol, opioid, sedative-hypnotic — which could reasonably collapse into one EPA about managing withdrawal across substances, the same merge that took the clinic from 9 to 6.',
+    ids: 'amwms1–amwms8 · candidates to merge: amwms2, amwms3, amwms4' },
   { flagged: false,
-    h: 'Are 9 EPAs too many for one sitting?',
-    p: 'Rotation sizes are 9, 8, 6 and 6. The residency averages 6–7. Uneven is fine if it reflects real scope, but the Outpatient Clinic form is the longest thing an attending will be asked to complete, and completion rates fall off with length.',
-    ids: 'Outpatient Addiction Medicine Clinic' },
+    h: 'Does the merged pharmacotherapy EPA try to do too much?',
+    p: 'amclin2 now covers opioid and alcohol pharmacotherapy plus ambulatory withdrawal management, and carries four milestones. That is the single busiest item in the set. It scores as one number, so a fellow strong on buprenorphine and weak on ambulatory withdrawal produces one middling rating that says neither.',
+    ids: 'amclin2 · PC2, MK1, MK3, PBLI1' },
   { flagged: false,
-    h: 'Should MK2 be mapped more widely?',
-    p: 'Epidemiology and Clinical Presentation is reached by only two EPAs, both initial assessments. It is arguably in play for most assessment work — amslf1 (recovery check-in) and amopd1 (level-of-care determination) are both plausible additions if you want it better represented.',
-    ids: 'MK2 · currently amclin1, amipd1' },
+    h: 'Do the Community Partners EPAs generalise correctly?',
+    p: 'These six were written for sober living rounds and reworded to cover withdrawal management, residential and intensive outpatient sites. The wording is now deliberately setting-neutral — "partner site", "program rules" — which may read as vague to an attending supervising at one specific place. Tell us if a named-setting version would score more reliably.',
+    ids: 'amcp1–amcp6' },
 ];
 
 document.getElementById('questions').innerHTML = QUESTIONS.map(q => `
