@@ -491,6 +491,9 @@
   .admin-header h2 { font-size: 22px; font-weight: 300; letter-spacing: -0.01em; color: var(--navy); }
   .admin-header h2 strong { font-weight: 700; }
   .admin-header p { font-size: 12px; color: var(--slate); margin-top: 4px; }
+  #program-switcher select { font-family: inherit; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy);
+    background: var(--white); border: 1px solid var(--border); padding: 7px 10px; }
 
   .admin-tabs {
     display: flex;
@@ -883,6 +886,10 @@
     <div>
       <h2><strong>Program</strong> Dashboard</h2>
       <p>Aggregate milestone data and evaluation submissions</p>
+        <!-- Milestone codes collide between programs, so the dashboard shows one
+             program at a time and re-fetches on change. Populated by
+             renderProgramSwitcher(); hidden when only one program exists. -->
+        <div id="program-switcher" style="margin-top:10px"></div>
     </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-secondary" onclick="exportCSV()" style="font-size:10px; letter-spacing:0.1em">⬇ Export CSV</button>
@@ -1002,7 +1009,7 @@
 // Fail visibly rather than silently. Without the shared definitions this page
 // would render its frame and simply show nothing to work with, which reads as
 // "there is no data" instead of "a file is missing".
-if (typeof ROTATIONS_BY_PROGRAM === 'undefined' || typeof resolveFacultyIdentity === 'undefined'
+if (typeof ROTATIONS_BY_PROGRAM === 'undefined' || typeof PROGRAMS === 'undefined' || typeof resolveFacultyIdentity === 'undefined'
     || typeof resolveDetailIdentity === 'undefined' || typeof normalize === 'undefined') {
   document.body.innerHTML = '<div style="max-width:640px;margin:80px auto;padding:0 24px;font-family:Helvetica,Arial,sans-serif;color:#1A2744">'
     + '<h2 style="margin-bottom:12px">This page did not load correctly</h2>'
@@ -1169,6 +1176,93 @@ async function loadSubmissions() {
   }
 }
 
+// ── Program switching ────────────────────────────────────────────────────────
+//
+// The dashboard shows ONE program at a time. Without a way to change it the
+// fellowship's evaluations are collected and then invisible: loadSubmissions()
+// filters program=eq.<currentProgram>, so an AM row is fetched by nobody and the
+// director sees an empty dashboard and concludes the form is broken.
+//
+// Switching re-fetches rather than filtering in memory, because the two programs
+// have different milestone vocabularies and rotation sets — every rendered view
+// reads milestoneDefs(currentProgram) and would otherwise mix them.
+
+// The learner noun is program-specific: a dashboard showing fellows must not say
+// "resident". Capitalised singular/plural, for labels.
+function learnerNoun(plural) {
+  const info = programInfo(currentProgram);
+  const w = plural ? info.learners : info.learner;
+  return w.charAt(0).toUpperCase() + w.slice(1);
+}
+
+// The placeholder for a learner select. populateFilterDropdowns() must COMPUTE
+// this rather than read options[0].text back, or switching from residents to
+// fellows re-persists "All Residents" forever.
+function learnerPlaceholder(id) {
+  if (id === 'filter-resident-detail') return 'Select a ' + learnerNoun(false) + '…';
+  return 'All ' + learnerNoun(true);
+}
+
+function renderProgramSwitcher() {
+  const el = document.getElementById('program-switcher');
+  if (!el) return;
+  const keys = Object.keys(PROGRAMS);
+  if (keys.length < 2) { el.innerHTML = ''; return; }   // one program: the control is noise
+  el.innerHTML =
+    '<select id="filter-program" onchange="switchProgram(this.value)" ' +
+    'title="Milestone vocabularies differ by program; the dashboard shows one at a time">' +
+    keys.map(k => '<option value="' + k + '"' + (k === currentProgram ? ' selected' : '') +
+                  '>' + escFaculty(PROGRAMS[k].label) + '</option>').join('') +
+    '</select>';
+}
+
+async function switchProgram(key) {
+  assertProgram(key);                 // refuses to guess; throws on an unknown key
+  if (key === currentProgram) return;
+  currentProgram = key;
+
+  // Clear every learner, rotation, date and search filter. Their values belong to
+  // the program we just left, and a stale rotation selection would silently show
+  // zero evaluations rather than saying why.
+  ['filter-resident-milestones','filter-resident-submissions','filter-resident-detail',
+   'filter-proc-resident','filter-rotation-milestones','filter-rotation-submissions',
+   'filter-eval-rotation','filter-proc-rotation','filter-res-rotation',
+   'search-submissions','filter-res-evaluator','filter-res-date-start','filter-res-date-end',
+   'filter-eval-date-start','filter-eval-date-end','filter-proc-date-start','filter-proc-date-end']
+    .forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+
+  await loadAdminData();              // relabels and repopulates
+  const open = document.querySelector('.admin-tab.active');
+  if (open) open.click();             // re-render whichever tab is showing
+}
+
+// Rewrites the user-visible strings that name a learner. Deliberately a short
+// explicit list rather than a sweep of the document: "resident" appears in prose
+// and identifiers throughout, and a blanket replace would corrupt them.
+function relabelForProgram() {
+  const one = learnerNoun(false), many = learnerNoun(true);
+
+  const tab = [...document.querySelectorAll('.admin-tab')]
+    .find(b => /^By\s+(Resident|Fellow)$/.test(b.textContent.trim()));
+  if (tab) tab.textContent = 'By ' + one;
+
+  [...document.querySelectorAll('th')]
+    .filter(h => /^(Resident|Fellow)$/.test(h.textContent.trim()))
+    .forEach(h => { h.textContent = one; });
+
+  const head = [...document.querySelectorAll('.merge-section-head')]
+    .find(h => /^By\s+(resident|fellow)$/i.test(h.textContent.trim()));
+  if (head) head.textContent = 'By ' + one.toLowerCase();
+
+  ['filter-resident-milestones','filter-resident-submissions',
+   'filter-resident-detail','filter-proc-resident'].forEach(id => {
+    const e = document.getElementById(id);
+    if (e && e.options.length) e.options[0].text = learnerPlaceholder(id);
+  });
+
+  renderProgramSwitcher();
+}
+
 // ADMIN — Load & Render
 // ══════════════════════════════════════════════════
 async function loadAdminData() {
@@ -1178,6 +1272,7 @@ async function loadAdminData() {
   // alongside the submissions so grouping resolves merges from the first render.
   const [subs] = await Promise.all([loadSubmissions(), loadFaculty(), loadDetailOptions()]);
   allSubmissions = subs;
+  relabelForProgram();
   populateFilterDropdowns();
   renderMilestones();
 }
@@ -1193,7 +1288,7 @@ function populateFilterDropdowns() {
     const el = document.getElementById(id);
     if (!el) return;
     const cur = el.value;
-    const placeholder = el.options[0].text;
+    const placeholder = learnerPlaceholder(id);
     el.innerHTML = `<option value="">${placeholder}</option>` +
       residents.map(r => `<option value="${r}" ${r === cur ? 'selected' : ''}>${r}</option>`).join('');
   });
