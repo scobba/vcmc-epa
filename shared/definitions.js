@@ -249,6 +249,32 @@ const ROTATIONS_FM = {
     ]
   },
 
+  // -- Added 2026-09-15: Community Medicine and Scholarly Activity, 14 EPAs.
+  // Fills the advocacy / QI / scholarship gaps Dr. O'Bryan identified; see
+  // the review document for the milestone rationale.
+  'Community Medicine': {
+    epas: [
+      { id: 'comm1', text: 'Deliver clinical care in a community or free-clinic setting', context: 'Consider: working within the constraints of a volunteer or grant-funded site; limited formulary, laboratory, and imaging; prioritizing what can be accomplished in a single encounter; arranging follow-up where continuity is not guaranteed; knowing the site\'s scope and when a patient must be referred elsewhere.', milestones: ['SBP3','PC3'] },
+      { id: 'comm2', text: 'Advocate for an individual patient\'s needs beyond the clinical encounter', context: 'Consider: identifying patient assistance programs, sliding-scale services, and community resources; completing documentation that unlocks benefits, accommodations, or legal protections; coordinating with case management and social work; persisting when a first attempt is refused.', milestones: ['SBP3','SBP4'] },
+      { id: 'comm3', text: 'Advocate for a patient population or for the specialty', context: 'Consider: recognizing advocacy for vulnerable populations as a professional responsibility rather than an optional extra; contributing to community education or outreach; speaking to structural causes of ill health rather than only individual behavior; representing Family Medicine to the community.', milestones: ['SBP4','PROF1'] },
+      { id: 'comm4', text: 'Communicate effectively across language and cultural barriers', context: 'Consider: working with interpreters, including for Indigenous languages such as Mixteco where Spanish is not a first language; confirming understanding rather than assuming it; adapting explanations to health literacy; recognizing one\'s own assumptions about a community and its health beliefs.', milestones: ['ICS1','PROF1'] },
+      { id: 'comm5', text: 'Communicate health information to a community or public audience', context: 'Consider: pitching content to a non-clinical audience; adapting to the setting, whether radio, school, clinic waiting room, or community event; culturally and linguistically appropriate framing; answering questions honestly within the limits of what is known; avoiding advice the audience has no realistic way to act on; understanding the physician\'s role in population-level health communication.', milestones: ['PC3','ICS1','SBP3'] },
+      { id: 'comm6', text: 'Partner with community organizations and public health services', context: 'Consider: working alongside promotores, outreach workers, public health nursing, and community-based organizations; understanding what each partner can and cannot do; communicating clinical information appropriately across organizational boundaries; respecting the organization\'s existing relationship with its community.', milestones: ['SBP2','SBP3'] },
+      { id: 'comm7', text: 'Recognize and respond to social and structural determinants of health', context: 'Consider: housing, immigration status, food and transportation insecurity, occupational exposure, and fear of accessing care; screening without stigmatizing; adjusting the clinical plan to what is actually achievable for this patient; documenting in a way that supports later benefit or legal applications.', milestones: ['PC3','SBP2'] },
+      { id: 'comm8', text: 'Teach and mentor students and volunteers in a community setting', context: 'Consider: supervising undergraduate or high-school volunteers at a community site; pitching explanation to the learner\'s level rather than one\'s own; modeling professionalism while being observed; giving feedback that is specific enough to act on; recognizing that introducing future clinicians to Family Medicine is itself advocacy for the specialty.', milestones: ['SBP4','ICS2'] },
+    ]
+  },
+  'Scholarly & Quality Improvement Activity': {
+    epas: [
+      { id: 'schol1', text: 'Analyze a patient safety event or near miss', context: 'Consider: reconstructing the sequence of events without hindsight bias; distinguishing individual error from system contribution; using a structured method such as root cause analysis or a fishbone diagram; identifying which contributing factors are actually modifiable; presenting the case without assigning blame.', milestones: ['SBP1','MK2'] },
+      { id: 'schol2', text: 'Apply quality improvement methodology to a practice problem', context: 'Consider: defining a specific and measurable aim; choosing process and outcome measures that mean something; PDSA cycles; using the data that exists rather than waiting for perfect data; recognizing when an intervention has not worked and changing it rather than defending it.', milestones: ['SBP1','PBLI2'] },
+      { id: 'schol3', text: 'Formulate a scholarly question and appraise the relevant literature', context: 'Consider: turning a clinical observation into an answerable question; searching efficiently; appraising study design, bias, and applicability to our patient population; distinguishing statistical from clinical significance; stating plainly what the evidence does not settle.', milestones: ['PBLI1','MK2'] },
+      { id: 'schol4', text: 'Present clinical or scholarly work to a professional audience', context: 'Consider: structuring for the audience and the time available; clear and uncluttered visual material; stating the take-home point explicitly rather than leaving it implied; accurate attribution of sources and collaborators; protecting patient confidentiality in case material.', milestones: ['ICS3','PBLI1'] },
+      { id: 'schol5', text: 'Respond to questions and critique, and incorporate feedback', context: 'Consider: answering directly, including saying "I don\'t know"; distinguishing a challenge to the work from a challenge to oneself; revising substantively rather than cosmetically in response to critique; seeking review before submission rather than after.', milestones: ['PBLI2','PROF3'] },
+      { id: 'schol6', text: 'Produce written scholarly output', context: 'Consider: abstracts, posters, protocols, case reports, or manuscripts; writing to the venue\'s requirements and deadlines; honest reporting of limitations; obtaining IRB review or quality-improvement exemption where required; finishing what was started.', milestones: ['ICS3','PBLI1'] },
+    ]
+  },
+
 };
 
 
@@ -290,6 +316,16 @@ const ROTATION_DETAIL_FM = {
     label: 'Which subspecialty?',
     hint: 'The clinic the resident was seeing patients in. Type a new one to add it.',
   },
+  'Community Medicine': {
+    category: 'community_site',
+    label: 'Which community site or activity?',
+    hint: 'Pick from the list, or type a new one and it will be added for next time.',
+  },
+  'Scholarly & Quality Improvement Activity': {
+    category: 'scholarly_activity',
+    label: 'Which activity?',
+    hint: 'M&M, Research Day, a QI project, journal club. Type a new one to add it.',
+  },
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -326,7 +362,7 @@ const PROGRAMS = {
     // Bump when the measurement changes for THIS program: an EPA reworded,
     // added or retired, or a milestone mapping altered. Per program, because a
     // change to the fellowship's EPAs says nothing about the residency's.
-    formVersion: '2026.2',
+    formVersion: '2026.3',
   },
   am: {
     key:         'am',
