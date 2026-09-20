@@ -897,6 +897,11 @@
       </div>
   </div>
 
+  <!-- Filled by renderRosterWarning() when the learner roster fails to load.
+       Above the tabs because the consequence - former names shown, training
+       levels missing - reaches every view rather than one. -->
+  <div id="roster-warning"></div>
+
   <div class="admin-tabs">
     <button class="admin-tab active" onclick="switchAdminTab('milestones', this)">Milestone Summary</button>
     <button class="admin-tab" onclick="switchAdminTab('submissions', this)">All Submissions</button>
@@ -1199,28 +1204,73 @@ async function loadSubmissions() {
 let learnerRoster = new Map();   // name -> record
 let learnerById   = new Map();   // residents.id -> record
 
+// Whether the roster came back. When it did not, every name on screen silently
+// falls back to the string stored at submission and every training level reads
+// as unknown — so this drives a banner rather than only a console message. A
+// dashboard that quietly shows a learner's former name is worse than one that
+// says it could not load the roster.
+let learnerRosterFailed = false;
+
 async function loadLearners() {
-  try {
-    const url = `${SUPABASE_URL}/rest/v1/residents?select=id,name,class_year,training_level&program=eq.${currentProgram}&limit=2000`;
-    const response = await fetch(url, { headers: await getAuthHeader() });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const rows = await response.json();
-    const recs = rows.map(r => ({
-      id:            r.id,
-      name:          r.name,
-      classYear:     r.class_year,
-      trainingLevel: r.training_level,
-    }));
-    learnerRoster = new Map(recs.map(r => [r.name, r]));
-    learnerById   = new Map(recs.map(r => [r.id, r]));
-  } catch (e) {
-    // Non-fatal. Every view below treats an unresolved learner as "cannot
-    // adjust" and falls back to the stored name and the unadjusted comparison,
-    // so a roster that fails to load costs the adjustment, not the dashboard.
-    console.error('Failed to load learner roster:', e.message);
-    learnerRoster = new Map();
-    learnerById   = new Map();
+  const url = `${SUPABASE_URL}/rest/v1/residents?select=id,name,class_year,training_level&program=eq.${currentProgram}&limit=2000`;
+
+  // The session token first, then the anon key.
+  //
+  // `residents` is anon-readable by necessity: the evaluation form is anonymous
+  // and cannot render its learner picker otherwise. The signed-in session is
+  // NOT guaranteed the same access — the policy on this table granted SELECT to
+  // anon and not to authenticated, so the dashboard's authenticated read came
+  // back 403 while the form's anonymous read of the same rows succeeded.
+  //
+  // Trying both means neither direction of policy change breaks this: tighten
+  // anon later and the session path still works, leave it as it is and the anon
+  // path does. Reading the roster anonymously exposes nothing new, since the
+  // form already does exactly that from a page with no login at all.
+  const attempts = [
+    ['session', async () => await getAuthHeader()],
+    ['anon',    async () => ({ 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` })],
+  ];
+
+  for (const [label, headersFor] of attempts) {
+    try {
+      const response = await fetch(url, { headers: await headersFor() });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const rows = await response.json();
+      const recs = rows.map(r => ({
+        id:            r.id,
+        name:          r.name,
+        classYear:     r.class_year,
+        trainingLevel: r.training_level,
+      }));
+      learnerRoster = new Map(recs.map(r => [r.name, r]));
+      learnerById   = new Map(recs.map(r => [r.id, r]));
+      learnerRosterFailed = false;
+      return;
+    } catch (e) {
+      console.warn(`Learner roster: ${label} read failed (${e.message})`);
+    }
   }
+
+  console.error('Learner roster could not be loaded by any route.');
+  learnerRoster = new Map();
+  learnerById   = new Map();
+  learnerRosterFailed = true;
+}
+
+// Says so on screen when the roster is missing. Without this the dashboard
+// looks entirely normal while showing names that may be months out of date and
+// quietly doing no case-mix adjustment at all.
+function renderRosterWarning() {
+  const el = document.getElementById('roster-warning');
+  if (!el) return;
+  el.innerHTML = learnerRosterFailed
+    ? `<div style="font-size:13px;color:var(--slate);background:var(--amber-pale);border:1px solid var(--gold-border);padding:11px 15px;margin-bottom:14px">
+         <strong>The ${learnerNoun(false).toLowerCase()} roster could not be loaded.</strong>
+         Names are shown as they were recorded when each evaluation was filed, so anyone renamed since will
+         appear under their former name. Training levels are unavailable, so the PGY adjustment is not being
+         applied. The evaluation data itself is unaffected.
+       </div>`
+    : '';
 }
 
 // The roster row an evaluation is about. Prefers `resident_id` (see
@@ -1373,6 +1423,7 @@ async function loadAdminData() {
   const [subs] = await Promise.all([loadSubmissions(), loadFaculty(), loadDetailOptions(), loadLearners()]);
   allSubmissions = subs;
   relabelForProgram();
+  renderRosterWarning();
   populateFilterDropdowns();
   renderMilestones();
 }
