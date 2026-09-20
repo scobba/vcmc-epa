@@ -204,6 +204,17 @@ function readRotationDetail(rotationName) {
   return v || undefined;
 }
 
+// Today as YYYY-MM-DD in LOCAL time, for bounding the supervision date.
+//
+// Deliberately not toISOString().slice(0, 10), which is UTC: west of Greenwich
+// that already reads as tomorrow for most of the evening, so an evaluator could
+// file a date a day in the future and the guard in submitForm() would wave it
+// through. Same trap as the July 1 boundary in academicYearStart().
+function todayLocalISO() {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 // ── The form itself ──────────────────────────────────────────────────────────
 function renderEPAFormInto(rotationName, el) {
   const epas = activeEpas(PROGRAM, rotationName);
@@ -245,7 +256,7 @@ function renderEPAFormInto(rotationName, el) {
         </div>
         <div class="form-group">
           <label>Supervision Date *</label>
-          <input type="date" id="field-date-start" required>
+          <input type="date" id="field-date-start" max="${todayLocalISO()}" required>
         </div>
         ${detailFieldMarkup(rotationName)}
       </div>
@@ -333,6 +344,23 @@ async function submitForm(rotationName) {
   if (!resident) { alert(`Please select a ${LEARNER}.`); return; }
   if (!evaluatorName) { alert('Please enter your name.'); return; }
   if (!dateStart) { alert('Please select a supervision date.'); return; }
+
+  // A supervision date in the future is always wrong - nobody supervised anyone
+  // next year - so this rejects rather than warns. One evaluation reached the
+  // database dated 2029-08-28, submitted on 2026-08-28: a mistyped year, which
+  // left the row unresolvable to any training level and quietly outside the
+  // case-mix adjustment.
+  //
+  // Re-checked here rather than trusting the input's `max`, which is rendered
+  // once from the day the page was opened and which typed input can bypass in
+  // some browsers anyway.
+  //
+  // No lower bound, deliberately: evaluators do file weeks late, and rejecting
+  // a genuine backdated evaluation costs more than accepting an old one.
+  if (dateStart > todayLocalISO()) {
+    alert('The supervision date cannot be in the future. Please check the year.');
+    return;
+  }
 
   // undefined means "this rotation asks, and nothing was chosen"; null means
   // "this rotation does not ask".
