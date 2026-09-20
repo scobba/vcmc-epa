@@ -375,7 +375,7 @@ const PROGRAMS = {
     label:       'Addiction Medicine Fellowship',
     learner:     'fellow',
     learners:    'fellows',
-    formVersion: '2026.1',
+    formVersion: '2026.2',
     years:       1,
   },
 };
@@ -411,16 +411,19 @@ const MILESTONE_DEFS_AM = {
 };
 
 // ── Registries ───────────────────────────────────────────────────────────────
-// ROTATION_DETAIL_AM is deliberately empty. None of the four fellowship
+// ROTATION_DETAIL_AM is deliberately empty. None of the three fellowship
 // rotations is generic the way Procedural Care is - each names a specific
 // setting - so there is no extra question to ask about which one it was. A
 // rotation absent from this object shows no extra field and stores NULL.
 //
 // EPA IDS ARE APPEND-ONLY AND PREFIXED BY ROTATION:
 //   amclin - Outpatient Addiction Medicine Clinic
-//   amipd  - Inpatient Detox Unit
-//   amslf  - Sober Living Facility Rounds
-//   amopd  - Outpatient Detox Unit
+//   amwms  - Inpatient Withdrawal Management Service
+//   amcp   - Community Partners Rotations
+// The amipd, amslf and amopd prefixes of the first draft are gone: the ids were
+// renumbered during the director's review, which was only safe because no AM
+// evaluation had been submitted. Treat that window as closed - do not renumber
+// again.
 // The `am` prefix is defensive: it keeps a fellowship id recognisable in a raw
 // `scores` blob even when it is read without the program column beside it.
 // Never rename one of these and never reuse one.
@@ -455,6 +458,7 @@ const ROTATIONS_AM = {
       { id: 'amwms6', text: 'Lead interdisciplinary rounds on the withdrawal management service', context: 'Consider: synthesizing input from nursing, counseling, social work, and pharmacy; resolving disagreement about readiness or behavior; setting a unified plan the team can carry out; supporting staff after a difficult event.', milestones: ['ICS2','SBP2'] },
       { id: 'amwms7', text: 'Plan discharge and transition to ongoing treatment', context: 'Consider: securing the next appointment before discharge; medication continuity and prescription logistics; naloxone at discharge; housing, transportation, and benefits; communicating the plan to the receiving clinician; planning for departure against medical advice.', milestones: ['SBP2','ICS3'] },
       { id: 'amwms8', text: 'Complete documentation, handoffs, and controlled-substance requirements accurately and on time', context: 'Consider: notes that support the level of care billed; prescription monitoring program checks; handoff content that survives a shift change; timeliness without templating away the clinical reasoning; confidentiality rules specific to substance use records.', milestones: ['PROF2','ICS3'] },
+      { id: 'amwms9', text: 'Serve as the addiction medicine consultant to another inpatient team', context: 'Consider: clarifying the question actually being asked before answering it; recommendations specific enough to act on rather than general advice, including agent, dose, route and duration; naming the few priorities that matter rather than an exhaustive list; speaking with the requesting team directly rather than leaving only a note; continuing MOUD through the admission and managing acute pain alongside it; addressing stigma or a difficult-patient framing without alienating the team; knowing where the consultant role ends and the primary team decision begins; following up rather than signing off after one visit.', milestones: ['PC1','SBP3','ICS2','ICS3'] },
     ]
   },
 

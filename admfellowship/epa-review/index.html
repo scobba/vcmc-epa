@@ -238,14 +238,14 @@ footer{
   <header class="masthead">
     <div class="eyebrow">VCMC · Addiction Medicine Fellowship</div>
     <h1>Draft EPAs for Review</h1>
-    <p class="standfirst col">Twenty entrustable professional activities across three rotations, mapped to the ACGME Addiction Medicine Milestones. Revised following Dr. Khan&rsquo;s review. The structure and milestone mapping are checked programmatically; the clinical substance is what needs faculty judgment.</p>
+    <p class="standfirst col">Twenty-one entrustable professional activities across three rotations, mapped to the ACGME Addiction Medicine Milestones. Revised following Dr. Khan&rsquo;s review. The structure and milestone mapping are checked programmatically; the clinical substance is what needs faculty judgment.</p>
     <div class="meta">
-      <span><b>20</b> EPAs</span>
+      <span><b>21</b> EPAs</span>
       <span><b>3</b> rotations</span>
       <span><b>16/16</b> milestones covered</span>
       <span>Milestones <b>v1.2</b> · Jan 2019</span>
-      <span>Form version <b>2026.1</b></span>
-      <span>Revision <b>2</b></span>
+      <span>Form version <b>2026.2</b></span>
+      <span>Revision <b>3</b></span>
     </div>
   </header>
 
@@ -263,8 +263,12 @@ footer{
 
   <section>
     <h2>What changed in this revision</h2>
-    <p class="sect-note">All four points from Dr. Khan&rsquo;s review are applied. The set went from 29 EPAs across four rotations to 20 across three.</p>
+    <p class="sect-note">Revision 3 adds one EPA at Dr. Khan&rsquo;s request: the fellow acting as a consultant to other inpatient teams. Revision 2&rsquo;s changes, from the first review, are kept below for context &mdash; that round took the set from 29 EPAs across four rotations to 20 across three.</p>
     <div class="notes">
+      <div class="note">
+        <h4>Consultation EPA added</h4>
+        <p>The set had no EPA for the fellow acting as a <strong>consultant to another inpatient team</strong> &mdash; assessing a patient on someone else&rsquo;s service and giving that team recommendations they can act on. <strong>amwms9</strong> covers it, mapped to PC1, SBP3, ICS2 and ICS3. The Inpatient Withdrawal Management Service is now 9 EPAs, which sharpens the open question below about its length.</p>
+      </div>
       <div class="note">
         <h4>Rotations renamed</h4>
         <p><strong>Inpatient Detox Unit</strong> is now <strong>Inpatient Withdrawal Management Service</strong>. <strong>Sober Living Facility Rounds</strong> is now <strong>Community Partners Rotations</strong>, and its six EPAs were reworded to speak to partner sites generally &mdash; withdrawal management, residential, and intensive outpatient &mdash; rather than to sober living homes specifically.</p>
@@ -327,7 +331,7 @@ footer{
   </section>
 
   <footer>
-    <p><strong>Draft &mdash; not the final instrument.</strong> Revision 2, generated 29 August 2026 from the fellowship&rsquo;s definitions file, so this document and the evaluation form cannot disagree. If the EPAs are revised again, this page is regenerated rather than edited by hand.</p>
+    <p><strong>Draft &mdash; not the final instrument.</strong> Revision 3, generated 20 September 2026 from the fellowship&rsquo;s definitions file, so this document and the evaluation form cannot disagree. If the EPAs are revised again, this page is regenerated rather than edited by hand.</p>
     <p>Nothing here contains fellow or patient information. Not indexed by search engines.</p>
     <p><a href="https://www.venturafamilymed.org">Ventura County Medical Center &middot; Family Medicine Residency Program</a></p>
   </footer>
@@ -375,6 +379,7 @@ const ROTATIONS_AM = {
       { id: 'amwms6', text: 'Lead interdisciplinary rounds on the withdrawal management service', context: 'Consider: synthesizing input from nursing, counseling, social work, and pharmacy; resolving disagreement about readiness or behavior; setting a unified plan the team can carry out; supporting staff after a difficult event.', milestones: ['ICS2','SBP2'] },
       { id: 'amwms7', text: 'Plan discharge and transition to ongoing treatment', context: 'Consider: securing the next appointment before discharge; medication continuity and prescription logistics; naloxone at discharge; housing, transportation, and benefits; communicating the plan to the receiving clinician; planning for departure against medical advice.', milestones: ['SBP2','ICS3'] },
       { id: 'amwms8', text: 'Complete documentation, handoffs, and controlled-substance requirements accurately and on time', context: 'Consider: notes that support the level of care billed; prescription monitoring program checks; handoff content that survives a shift change; timeliness without templating away the clinical reasoning; confidentiality rules specific to substance use records.', milestones: ['PROF2','ICS3'] },
+      { id: 'amwms9', text: 'Serve as the addiction medicine consultant to another inpatient team', context: 'Consider: clarifying the question actually being asked before answering it; recommendations specific enough to act on rather than general advice, including agent, dose, route and duration; naming the few priorities that matter rather than an exhaustive list; speaking with the requesting team directly rather than leaving only a note; continuing MOUD through the admission and managing acute pain alongside it; addressing stigma or a difficult-patient framing without alienating the team; knowing where the consultant role ends and the primary team decision begins; following up rather than signing off after one visit.', milestones: ['PC1','SBP3','ICS2','ICS3'] },
     ]
   },
 
@@ -424,9 +429,9 @@ const QUESTIONS = [
     p: 'SBP1, PBLI1, PBLI2, PROF2 and PROF3 are each reached by exactly one EPA, and two of them (PBLI2 and PROF3) by the same one. Cut or reword that EPA in a later round and the milestone drops to zero coverage, with nothing to report to the ACGME for it. This is the cost of a shorter set and it is not obviously wrong — but it is worth knowing which EPAs are load-bearing before anyone proposes removing them.',
     ids: 'amwms5 · amclin2 · amclin6 · amwms8' },
   { flagged: false,
-    h: 'Is the Inpatient Withdrawal Management Service still too long at 8?',
-    p: 'The clinic came down to 6 because 9 was judged too much for one sitting. The inpatient service was not part of that instruction and still has 8. Four of them are withdrawal management by substance class — alcohol, opioid, sedative-hypnotic — which could reasonably collapse into one EPA about managing withdrawal across substances, the same merge that took the clinic from 9 to 6.',
-    ids: 'amwms1–amwms8 · candidates to merge: amwms2, amwms3, amwms4' },
+    h: 'The Inpatient Withdrawal Management Service is now 9. Is that too long?',
+    p: 'The clinic came down to 6 because 9 was judged too much for one sitting. The inpatient service was not part of that instruction, and the consultation EPA has now taken it from 8 to 9 — the length the clinic was cut back from. Four of the nine are withdrawal management by substance class (alcohol, opioid, sedative-hypnotic), which could collapse into one EPA about managing withdrawal across substances, the same merge that shortened the clinic. Adding the consult EPA and merging those would leave the service at 7.',
+    ids: 'amwms1–amwms9 · candidates to merge: amwms2, amwms3, amwms4' },
   { flagged: false,
     h: 'Does the merged pharmacotherapy EPA try to do too much?',
     p: 'amclin2 now covers opioid and alcohol pharmacotherapy plus ambulatory withdrawal management, and carries four milestones. That is the single busiest item in the set. It scores as one number, so a fellow strong on buprenorphine and weak on ambulatory withdrawal produces one middling rating that says neither.',
