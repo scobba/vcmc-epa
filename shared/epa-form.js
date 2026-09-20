@@ -53,13 +53,15 @@ const LEARNER_C = LEARNER.charAt(0).toUpperCase() + LEARNER.slice(1);
 // ── Learner roster ───────────────────────────────────────────────────────────
 // Scoped to this program. Without the filter a fellow appears in the residency
 // picker and vice versa.
+// [{ id, name }]. The id is what makes an evaluation survive a roster rename
+// (see sql/013); the placeholder entries below carry id: null.
 let RESIDENTS = [];
 let residentsLoaded = false;
 
 async function loadResidents() {
   try {
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/residents?select=name&program=eq.${PROGRAM}&active=eq.true&order=sort_order.asc,name.asc`,
+      `${SUPABASE_URL}/rest/v1/residents?select=id,name&program=eq.${PROGRAM}&active=eq.true&order=sort_order.asc,name.asc`,
       {
         headers: {
           'apikey':        SUPABASE_ANON,
@@ -69,11 +71,12 @@ async function loadResidents() {
     );
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const rows = await response.json();
-    RESIDENTS = rows.map(r => r.name).filter(n => n && n.trim());
-    if (RESIDENTS.length === 0) RESIDENTS = [`[No ${LEARNERS} found — check the Supabase residents table]`];
+    RESIDENTS = rows.filter(r => r.name && r.name.trim())
+                    .map(r => ({ id: r.id, name: r.name }));
+    if (RESIDENTS.length === 0) RESIDENTS = [{ id: null, name: `[No ${LEARNERS} found — check the Supabase residents table]` }];
   } catch (e) {
     console.error(`Failed to load ${LEARNERS}:`, e);
-    RESIDENTS = ['[Could not load — check Supabase connection]'];
+    RESIDENTS = [{ id: null, name: '[Could not load — check Supabase connection]' }];
   }
   residentsLoaded = true;
 }
@@ -110,7 +113,7 @@ function renderFormLanding() {
 
   // A real name never starts with "[" — loadResidents() uses that shape for its
   // placeholders, so this counts people rather than error messages.
-  const rosterCount = RESIDENTS.filter(r => !r.startsWith('[')).length;
+  const rosterCount = RESIDENTS.filter(r => !r.name.startsWith('[')).length;
 
   // An empty roster is reported as a problem, not as a successful load of
   // nothing. It is the state a new program sits in until someone is added to the
@@ -229,7 +232,7 @@ function renderEPAFormInto(rotationName, el) {
           <label>${LEARNER_C} Being Evaluated *</label>
           <select id="field-resident" required>
             <option value="">&mdash; Select ${LEARNER_C} &mdash;</option>
-            ${RESIDENTS.map(r => `<option value="${r}">${r}</option>`).join('')}
+            ${RESIDENTS.map(r => `<option value="${escFaculty(r.name)}" data-resident-id="${r.id ?? ''}">${escFaculty(r.name)}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
@@ -317,7 +320,12 @@ function renderEPAFormInto(rotationName, el) {
 
 // ── Submit ───────────────────────────────────────────────────────────────────
 async function submitForm(rotationName) {
-  const resident = document.getElementById('field-resident').value;
+  // The name stays the value so every existing reader is unaffected; the id
+  // rides along in a data attribute and is what the row is filed under.
+  const residentSel = document.getElementById('field-resident');
+  const resident    = residentSel.value;
+  const rawId       = residentSel.selectedOptions[0] && residentSel.selectedOptions[0].dataset.residentId;
+  const residentId  = rawId ? Number(rawId) : null;
   const evaluatorName = document.getElementById('field-evaluator-name').value.trim();
   const dateStart = document.getElementById('field-date-start').value;
   const narrative = document.getElementById('field-narrative').value.trim();
@@ -353,6 +361,7 @@ async function submitForm(rotationName) {
     id: Date.now().toString(),
     timestamp: new Date().toISOString(),
     resident,
+    residentId,
     rotation: rotationName,
     evaluatorName,
     evaluatorId: null,   // filled in at save time once the roster row is resolved
@@ -540,6 +549,7 @@ function computeMilestoneScores(rotationName, scores) {
 async function saveSubmission(sub) {
   const payload = {
     resident:        sub.resident,
+    resident_id:     sub.residentId ?? null,
     rotation:        sub.rotation,
     program:         PROGRAM,
     evaluator_name:  sub.evaluatorName,

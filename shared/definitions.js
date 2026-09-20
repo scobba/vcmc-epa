@@ -363,6 +363,12 @@ const PROGRAMS = {
     // added or retired, or a milestone mapping altered. Per program, because a
     // change to the fellowship's EPAs says nothing about the residency's.
     formVersion: '2026.3',
+    // Length of training, in years. Used to derive a learner’s PGY from their
+    // graduation year — see trainingYear(). The residency expanded from three
+    // years to four and every class now on the roster is a four-year class; if a
+    // three-year class ever needs resolving again this becomes per-class data
+    // rather than per-program.
+    years:       4,
   },
   am: {
     key:         'am',
@@ -370,6 +376,7 @@ const PROGRAMS = {
     learner:     'fellow',
     learners:    'fellows',
     formVersion: '2026.1',
+    years:       1,
   },
 };
 
@@ -514,6 +521,64 @@ function rotationDetailFor(program, rotationName) {
 // Rotation names within a program that collect a rotation_detail value.
 function rotationsWithDetail(program) {
   return Object.keys(ROTATION_DETAIL_BY_PROGRAM[assertProgram(program)]);
+}
+
+// ── Training level ───────────────────────────────────────────────────────────
+//
+// A learner's PGY is DERIVED, never stored. `residents.class_year` — the year
+// they finish — is a durable fact that never changes; PGY is a function of it
+// and of a date. Storing PGY would need a job every July 1 whose failure mode
+// is silent: everyone reads a year behind, and every case-mix adjustment built
+// on it is wrong in the same direction with nothing on screen to say so.
+// Derived, it cannot go stale and there is no job to fail.
+//
+// Same principle as halfStep() in the dashboard: store the fact, derive the
+// presentation.
+
+// The academic year containing `when`, named by the July it began. July 1 is
+// the boundary: 2026-06-30 belongs to the year starting 2025, 2026-07-01 to
+// the year starting 2026.
+//
+// A bare YYYY-MM-DD is pinned to local NOON before being read. `new Date()`
+// parses a date-only string as UTC midnight but getMonth() reports local time,
+// so west of Greenwich every such date silently reads as the day before — and
+// an evaluation dated July 1 would be filed under the previous academic year,
+// at exactly the boundary this function exists to find. Noon is far enough
+// from both midnights to survive any offset. Same guard as the `T12:00:00`
+// the dashboard already appends when formatting a date for display.
+function academicYearStart(when) {
+  let d;
+  if (when instanceof Date)                          d = when;
+  else if (typeof when === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(when))
+                                                     d = new Date(when + 'T12:00:00');
+  else if (when)                                     d = new Date(when);
+  else                                               d = new Date();
+  if (isNaN(d)) return null;
+  return d.getMonth() >= 6 ? d.getFullYear() : d.getFullYear() - 1;
+}
+
+// PGY for a learner graduating in `classYear`, as of `when` (default: now).
+//
+//   PGY = academicYearStart - classYear + years + 1
+//
+// The residency is four years, so the class of 2028 is PGY-3 in the academic
+// year starting 2026 and PGY-4 in the one starting 2027.
+//
+// `when` matters: pass the DATE OF THE EVALUATION, not today. An evaluation
+// written in October 2025 assessed a PGY-2; that it was written about someone
+// who is now a PGY-3 is irrelevant to what that evaluator was looking at.
+//
+// Returns null — never a guess — when the class year is unknown or the result
+// falls outside 1..years. A graduate, an incoming learner and a typo are all
+// "no training level", and a caller must handle that rather than be handed a
+// plausible number.
+function trainingYear(program, classYear, when) {
+  const years = programInfo(program).years;
+  const gy    = Number(classYear);
+  const start = academicYearStart(when);
+  if (!Number.isFinite(gy) || start === null) return null;
+  const pgy = start - gy + years + 1;
+  return (pgy >= 1 && pgy <= years) ? pgy : null;
 }
 
 // ── Faculty evaluation items (faculty/ and faculty-dashboard/) ──
