@@ -1242,6 +1242,15 @@ async function loadLearners() {
         classYear:     r.class_year,
         trainingLevel: r.training_level,
       }));
+      // An empty roster is a failure, not a state. RLS denies by returning
+      // zero rows with HTTP 200 and no error, so response.ok cannot tell
+      // "this role matches no policy" from "there are no learners" - and a
+      // program with no learners does not exist. Treating it as a failed read
+      // means the next route is tried and the banner appears if none works.
+      // Without this, a policy scoped to the wrong role would fail silently,
+      // which is exactly how the 403 this guard sits beside went unnoticed.
+      if (recs.length === 0) throw new Error('read succeeded but returned no rows');
+
       learnerRoster = new Map(recs.map(r => [r.name, r]));
       learnerById   = new Map(recs.map(r => [r.id, r]));
       learnerRosterFailed = false;
