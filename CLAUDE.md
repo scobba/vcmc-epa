@@ -157,11 +157,15 @@ identity. `program` is not a guess: every row written before the fellowship
 existed is a Family Medicine evaluation as a matter of chronology. 010's `DEFAULT
 'fm'` does it in one statement.
 
-**That default is temporary.** While it stands, a page that forgets to send
-`program` silently files its evaluation as Family Medicine — the exact conflation
+**That default is gone.** While it stood, a page that forgot to send `program`
+filed its evaluation as Family Medicine without complaint — the exact conflation
 the column exists to prevent. [sql/011_drop_program_default.sql](sql/011_drop_program_default.sql)
-removes it once both forms send the value explicitly, turning a silent misfiling
-into a loud `23502`. Run 011 only after the AM form is deployed.
+dropped it from both `epa_submissions` and `residents` once both forms were
+sending the value explicitly, so an insert that omits `program` now fails with a
+loud `23502` instead of filing quietly under the wrong vocabulary. **Applied
+2026-09-20**; both columns verified `NOT NULL` with no default, and no row on
+either table has a null `program`. A new page must send `program` explicitly —
+there is no longer a fallback to catch it.
 
 **Versions are per program.** `formVersion` lives in `PROGRAMS`, not as one
 global — a change to the fellowship's EPAs says nothing about the residency's,

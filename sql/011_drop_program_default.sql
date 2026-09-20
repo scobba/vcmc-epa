@@ -1,19 +1,16 @@
 -- 011_drop_program_default.sql
 -- Project: ubqecdyhgejqoweltagl  ·  Table: public.epa_submissions, public.residents
 --
---   ┌──────────────────────────────────────────────────────────────────────┐
---   │  DO NOT RUN YET.                                                      │
+--   ┌───────────────────────────────────────────────────────────────────────┐
+--   │  APPLIED 2026-09-20. Nothing further to do.                           │
 --   │                                                                       │
---   │  Run this only after BOTH forms are deployed and sending `program`     │
---   │  explicitly on every insert. Running it early makes every anonymous    │
---   │  submission from the currently deployed form fail with 23502, and the  │
---   │  evaluator cannot work around it.                                      │
+--   │  Kept as the record of what was run. Re-running it is harmless: a     │
+--   │  `drop default` on a column that has none is a no-op, not an error,   │
+--   │  so running it twice changes nothing.                                 │
 --   │                                                                       │
---   │  Check first - this must return no rows written since the deploy:      │
---   │    select count(*) from public.epa_submissions                         │
---   │     where program is null;                                             │
---   │  and confirm the form payload in index.html contains `program:`.        │
---   └──────────────────────────────────────────────────────────────────────┘
+--   │  Verified after the fact: both columns are NOT NULL with no default,  │
+--   │  and no row on either table has a null `program`.                     │
+--   └───────────────────────────────────────────────────────────────────────┘
 --
 -- WHY
 --   010 added `program` with `default 'fm'` so that the migration could be
