@@ -428,10 +428,16 @@ const MILESTONE_DEFS_AM = {
 // `scores` blob even when it is read without the program column beside it.
 // Never rename one of these and never reuse one.
 //
-// DRAFT - written from the ACGME Addiction Medicine Milestones v1.2 and not yet
-// reviewed by fellowship faculty. Revise freely until the first evaluation is
-// submitted; after that the ids harden and scores_detail has frozen the wording
-// on every row already filed.
+// APPROVED 2026-09-22 by Dr. Tipu Khan, fellowship director, at revision 3.
+// Written from the ACGME Addiction Medicine Milestones v1.2, revised twice on
+// his review, and signed off as the instrument the fellowship will use.
+//
+// The ids are now effectively frozen. They were renumbered once during review,
+// which was only safe because no AM evaluation existed; that is no longer the
+// position to reason from. Treat these as append-only like the FM set: reword
+// freely, retire with `retired: true`, never rename and never reuse an id.
+// The first submitted evaluation makes it literal, since scores_detail freezes
+// the wording on every row already filed.
 //
 // Every one of the 16 AM milestones is mapped by at least one EPA, so no
 // milestone row renders permanently blank on the dashboard.
