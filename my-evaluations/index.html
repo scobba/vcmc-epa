@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Evaluations — VCMC FM Residency</title>
+<meta name="robots" content="noindex, nofollow">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --navy: #1A2744;
+    --navy-mid: #253660;
+    --navy-light: #344878;
+    --gold: #B8901E;
+    --gold-bright: #D4A820;
+    --gold-pale: #FBF6E9;
+    --gold-border: #E8D08A;
+    --slate: #4A5568;
+    --slate-light: #8896A8;
+    --border: #E2E6ED;
+    --border-light: #EEF1F5;
+    --bg: #FFFFFF;
+    --bg-soft: #F8F9FB;
+    --white: #FFFFFF;
+    --teal: #1A5C8A;
+    --teal-light: #2275AD;
+    --teal-pale: #EBF4FA;
+    --amber: #B8901E;
+    --amber-pale: #FBF6E9;
+    --scale-1: #B91C1C;
+    --scale-2: #C05621;
+    --scale-3: #92600A;
+    --scale-4: #15803D;
+    --scale-5: #1A2744;
+    --scale-na: #6B7280;
+    --radius: 4px;
+    --radius-lg: 6px;
+    --shadow: 0 1px 4px rgba(26,39,68,0.08);
+    --shadow-lg: 0 4px 24px rgba(26,39,68,0.12);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-soft); color: var(--navy);
+    font-size: 15px; line-height: 1.55;
+  }
+
+  /* ── Auth gate ─────────────────────────────────────────────────── */
+  .auth-gate {
+    position: fixed; inset: 0; background: var(--navy);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; padding: 20px;
+  }
+  .auth-box {
+    background: var(--white); padding: 40px 36px; max-width: 400px; width: 100%;
+    text-align: center; box-shadow: var(--shadow-lg);
+  }
+  .auth-box img { width: 60px; margin-bottom: 18px }
+  .auth-eyebrow {
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--gold); font-weight: 700; margin-bottom: 8px;
+  }
+  .auth-box h2 { font-size: 22px; font-weight: 400; margin-bottom: 10px }
+  .auth-box h2 strong { font-weight: 700 }
+  .auth-box p { font-size: 13.5px; color: var(--slate); margin-bottom: 20px }
+  .auth-box input {
+    width: 100%; padding: 11px 13px; border: 1px solid var(--border);
+    font-size: 14px; font-family: inherit; color: var(--navy);
+  }
+  .auth-box input:focus { outline: none; border-color: var(--navy-light) }
+  .auth-message { padding: 10px 12px; font-size: 13px; margin-bottom: 14px; text-align: left }
+  .auth-message.error { background: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5 }
+  .auth-hint { font-size: 11.5px; color: var(--slate-light); margin-top: 18px; line-height: 1.6 }
+
+  .btn {
+    padding: 11px 18px; font-size: 13px; font-weight: 600; font-family: inherit;
+    border: 1px solid transparent; cursor: pointer; letter-spacing: 0.02em;
+  }
+  .btn-primary { background: var(--navy); color: var(--white) }
+  .btn-primary:hover { background: var(--navy-mid) }
+  .btn-primary:disabled { opacity: .6; cursor: default }
+  .btn-secondary { background: var(--white); color: var(--navy); border-color: var(--border) }
+  .btn-secondary:hover { border-color: var(--navy-light) }
+
+  /* ── Page chrome ───────────────────────────────────────────────── */
+  #content { display: none }
+  .topbar {
+    background: var(--white); border-bottom: 1px solid var(--border);
+    padding: 14px 24px; display: flex; align-items: center;
+    justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 12px }
+  .brand img { width: 38px }
+  .brand-text { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+                color: var(--slate); line-height: 1.45; font-weight: 600 }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 28px 24px 80px }
+
+  .page-head { margin-bottom: 22px }
+  .page-head h1 { font-size: 27px; font-weight: 400; letter-spacing: -0.01em }
+  .page-head h1 strong { font-weight: 700 }
+  .page-head .sub { font-size: 13.5px; color: var(--slate); margin-top: 4px }
+
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+              gap: 12px; margin-bottom: 22px }
+  .stat-card { background: var(--white); border: 1px solid var(--border); padding: 14px 16px }
+  .stat-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+                color: var(--slate-light); font-weight: 700; margin-bottom: 5px }
+  .stat-value { font-size: 25px; font-weight: 600; color: var(--navy); line-height: 1.1 }
+
+  .note {
+    background: var(--gold-pale); border: 1px solid var(--gold-border);
+    padding: 13px 16px; font-size: 13px; color: var(--slate);
+    line-height: 1.65; margin-bottom: 22px;
+  }
+  .note strong { color: var(--navy) }
+
+  h2.sect {
+    font-size: 16px; font-weight: 700; color: var(--navy); margin: 30px 0 4px;
+    padding-bottom: 8px; border-bottom: 2px solid var(--navy);
+  }
+  .sect-note { font-size: 12.5px; color: var(--slate-light); margin: 8px 0 14px; line-height: 1.6; max-width: 760px }
+
+  /* ── Scale legend ──────────────────────────────────────────────── */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px }
+  .legend .lv {
+    display: flex; align-items: baseline; gap: 6px; background: var(--white);
+    border: 1px solid var(--border); padding: 6px 10px; font-size: 12px;
+  }
+  .legend .n { font-weight: 700; font-size: 13px; min-width: 12px }
+  .legend .t { color: var(--slate) }
+
+  /* ── Tables ────────────────────────────────────────────────────── */
+  .card { background: var(--white); border: 1px solid var(--border); margin-bottom: 16px }
+  .card-head {
+    padding: 11px 16px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    background: var(--bg-soft);
+  }
+  .card-head h3 { font-size: 14px; font-weight: 700; color: var(--navy) }
+  .card-head .meta { font-size: 11.5px; color: var(--slate-light) }
+  table { width: 100%; border-collapse: collapse }
+  th {
+    text-align: left; font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--slate-light); font-weight: 700; padding: 9px 16px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  td { padding: 10px 16px; font-size: 13.5px; border-bottom: 1px solid var(--border-light);
+       vertical-align: top }
+  tr:last-child td { border-bottom: none }
+  .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums }
+  .avg { font-weight: 700; font-size: 15px }
+  .n-obs { font-size: 11.5px; color: var(--slate-light); white-space: nowrap }
+  .thin { color: var(--slate-light) }
+
+  .bar { height: 4px; background: var(--border-light); margin-top: 5px; width: 100% }
+  .bar i { display: block; height: 100%; background: var(--navy-light) }
+
+  /* ── Evaluation cards ──────────────────────────────────────────── */
+  .ev { background: var(--white); border: 1px solid var(--border); margin-bottom: 12px }
+  .ev-head {
+    padding: 13px 16px; cursor: pointer; display: flex; align-items: baseline;
+    justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  }
+  .ev-head:hover { background: var(--bg-soft) }
+  .ev-title { font-weight: 700; font-size: 14px; color: var(--navy) }
+  .ev-sub { font-size: 12px; color: var(--slate-light); margin-top: 2px }
+  .ev-right { display: flex; align-items: baseline; gap: 14px; font-size: 12.5px; color: var(--slate) }
+  .ev-body { display: none; border-top: 1px solid var(--border-light); padding: 4px 0 0 }
+  .ev.open .ev-body { display: block }
+  .ev .chev { color: var(--slate-light); font-size: 11px }
+  .narrative {
+    margin: 4px 16px 16px; padding: 13px 15px; background: var(--teal-pale);
+    border-left: 3px solid var(--teal); font-size: 13.5px; line-height: 1.7;
+    color: var(--navy); white-space: pre-wrap;
+  }
+  .narrative-label {
+    font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--teal); font-weight: 700; margin-bottom: 6px;
+  }
+
+  .pill {
+    display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 700;
+    border-radius: 10px; background: var(--bg-soft); color: var(--slate);
+    border: 1px solid var(--border);
+  }
+  .na { color: var(--scale-na); font-style: italic; font-size: 12.5px }
+
+  .empty { background: var(--white); border: 1px solid var(--border);
+           padding: 44px 24px; text-align: center; color: var(--slate) }
+  .empty .icon { font-size: 30px; margin-bottom: 10px }
+  .loading { padding: 40px; text-align: center; color: var(--slate-light); font-size: 14px }
+
+  .blocked {
+    background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B;
+    padding: 18px 20px; font-size: 14px; line-height: 1.65;
+  }
+
+  footer { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--border);
+           font-size: 11.5px; color: var(--slate-light); line-height: 1.7 }
+
+  @media print {
+    .auth-gate, .topbar .btn, .no-print { display: none !important }
+    body { background: var(--white) }
+    .ev-body { display: block !important }
+    .wrap { max-width: none; padding: 0 }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding: 20px 16px 60px }
+    th, td { padding: 9px 12px }
+  }
+</style>
+</head>
+<body>
+
+<div class="auth-gate" id="auth-gate">
+  <div class="auth-box">
+    <img src="https://static.wixstatic.com/media/48ea68_21770b96de134293966db6558bd3d23a~mv2.png/v1/fill/w_75,h_79,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/vcmc-fmr-icon.png" alt="VCMC FM Residency Logo">
+    <div class="auth-eyebrow">My Evaluations</div>
+    <h2><strong>Resident</strong> Access</h2>
+    <p>Sign in to see your own EPA evaluations.</p>
+    <div id="auth-message" class="auth-message" style="display:none"></div>
+    <input type="email" id="auth-email" placeholder="Email address"
+           onkeydown="if(event.key==='Enter') document.getElementById('auth-password').focus()">
+    <input type="password" id="auth-password" placeholder="Password"
+           onkeydown="if(event.key==='Enter') signIn()" style="margin-top:8px">
+    <button class="btn btn-primary" style="width:100%; margin-top:12px"
+            onclick="signIn()" id="auth-btn">Sign In</button>
+    <p class="auth-hint">You can only see evaluations written about you.<br>
+    Contact your program coordinator if you cannot sign in.</p>
+  </div>
+</div>
+
+<div id="content">
+  <div class="topbar">
+    <div class="brand">
+      <img src="https://static.wixstatic.com/media/48ea68_21770b96de134293966db6558bd3d23a~mv2.png/v1/fill/w_75,h_79,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/vcmc-fmr-icon.png" alt="">
+      <div class="brand-text">Ventura County Medical Center<br>Family Medicine Residency</div>
+    </div>
+    <div style="display:flex; gap:8px">
+      <button class="btn btn-secondary" onclick="window.print()">Print</button>
+      <button class="btn btn-secondary" onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+  <div class="wrap" id="main"><div class="loading">Loading your evaluations…</div></div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://ubqecdyhgejqoweltagl.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
+</script>
+<script src="../shared/definitions.js?v=11"></script>
+<script>
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let ME = null;          // the caller's row in `residents`
+let SUBS = [];          // their own evaluations
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+async function signIn() {
+  const email    = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const btn      = document.getElementById('auth-btn');
+  if (!email || !email.includes('@')) return authMsg('Please enter a valid email address.');
+  if (!password) return authMsg('Please enter your password.');
+
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) { authMsg('Incorrect email or password. Please try again.'); reset(); }
+    else await show();
+  } catch (e) { authMsg('Error: ' + e.message); reset(); }
+
+  function reset() { btn.disabled = false; btn.textContent = 'Sign In'; }
+}
+
+function authMsg(text) {
+  const m = document.getElementById('auth-message');
+  m.textContent = text; m.className = 'auth-message error'; m.style.display = 'block';
+}
+
+async function signOut() {
+  await supabaseClient.auth.signOut();
+  ME = null; SUBS = [];
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('auth-gate').style.display = 'flex';
+  document.getElementById('auth-password').value = '';
+  document.getElementById('auth-message').style.display = 'none';
+  const b = document.getElementById('auth-btn'); b.disabled = false; b.textContent = 'Sign In';
+}
+
+async function checkAuth() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session) await show();
+}
+
+async function show() {
+  document.getElementById('auth-gate').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+  await load();
+}
+
+async function authHeaders() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  // No anon fallback here, unlike the dashboards. This page exists to show one
+  // person their own record; an anonymous request could only ever be wrong.
+  if (!session) throw new Error('not signed in');
+  return { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${session.access_token}` };
+}
+
+// ── Load ─────────────────────────────────────────────────────────────────────
+async function load() {
+  const main = document.getElementById('main');
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const uid = session && session.user && session.user.id;
+    if (!uid) throw new Error('no session');
+    const headers = await authHeaders();
+
+    // Which learner is this account? residents is readable by any signed-in
+    // user, so this is filtered by auth_user_id rather than by policy.
+    const meRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/residents?select=id,name,class_year,program&auth_user_id=eq.${encodeURIComponent(uid)}`,
+      { headers });
+    if (!meRes.ok) throw new Error(`roster lookup failed (HTTP ${meRes.status})`);
+    const meRows = await meRes.json();
+
+    if (meRows.length !== 1) {
+      // A staff account, or one nobody has linked yet. Show nothing rather than
+      // whatever the submissions policy would return for them - this page has
+      // one job and cannot do it for an account it cannot place.
+      main.innerHTML = `
+        <div class="page-head"><h1><strong>My</strong> Evaluations</h1></div>
+        <div class="blocked">
+          <strong>This account is not linked to a resident record.</strong><br>
+          If you are faculty or a coordinator, the program dashboard is the page you want.
+          If you are a resident and expected to see your evaluations here, contact your
+          program coordinator - your account needs to be linked to your roster entry.
+        </div>`;
+      return;
+    }
+    ME = meRows[0];
+
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/epa_submissions?select=*&order=date_start.desc&limit=1000`,
+      { headers });
+    if (!res.ok) throw new Error(`evaluations failed (HTTP ${res.status})`);
+    const rows = await res.json();
+
+    // Belt and braces. Row-level security is what keeps one resident out of
+    // another's record, and it is working - but this page would rather show
+    // nothing than quietly render somebody else's evaluation if a policy is
+    // ever changed wrongly. Cheap, and the failure it guards is not recoverable.
+    const foreign = rows.filter(r => r.resident_id !== ME.id);
+    if (foreign.length) {
+      main.innerHTML = `
+        <div class="page-head"><h1><strong>My</strong> Evaluations</h1></div>
+        <div class="blocked">
+          <strong>Something is wrong, so nothing is shown.</strong><br>
+          This page received evaluation records that do not belong to you. It has not
+          displayed them. Please tell your program coordinator, quoting this message.
+        </div>`;
+      console.error('Refusing to render: received rows for other residents.');
+      return;
+    }
+
+    SUBS = rows.map(r => ({
+      id: r.id, rotation: r.rotation, program: r.program,
+      dateStart: r.date_start, rotationDetail: r.rotation_detail || null,
+      scores: r.scores || {}, milestoneScores: r.milestone_scores || {},
+      scoresDetail: r.scores_detail || null, narrative: r.narrative || '',
+    }));
+    render();
+  } catch (e) {
+    console.error(e);
+    main.innerHTML = `<div class="blocked"><strong>Could not load your evaluations.</strong><br>${esc(e.message)}</div>`;
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g,
+  c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+
+const fmtDate = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-US',
+  { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+
+// Milestones report in half-steps, exactly as the program dashboard does. The
+// 0-5 entrustment scale is ordinal, so "2.24" claims a precision the instrument
+// does not have. Rounded once, at the point of display, never into a total.
+const halfStep = n => Math.round(n * 2) / 2;
+
+// The EPA list for one evaluation. Prefers the snapshot frozen at submission,
+// so the wording shown is the wording the evaluator actually read, and falls
+// back to the current definitions for rows written before scores_detail.
+function epaRows(sub) {
+  if (Array.isArray(sub.scoresDetail) && sub.scoresDetail.length) return sub.scoresDetail;
+  let defs = [];
+  try { defs = epaDefsFor(sub.program, sub.rotation); } catch (e) { defs = []; }
+  const byId = new Map(defs.map(d => [d.id, d]));
+  return Object.entries(sub.scores).map(([id, score]) => ({
+    id, score, text: (byId.get(id) || {}).text || id,
+    milestones: (byId.get(id) || {}).milestones || [],
+  }));
+}
+
+const scaleColor = v => v >= 4 ? 'var(--scale-4)' : v >= 3 ? 'var(--scale-3)'
+                      : v >= 2 ? 'var(--scale-2)' : 'var(--scale-1)';
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function render() {
+  const main = document.getElementById('main');
+
+  if (!SUBS.length) {
+    main.innerHTML = head() + `
+      <div class="empty"><div class="icon">&#128203;</div>
+        <p><strong>No evaluations yet.</strong></p>
+        <p style="font-size:13px;margin-top:6px">Once an attending submits an EPA evaluation about you, it will appear here.</p>
+      </div>` + foot();
+    return;
+  }
+
+  const dates = SUBS.map(s => s.dateStart).filter(Boolean).sort();
+  const allScores = SUBS.flatMap(s => Object.values(s.scores).filter(v => v !== 'na'));
+  const overall = allScores.length ? allScores.reduce((a, b) => a + b, 0) / allScores.length : null;
+
+  main.innerHTML = head() + `
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">Evaluations</div><div class="stat-value">${SUBS.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Rotations</div><div class="stat-value">${new Set(SUBS.map(s => s.rotation)).size}</div></div>
+      <div class="stat-card"><div class="stat-label">Items Scored</div><div class="stat-value">${allScores.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Overall Average</div><div class="stat-value">${overall !== null ? overall.toFixed(2) : '&mdash;'}</div></div>
+    </div>
+
+    <div class="note">
+      <strong>How to read this.</strong> Each score is one attending's judgement of how much
+      supervision you needed for that activity, on that day, in that setting &mdash; not a grade.
+      Entrustment is expected to rise with experience, so early scores being low is the design of
+      the scale rather than a comment on you. Averages below rest on few observations, and the
+      number beside each one tells you how few. A single evaluation is a data point, not a verdict;
+      the pattern across many is the thing worth reading.
+    </div>
+
+    ${legend()}
+    ${epaSection()}
+    ${milestoneSection()}
+    ${evaluationSection()}
+  ` + foot();
+}
+
+function head() {
+  const pgy  = trainingYear(ME.program, ME.class_year);
+  const bits = [];
+  if (pgy) bits.push(`PGY-${pgy}`);
+  if (ME.class_year) bits.push(`Class of ${esc(ME.class_year)}`);
+  return `
+    <div class="page-head">
+      <h1><strong>My</strong> Evaluations</h1>
+      <div class="sub">${esc(ME.name)}${bits.length ? ' &middot; ' + bits.join(' &middot; ') : ''}</div>
+    </div>`;
+}
+
+function legend() {
+  return `<div class="legend">` +
+    [0,1,2,3,4,5].map(n =>
+      `<div class="lv"><span class="n" style="color:${n === 0 ? 'var(--scale-1)' : scaleColor(n)}">${n}</span><span class="t">${esc(SCALE_LABELS[n])}</span></div>`
+    ).join('') +
+    `<div class="lv"><span class="n" style="color:var(--scale-na)">N/A</span><span class="t">Not observed</span></div>` +
+  `</div>`;
+}
+
+// ── EPA averages, grouped by rotation ────────────────────────────────────────
+function epaSection() {
+  const byRot = new Map();
+  SUBS.forEach(sub => {
+    if (!byRot.has(sub.rotation)) byRot.set(sub.rotation, { evals: 0, epas: new Map() });
+    const r = byRot.get(sub.rotation);
+    r.evals++;
+    epaRows(sub).forEach(e => {
+      if (!r.epas.has(e.id)) r.epas.set(e.id, { id: e.id, text: e.text, vals: [], na: 0 });
+      const rec = r.epas.get(e.id);
+      rec.text = e.text || rec.text;
+      if (e.score === 'na' || e.score == null) rec.na++; else rec.vals.push(Number(e.score));
+    });
+  });
+
+  const cards = [...byRot.entries()].sort((a, b) => b[1].evals - a[1].evals).map(([rot, r]) => `
+    <div class="card">
+      <div class="card-head">
+        <h3>${esc(rot)}</h3>
+        <span class="meta">${r.evals} evaluation${r.evals === 1 ? '' : 's'}</span>
+      </div>
+      <table>
+        <thead><tr><th>Activity</th><th class="num">Scored</th><th class="num">Average</th></tr></thead>
+        <tbody>
+          ${[...r.epas.values()].map(e => {
+            const n = e.vals.length;
+            const avg = n ? e.vals.reduce((a, b) => a + b, 0) / n : null;
+            return `
+              <tr>
+                <td>${esc(e.text)}
+                  ${avg !== null ? `<div class="bar"><i style="width:${(avg/5*100).toFixed(0)}%;background:${scaleColor(avg)}"></i></div>` : ''}
+                </td>
+                <td class="num n-obs">${n ? n + '&times;' : ''}${e.na ? `<div class="na">${e.na} N/A</div>` : ''}</td>
+                <td class="num">${avg !== null
+                  ? `<span class="avg" style="color:${scaleColor(avg)}">${avg.toFixed(1)}</span>`
+                  : `<span class="na">not observed</span>`}</td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`).join('');
+
+  return `
+    <h2 class="sect">Average by activity</h2>
+    <p class="sect-note">Every EPA you have been scored on, averaged across your evaluations for that
+      rotation. The &ldquo;scored&rdquo; column is how many times an attending actually rated it &mdash;
+      an average of one observation is one person's view on one day. Items marked N/A were not
+      observed and are left out of the average rather than counted as zero.</p>
+    ${cards}`;
+}
+
+// ── Milestones ───────────────────────────────────────────────────────────────
+function milestoneSection() {
+  let defs = {};
+  try { defs = milestoneDefs(ME.program); } catch (e) { return ''; }
+
+  const acc = new Map();
+  SUBS.forEach(s => Object.entries(s.milestoneScores || {}).forEach(([code, v]) => {
+    if (typeof v !== 'number') return;
+    if (!acc.has(code)) acc.set(code, []);
+    acc.get(code).push(v);
+  }));
+  if (!acc.size) return '';
+
+  const rows = Object.keys(defs).filter(c => acc.has(c)).map(code => {
+    const vals = acc.get(code);
+    const mean = vals.reduce((a, b) => a + b, 0) / vals.length;   // averaged raw, rounded once below
+    const shown = halfStep(mean);
+    return `
+      <tr>
+        <td style="white-space:nowrap"><span class="pill">${esc(code)}</span></td>
+        <td>${esc(defs[code])}</td>
+        <td class="num n-obs">${vals.length}&times;</td>
+        <td class="num"><span class="avg" style="color:${scaleColor(shown)}">${shown.toFixed(1)}</span></td>
+      </tr>`;
+  }).join('');
+
+  const missing = Object.keys(defs).filter(c => !acc.has(c));
+
+  return `
+    <h2 class="sect">ACGME milestones</h2>
+    <p class="sect-note">Each EPA feeds the milestones it maps to, so these are derived from the same
+      scores above rather than rated separately. Reported to the nearest half step, because the
+      underlying scale is ordinal and a figure like 2.24 would imply a precision it does not have.
+      ${missing.length ? `${missing.length} of the ${Object.keys(defs).length} subcompetencies have no
+      data yet &mdash; they are only reached by rotations you have not been evaluated on.` : ''}</p>
+    <div class="card">
+      <table>
+        <thead><tr><th>Code</th><th>Subcompetency</th><th class="num">Scored</th><th class="num">Average</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ── Individual evaluations ───────────────────────────────────────────────────
+function evaluationSection() {
+  const cards = SUBS.map((sub, i) => {
+    const rows = epaRows(sub);
+    const vals = rows.map(e => e.score).filter(v => v !== 'na' && v != null).map(Number);
+    const avg  = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+    return `
+      <div class="ev" id="ev-${i}">
+        <div class="ev-head" onclick="document.getElementById('ev-${i}').classList.toggle('open')">
+          <div>
+            <div class="ev-title">${esc(sub.rotation)}</div>
+            <div class="ev-sub">${esc(fmtDate(sub.dateStart))}${sub.rotationDetail ? ' &middot; ' + esc(sub.rotationDetail) : ''}</div>
+          </div>
+          <div class="ev-right">
+            ${avg !== null ? `<span>avg <strong style="color:${scaleColor(avg)}">${avg.toFixed(1)}</strong></span>` : ''}
+            ${sub.narrative ? '<span>&#128172; comments</span>' : ''}
+            <span class="chev">&#9662; details</span>
+          </div>
+        </div>
+        <div class="ev-body">
+          <table>
+            <thead><tr><th>Activity</th><th class="num">Score</th></tr></thead>
+            <tbody>
+              ${rows.map(e => {
+                const na = e.score === 'na' || e.score == null;
+                return `
+                  <tr>
+                    <td>${esc(e.text)}</td>
+                    <td class="num">${na ? '<span class="na">N/A</span>'
+                      : `<span class="avg" style="color:${scaleColor(Number(e.score))}">${Number(e.score)}</span>
+                         <div class="n-obs">${esc(SCALE_LABELS[e.score] || '')}</div>`}</td>
+                  </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+          ${sub.narrative ? `
+            <div class="narrative">
+              <div class="narrative-label">Narrative comments</div>${esc(sub.narrative)}
+            </div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <h2 class="sect">Each evaluation</h2>
+    <p class="sect-note">Newest first. Open one to see every activity you were scored on and any
+      narrative comments the attending wrote.</p>
+    ${cards}`;
+}
+
+function foot() {
+  return `<footer>
+    You are seeing only evaluations written about you. Scores and comments are recorded as the
+    attending submitted them and are not edited.<br>
+    If something here looks wrong, or you would like help interpreting it, speak with your advisor
+    or the program coordinator.
+  </footer>`;
+}
+
+checkAuth();
+</script>
+</body>
+</html>
