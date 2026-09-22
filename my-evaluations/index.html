@@ -242,8 +242,29 @@
            onkeydown="if(event.key==='Enter') signIn()" style="margin-top:8px">
     <button class="btn btn-primary" style="width:100%; margin-top:12px"
             onclick="signIn()" id="auth-btn">Sign In</button>
+    <p class="auth-hint"><a href="#" id="forgot-link" onclick="forgotPassword(); return false;">Forgot your password?</a></p>
     <p class="auth-hint">You can only see evaluations written about you.<br>
     Contact your program coordinator if you cannot sign in.</p>
+  </div>
+</div>
+
+<!-- Shown when someone arrives from an invitation or a reset link. Supabase
+     signs them in from the token in the URL but leaves them with no password,
+     so without this step they get in once and can never get back. -->
+<div class="auth-gate" id="pw-gate" style="display:none">
+  <div class="auth-box">
+    <img src="https://static.wixstatic.com/media/48ea68_21770b96de134293966db6558bd3d23a~mv2.png/v1/fill/w_75,h_79,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/vcmc-fmr-icon.png" alt="VCMC FM Residency Logo">
+    <div class="auth-eyebrow">My Evaluations</div>
+    <h2><strong>Choose</strong> a Password</h2>
+    <p>This is the password you will use to sign in from now on.</p>
+    <div id="pw-message" class="auth-message" style="display:none"></div>
+    <input type="password" id="pw-new" placeholder="New password" autocomplete="new-password"
+           onkeydown="if(event.key==='Enter') document.getElementById('pw-confirm').focus()">
+    <input type="password" id="pw-confirm" placeholder="Type it again" autocomplete="new-password"
+           style="margin-top:8px" onkeydown="if(event.key==='Enter') setPassword()">
+    <button class="btn btn-primary" style="width:100%; margin-top:12px"
+            onclick="setPassword()" id="pw-btn">Save and continue</button>
+    <p class="auth-hint">At least 8 characters. Please do not reuse a hospital or EHR password.</p>
   </div>
 </div>
 
@@ -269,6 +290,12 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 <script src="../shared/definitions.js?v=11"></script>
 <script src="../shared/faculty-roster.js?v=2"></script>
 <script>
+// Read before the client is created. supabase-js consumes the URL hash during
+// init to establish the session, so by the time anything else runs the token -
+// and the `type=invite` that tells us why they are here - is already gone.
+const ENTRY_HASH = window.location.hash || '';
+const FROM_EMAIL_LINK = /type=(invite|recovery|signup)/.test(ENTRY_HASH);
+
 const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON);
 
@@ -310,7 +337,64 @@ async function signOut() {
 
 async function checkAuth() {
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session) await show();
+  if (!session) return;
+  // Arrived from an invitation or a reset link: they have a session but no
+  // password they know. Send them to set one before anything else.
+  if (FROM_EMAIL_LINK) { showPasswordGate(); return; }
+  await show();
+}
+
+// A reset link can also surface as an event rather than in the hash, depending
+// on how the client consumed the URL. Either route lands in the same place.
+supabaseClient.auth.onAuthStateChange((event) => {
+  if (event === 'PASSWORD_RECOVERY') showPasswordGate();
+});
+
+function showPasswordGate() {
+  document.getElementById('auth-gate').style.display = 'none';
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('pw-gate').style.display = 'flex';
+  document.getElementById('pw-new').focus();
+}
+
+function pwMsg(text) {
+  const m = document.getElementById('pw-message');
+  m.textContent = text; m.className = 'auth-message error'; m.style.display = 'block';
+}
+
+async function setPassword() {
+  const a = document.getElementById('pw-new').value;
+  const b = document.getElementById('pw-confirm').value;
+  const btn = document.getElementById('pw-btn');
+  if (a.length < 8)  return pwMsg('Please use at least 8 characters.');
+  if (a !== b)       return pwMsg('Those two do not match.');
+
+  btn.disabled = true; btn.textContent = 'Saving…';
+  const { error } = await supabaseClient.auth.updateUser({ password: a });
+  if (error) {
+    pwMsg(error.message || 'Could not set your password. Please try again.');
+    btn.disabled = false; btn.textContent = 'Save and continue';
+    return;
+  }
+  // Drop the token from the address bar so a shared or bookmarked URL cannot
+  // carry a live session to somebody else.
+  history.replaceState(null, '', window.location.pathname);
+  document.getElementById('pw-gate').style.display = 'none';
+  await show();
+}
+
+async function forgotPassword() {
+  const email = document.getElementById('auth-email').value.trim();
+  if (!email || !email.includes('@'))
+    return authMsg('Type your email address above first, then click this again.');
+  await supabaseClient.auth.resetPasswordForEmail(email,
+    { redirectTo: window.location.origin + window.location.pathname });
+  // Deliberately the same answer either way: whether an address has an account
+  // is not something an unauthenticated visitor should be able to find out.
+  const m = document.getElementById('auth-message');
+  m.textContent = 'If that address has an account, a reset link is on its way. It expires after an hour.';
+  m.className = 'auth-message';
+  m.style.cssText = 'display:block;background:var(--teal-pale);color:var(--teal);border:1px solid var(--teal-light)';
 }
 
 async function show() {
