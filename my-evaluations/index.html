@@ -27,12 +27,23 @@
     --teal-pale: #EBF4FA;
     --amber: #B8901E;
     --amber-pale: #FBF6E9;
-    --scale-1: #B91C1C;
-    --scale-2: #C05621;
-    --scale-3: #92600A;
-    --scale-4: #15803D;
+    /* Entrustment is a developmental scale, not a grade. These deepen with
+       the score rather than running red-to-green, so a low number reads as
+       early rather than as failing. Same ramp as the program dashboard. */
+    --scale-0: #5C7488;
+    --scale-1: #4E6E85;
+    --scale-2: #41667C;
+    --scale-3: #355B74;
+    --scale-4: #264A6A;
     --scale-5: #1A2744;
-    --scale-na: #6B7280;
+    --scale-na: #68727E;
+    --scale-bg-0: #EDF1F5;
+    --scale-bg-1: #E9EEF3;
+    --scale-bg-2: #E5EBF1;
+    --scale-bg-3: #E1E8EF;
+    --scale-bg-4: #DDE5ED;
+    --scale-bg-5: #D8E1EB;
+    --scale-bg-na: #F0F1F3;
     --radius: 4px;
     --radius-lg: 6px;
     --shadow: 0 1px 4px rgba(26,39,68,0.08);
@@ -151,6 +162,11 @@
   .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums }
   .avg { font-weight: 700; font-size: 15px }
   .n-obs { font-size: 11.5px; color: var(--slate-light); white-space: nowrap }
+  .chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 32px; height: 27px; padding: 0 8px;
+    font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
+  }
   .thin { color: var(--slate-light) }
 
   .bar { height: 4px; background: var(--border-light); margin-top: 5px; width: 100% }
@@ -404,8 +420,13 @@ function epaRows(sub) {
   }));
 }
 
-const scaleColor = v => v >= 4 ? 'var(--scale-4)' : v >= 3 ? 'var(--scale-3)'
-                      : v >= 2 ? 'var(--scale-2)' : 'var(--scale-1)';
+// Colour by score, on a single blue-grey ramp that deepens as entrustment
+// rises. Deliberately not red-to-green: on a developmental scale a 1 means
+// early, not failing, and a resident reading their own record should not meet
+// a wall of red for being where their training expects them to be.
+const scaleStep  = v => Math.max(0, Math.min(5, Math.round(Number(v))));
+const scaleColor = v => `var(--scale-${scaleStep(v)})`;
+const scaleBg    = v => `var(--scale-bg-${scaleStep(v)})`;
 
 // ── Render ───────────────────────────────────────────────────────────────────
 function render() {
@@ -463,9 +484,9 @@ function head() {
 function legend() {
   return `<div class="legend">` +
     [0,1,2,3,4,5].map(n =>
-      `<div class="lv"><span class="n" style="color:${n === 0 ? 'var(--scale-1)' : scaleColor(n)}">${n}</span><span class="t">${esc(SCALE_LABELS[n])}</span></div>`
+      `<div class="lv"><span class="chip" style="background:${scaleBg(n)};color:${scaleColor(n)}">${n}</span><span class="t">${esc(SCALE_LABELS[n])}</span></div>`
     ).join('') +
-    `<div class="lv"><span class="n" style="color:var(--scale-na)">N/A</span><span class="t">Not observed</span></div>` +
+    `<div class="lv"><span class="chip" style="background:var(--scale-bg-na);color:var(--scale-na)">N/A</span><span class="t">Not observed</span></div>` +
   `</div>`;
 }
 
@@ -503,7 +524,7 @@ function epaSection() {
                 </td>
                 <td class="num n-obs">${n ? n + '&times;' : ''}${e.na ? `<div class="na">${e.na} N/A</div>` : ''}</td>
                 <td class="num">${avg !== null
-                  ? `<span class="avg" style="color:${scaleColor(avg)}">${avg.toFixed(1)}</span>`
+                  ? `<span class="chip" style="background:${scaleBg(avg)};color:${scaleColor(avg)}">${avg.toFixed(1)}</span>`
                   : `<span class="na">not observed</span>`}</td>
               </tr>`;
           }).join('')}
@@ -542,7 +563,7 @@ function milestoneSection() {
         <td style="white-space:nowrap"><span class="pill">${esc(code)}</span></td>
         <td>${esc(defs[code])}</td>
         <td class="num n-obs">${vals.length}&times;</td>
-        <td class="num"><span class="avg" style="color:${scaleColor(shown)}">${shown.toFixed(1)}</span></td>
+        <td class="num"><span class="chip" style="background:${scaleBg(shown)};color:${scaleColor(shown)}">${shown.toFixed(1)}</span></td>
       </tr>`;
   }).join('');
 
@@ -592,7 +613,7 @@ function evaluationSection() {
                   <tr>
                     <td>${esc(e.text)}</td>
                     <td class="num">${na ? '<span class="na">N/A</span>'
-                      : `<span class="avg" style="color:${scaleColor(Number(e.score))}">${Number(e.score)}</span>
+                      : `<span class="chip" style="background:${scaleBg(Number(e.score))};color:${scaleColor(Number(e.score))}">${Number(e.score)}</span>
                          <div class="n-obs">${esc(SCALE_LABELS[e.score] || '')}</div>`}</td>
                   </tr>`;
               }).join('')}
