@@ -265,7 +265,9 @@
 const SUPABASE_URL  = 'https://ubqecdyhgejqoweltagl.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
 </script>
+<script src="../shared/text-matching.js?v=1"></script>
 <script src="../shared/definitions.js?v=11"></script>
+<script src="../shared/faculty-roster.js?v=2"></script>
 <script>
 const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -384,9 +386,17 @@ async function load() {
     SUBS = rows.map(r => ({
       id: r.id, rotation: r.rotation, program: r.program,
       dateStart: r.date_start, rotationDetail: r.rotation_detail || null,
+      evaluatorName: r.evaluator_name || '', evaluatorId: r.evaluator_id || null,
       scores: r.scores || {}, milestoneScores: r.milestone_scores || {},
       scoresDetail: r.scores_detail || null, narrative: r.narrative || '',
     }));
+
+    // The roster turns an evaluator id or name into a person, so a merged
+    // duplicate shows as one attending rather than two spellings. Read with the
+    // anon key inside faculty-roster.js, the same route the forms use, and
+    // best-effort: if it fails, names fall back to what was typed.
+    await loadFaculty();
+
     render();
   } catch (e) {
     console.error(e);
@@ -424,6 +434,18 @@ function epaRows(sub) {
 // rises. Deliberately not red-to-green: on a developmental scale a 1 means
 // early, not failing, and a resident reading their own record should not meet
 // a wall of red for being where their training expects them to be.
+// The attending who wrote an evaluation, resolved through the faculty roster so
+// two spellings of one person collapse to the name they have been merged under -
+// the same resolution the dashboard's By Evaluator tab uses. Falls back to the
+// name as typed, so an evaluator the roster cannot place is still named rather
+// than hidden. Rendered through escFaculty(), because anonymous self-registration
+// means faculty.name is untrusted input by the time it reaches a page.
+function evaluatorFor(sub) {
+  const ident = typeof resolveFacultyIdentity === 'function'
+    ? resolveFacultyIdentity(sub.evaluatorId, sub.evaluatorName) : null;
+  return ident ? ident.name : (sub.evaluatorName || 'Not recorded');
+}
+
 const scaleStep  = v => Math.max(0, Math.min(5, Math.round(Number(v))));
 const scaleColor = v => `var(--scale-${scaleStep(v)})`;
 const scaleBg    = v => `var(--scale-bg-${scaleStep(v)})`;
@@ -449,6 +471,7 @@ function render() {
     <div class="stat-row">
       <div class="stat-card"><div class="stat-label">Evaluations</div><div class="stat-value">${SUBS.length}</div></div>
       <div class="stat-card"><div class="stat-label">Rotations</div><div class="stat-value">${new Set(SUBS.map(s => s.rotation)).size}</div></div>
+      <div class="stat-card"><div class="stat-label">Attendings</div><div class="stat-value">${new Set(SUBS.map(evaluatorFor)).size}</div></div>
       <div class="stat-card"><div class="stat-label">Items Scored</div><div class="stat-value">${allScores.length}</div></div>
       <div class="stat-card"><div class="stat-label">Overall Average</div><div class="stat-value">${overall !== null ? overall.toFixed(2) : '&mdash;'}</div></div>
     </div>
@@ -595,7 +618,7 @@ function evaluationSection() {
         <div class="ev-head" onclick="document.getElementById('ev-${i}').classList.toggle('open')">
           <div>
             <div class="ev-title">${esc(sub.rotation)}</div>
-            <div class="ev-sub">${esc(fmtDate(sub.dateStart))}${sub.rotationDetail ? ' &middot; ' + esc(sub.rotationDetail) : ''}</div>
+            <div class="ev-sub">${esc(fmtDate(sub.dateStart))} &middot; ${escFaculty(evaluatorFor(sub))}${sub.rotationDetail ? ' &middot; ' + esc(sub.rotationDetail) : ''}</div>
           </div>
           <div class="ev-right">
             ${avg !== null ? `<span>avg <strong style="color:${scaleColor(avg)}">${avg.toFixed(1)}</strong></span>` : ''}
