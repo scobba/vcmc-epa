@@ -317,8 +317,8 @@
            onkeydown="if(event.key==='Enter') signIn()" style="margin-top:8px">
     <button class="btn btn-primary" style="width:100%; margin-top:12px"
             onclick="signIn()" id="auth-btn">Sign In</button>
-    <p class="auth-hint"><a href="#" onclick="showCodeGate(); return false;"><strong>Email me a sign-in link</strong></a><br>
-    Use this the first time, or if an earlier link from us did not work.</p>
+    <p class="auth-hint"><a href="#" onclick="showCodeGate(); return false;"><strong>Email me a sign-in code</strong></a><br>
+    Use this the first time, or any time you would rather not use a password.</p>
     <p class="auth-hint"><a href="#" id="forgot-link" onclick="forgotPassword(); return false;">Forgot your password?</a></p>
     <p class="auth-hint">You can only see evaluations written about you.<br>
     Contact your program coordinator if you cannot sign in.</p>
@@ -355,21 +355,19 @@
   <div class="auth-box">
     <img src="https://static.wixstatic.com/media/48ea68_21770b96de134293966db6558bd3d23a~mv2.png/v1/fill/w_75,h_79,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/vcmc-fmr-icon.png" alt="VCMC FM Residency Logo">
     <div class="auth-eyebrow">My Evaluations</div>
-    <h2><strong>Sign In</strong> by Email</h2>
-    <p>We will email you a one-time sign-in link. Open it and you will land back on this page, signed in.</p>
+    <h2><strong>Sign In</strong> with a Code</h2>
+    <p id="code-intro">We will email you a sign-in code. Type it in here &mdash; there is no link to click, so email security cannot use it up.</p>
     <div id="code-message" class="auth-message" style="display:none"></div>
     <input type="email" id="code-email" placeholder="Email address" autocomplete="email"
            onkeydown="if(event.key==='Enter') sendCode()">
     <button class="btn btn-primary" style="width:100%; margin-top:12px"
-            onclick="sendCode()" id="code-send-btn">Email me a link</button>
-    <!-- Only reachable if the email template is ever changed to include {{ .Token }}.
-         On Supabase's built-in email the template cannot be edited, so the email
-         carries a link and no code - this stays hidden unless someone says their
-         email shows a number. -->
-    <p class="auth-hint" id="code-reveal" style="display:none"><a href="#" onclick="document.getElementById('code-entry').style.display='block'; document.getElementById('code-token').focus(); return false;">My email shows a six-digit code instead</a></p>
+            onclick="sendCode()" id="code-send-btn">Email me a code</button>
+    <!-- The email carries the code and deliberately NO sign-in link. The link and
+         the code are the same single-use token: an email scanner opening the link
+         would spend it and kill the code with it. See the Magic Link template. -->
     <div id="code-entry" style="display:none">
-      <input type="text" id="code-token" placeholder="6-digit code" inputmode="numeric"
-             autocomplete="one-time-code" maxlength="6" style="margin-top:10px; text-align:center;
+      <input type="text" id="code-token" placeholder="Code from the email" inputmode="numeric"
+             autocomplete="one-time-code" maxlength="12" style="margin-top:10px; text-align:center;
              letter-spacing:.35em; font-size:19px; font-weight:700"
              onkeydown="if(event.key==='Enter') verifyCode()">
       <button class="btn btn-primary" style="width:100%; margin-top:12px"
@@ -459,8 +457,8 @@ async function checkAuth() {
   if (!session && LINK_ERROR) {
     showSignIn();
     authMsg(LINK_ERROR === 'otp_expired'
-      ? 'That link had already been used or had expired. Email security sometimes opens links automatically, which uses them up. Use "Email me a sign-in link" below to get a fresh one.'
-      : 'That link could not be used. Use "Email me a sign-in link" below to get a fresh one.');
+      ? 'That link had already been used or had expired. Email security sometimes opens links automatically, which uses them up. Use "Email me a sign-in code" below instead.'
+      : 'That link could not be used. Use "Email me a sign-in code" below instead.');
     return;
   }
   if (!session) return;
@@ -545,17 +543,21 @@ async function sendCode() {
     emailRedirectTo: window.location.origin + window.location.pathname,
   } });
 
-  btn.disabled = false; btn.textContent = 'Send another link';
+  btn.disabled = false; btn.textContent = 'Send another code';
   if (isRateLimited(error)) return codeMsg(RATE_LIMIT_MSG);
-  document.getElementById('code-reveal').style.display = 'block';
+  document.getElementById('code-entry').style.display = 'block';
+  document.getElementById('code-token').focus();
   // Deliberately the same answer whether or not the address has an account.
-  codeMsg('If that address has an account, a sign-in link is on its way. Open it within the hour. If it says the link has expired, come back and send another.', true);
+  codeMsg('If that address has an account, a code is on its way. It works once, for an hour. Check your junk folder if it has not arrived in a few minutes.', true);
 }
 
 async function verifyCode() {
   const email = document.getElementById('code-email').value.trim();
   const token = document.getElementById('code-token').value.trim().replace(/\D/g, '');
-  if (token.length !== 6) return codeMsg('The code is six digits.');
+  // Six digits by default, but the length is a project setting (Email OTP
+  // Length), and a page that insists on six would reject every code if it
+  // were ever changed. Accept any plausible length and let the server decide.
+  if (token.length < 6 || token.length > 10) return codeMsg('Please type the code from the email.');
   const btn = document.getElementById('code-verify-btn');
   btn.disabled = true; btn.textContent = 'Checking…';
 
@@ -608,19 +610,14 @@ async function setPassword() {
   await show();
 }
 
+// A forgotten password goes through the sign-in code rather than a reset email.
+// A reset email carries a single-use link, and link-scanning email security spends
+// it before the person clicks; a code cannot be spent that way. Signing in with a
+// code lands on "Choose a password", so the new password is set there.
 async function forgotPassword() {
-  const email = document.getElementById('auth-email').value.trim();
-  if (!email || !email.includes('@'))
-    return authMsg('Type your email address above first, then click this again.');
-  const { error } = await supabaseClient.auth.resetPasswordForEmail(email,
-    { redirectTo: window.location.origin + window.location.pathname });
-  if (isRateLimited(error)) return authMsg(RATE_LIMIT_MSG);
-  // Deliberately the same answer either way: whether an address has an account
-  // is not something an unauthenticated visitor should be able to find out.
-  const m = document.getElementById('auth-message');
-  m.textContent = 'If that address has an account, a reset link is on its way. It expires after an hour.';
-  m.className = 'auth-message';
-  m.style.cssText = 'display:block;background:var(--teal-pale);color:var(--teal);border:1px solid var(--teal-light)';
+  showCodeGate();
+  document.getElementById('code-intro').textContent =
+    'Sign in with a code from your email, then choose a new password on the next screen.';
 }
 
 async function show() {
