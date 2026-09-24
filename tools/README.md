@@ -120,7 +120,7 @@ once for the whole roster, and again each July for the incoming interns.
 It **creates** each account through the Supabase Admin API — already confirmed, with no
 password, and **without sending any email** — and **writes** the SQL that links each account
 to its roster row, for you to paste into the SQL editor. The resident then signs in the first
-time with "Email me a sign-in link" on the page.
+time with "Email me a sign-in code" on the page.
 
 No invitation email goes out, deliberately. Hospital email security opens links to scan them,
 which spends a single-use invite before the resident ever clicks it, and every email counts

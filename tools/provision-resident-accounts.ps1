@@ -11,7 +11,7 @@
      email. No invitation goes out because hospital email security opens links
      before the recipient does, which spends a single-use invite, and because every
      email counts against Supabase's small hourly sending limit. The resident signs
-     in the first time with "Email me a sign-in link" on the page itself.
+     in the first time with "Email me a sign-in code" on the page itself.
 
   2. LINKS. Writes one SQL statement that links each roster row to its account, for
      you to paste into the Supabase SQL editor. It is written out rather than run,
