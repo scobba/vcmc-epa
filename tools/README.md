@@ -111,3 +111,45 @@ These are snapshots, not an automated restore. To put data back, POST the JSON a
 the table's PostgREST endpoint with a service_role key, or import the file from the
 Supabase dashboard. Restore into a scratch table first and compare before touching a
 live one.
+
+# Resident accounts
+
+`provision-resident-accounts.ps1` gives residents a sign-in for `/my-evaluations/`. Run it
+once for the whole roster, and again each July for the incoming interns.
+
+It **creates** each account through the Supabase Admin API — already confirmed, with no
+password, and **without sending any email** — and **writes** the SQL that links each account
+to its roster row, for you to paste into the SQL editor. The resident then signs in the first
+time with "Email me a sign-in link" on the page.
+
+No invitation email goes out, deliberately. Hospital email security opens links to scan them,
+which spends a single-use invite before the resident ever clicks it, and every email counts
+against Supabase's small hourly sending limit.
+
+**1. Make the list.** Writes every active resident without an account to a CSV with an empty
+`email` column. It holds names — keep it somewhere private; the script refuses paths inside
+this repository.
+
+```powershell
+.\tools\provision-resident-accounts.ps1 -CsvPath "C:\somewhere\private\resident-accounts.csv" -WriteTemplate
+```
+
+**2. Fill in emails.** Leave a row blank to skip it for now.
+
+**3. Dry run.** Shows what would happen and changes nothing. Each row reads `CREATE`, `LINK`,
+`DONE` or `SKIP`, and every skip says why — including a name that no longer matches its roster
+id, which is what an email pasted onto the wrong line looks like.
+
+```powershell
+.\tools\provision-resident-accounts.ps1 -CsvPath "C:\somewhere\private\resident-accounts.csv"
+```
+
+**4. Apply.** Creates the accounts and writes `resident-accounts-link.sql` beside the CSV.
+Paste that into the SQL editor and run it; it returns one row per resident linked, and is safe
+to run twice.
+
+```powershell
+.\tools\provision-resident-accounts.ps1 -CsvPath "C:\somewhere\private\resident-accounts.csv" -Apply
+```
+
+Fellows work the same way with `-Program am`.

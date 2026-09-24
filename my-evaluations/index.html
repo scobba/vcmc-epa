@@ -512,6 +512,22 @@ function codeMsg(text, ok) {
     : 'display:block';
 }
 
+// The one send failure that is safe - and necessary - to report.
+//
+// Every other error from these two calls is swallowed on purpose, so the page
+// answers identically whether or not an address has an account. A rate limit
+// is different: it says nothing about any account, only that the project has
+// sent too many emails lately. Supabase's built-in email service is capped at a
+// few an hour, and swallowing this would tell a resident a link is on its way
+// when none is - on exactly the day an announcement sends thirty of them to the
+// page at once.
+const RATE_LIMIT_MSG = 'We could not send an email just now \u2014 too many have gone out in a short time. Please wait a while and try again. If this keeps happening, contact your program coordinator.';
+function isRateLimited(error) {
+  if (!error) return false;
+  return error.status === 429
+      || /rate.?limit|too many|over_email_send/i.test(`${error.code || ''} ${error.message || ''}`);
+}
+
 async function sendCode() {
   const email = document.getElementById('code-email').value.trim();
   if (!email || !email.includes('@')) return codeMsg('Please enter your email address.');
@@ -521,7 +537,7 @@ async function sendCode() {
   // shouldCreateUser:false matters. Without it this endpoint would happily make
   // an account for any address typed in, and the page would become a signup
   // form for anyone who found the URL.
-  await supabaseClient.auth.signInWithOtp({ email, options: {
+  const { error } = await supabaseClient.auth.signInWithOtp({ email, options: {
     shouldCreateUser: false,
     // Where the emailed link returns to. Without this it falls through to the
     // project's Site URL - the EPA form, which cannot use the token - and that
@@ -530,6 +546,7 @@ async function sendCode() {
   } });
 
   btn.disabled = false; btn.textContent = 'Send another link';
+  if (isRateLimited(error)) return codeMsg(RATE_LIMIT_MSG);
   document.getElementById('code-reveal').style.display = 'block';
   // Deliberately the same answer whether or not the address has an account.
   codeMsg('If that address has an account, a sign-in link is on its way. Open it within the hour. If it says the link has expired, come back and send another.', true);
@@ -595,8 +612,9 @@ async function forgotPassword() {
   const email = document.getElementById('auth-email').value.trim();
   if (!email || !email.includes('@'))
     return authMsg('Type your email address above first, then click this again.');
-  await supabaseClient.auth.resetPasswordForEmail(email,
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email,
     { redirectTo: window.location.origin + window.location.pathname });
+  if (isRateLimited(error)) return authMsg(RATE_LIMIT_MSG);
   // Deliberately the same answer either way: whether an address has an account
   // is not something an unauthenticated visitor should be able to find out.
   const m = document.getElementById('auth-message');
