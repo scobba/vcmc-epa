@@ -242,8 +242,8 @@
            onkeydown="if(event.key==='Enter') signIn()" style="margin-top:8px">
     <button class="btn btn-primary" style="width:100%; margin-top:12px"
             onclick="signIn()" id="auth-btn">Sign In</button>
-    <p class="auth-hint"><a href="#" onclick="showCodeGate(); return false;"><strong>Email me a sign-in code instead</strong></a><br>
-    Use this the first time, or if a link from us did not work.</p>
+    <p class="auth-hint"><a href="#" onclick="showCodeGate(); return false;"><strong>Email me a sign-in link</strong></a><br>
+    Use this the first time, or if an earlier link from us did not work.</p>
     <p class="auth-hint"><a href="#" id="forgot-link" onclick="forgotPassword(); return false;">Forgot your password?</a></p>
     <p class="auth-hint">You can only see evaluations written about you.<br>
     Contact your program coordinator if you cannot sign in.</p>
@@ -280,13 +280,18 @@
   <div class="auth-box">
     <img src="https://static.wixstatic.com/media/48ea68_21770b96de134293966db6558bd3d23a~mv2.png/v1/fill/w_75,h_79,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/vcmc-fmr-icon.png" alt="VCMC FM Residency Logo">
     <div class="auth-eyebrow">My Evaluations</div>
-    <h2><strong>Sign In</strong> with a Code</h2>
-    <p>We will email you a six-digit code. Codes still work when your email system blocks or rewrites links.</p>
+    <h2><strong>Sign In</strong> by Email</h2>
+    <p>We will email you a one-time sign-in link. Open it and you will land back on this page, signed in.</p>
     <div id="code-message" class="auth-message" style="display:none"></div>
     <input type="email" id="code-email" placeholder="Email address" autocomplete="email"
            onkeydown="if(event.key==='Enter') sendCode()">
     <button class="btn btn-primary" style="width:100%; margin-top:12px"
-            onclick="sendCode()" id="code-send-btn">Email me a code</button>
+            onclick="sendCode()" id="code-send-btn">Email me a link</button>
+    <!-- Only reachable if the email template is ever changed to include {{ .Token }}.
+         On Supabase's built-in email the template cannot be edited, so the email
+         carries a link and no code - this stays hidden unless someone says their
+         email shows a number. -->
+    <p class="auth-hint" id="code-reveal" style="display:none"><a href="#" onclick="document.getElementById('code-entry').style.display='block'; document.getElementById('code-token').focus(); return false;">My email shows a six-digit code instead</a></p>
     <div id="code-entry" style="display:none">
       <input type="text" id="code-token" placeholder="6-digit code" inputmode="numeric"
              autocomplete="one-time-code" maxlength="6" style="margin-top:10px; text-align:center;
@@ -377,14 +382,17 @@ async function checkAuth() {
   if (!session && LINK_ERROR) {
     showSignIn();
     authMsg(LINK_ERROR === 'otp_expired'
-      ? 'That link had already been used or had expired. Email security often opens links automatically, which uses them up. Use a sign-in code instead — the option is below.'
-      : 'That link could not be used. Try a sign-in code instead — the option is below.');
+      ? 'That link had already been used or had expired. Email security sometimes opens links automatically, which uses them up. Use "Email me a sign-in link" below to get a fresh one.'
+      : 'That link could not be used. Use "Email me a sign-in link" below to get a fresh one.');
     return;
   }
   if (!session) return;
   // Arrived from an invitation or a reset link: they have a session but no
   // password they know. Send them to set one before anything else.
   if (FROM_EMAIL_LINK) { showPasswordGate(false); return; }
+  // Arrived from a sign-in link they asked for: they are in, and can keep using
+  // links, so a password is offered but optional.
+  if (/type=magiclink/.test(ENTRY_HASH)) { showPasswordGate(true); return; }
   await show();
 }
 
@@ -436,13 +444,18 @@ async function sendCode() {
   // shouldCreateUser:false matters. Without it this endpoint would happily make
   // an account for any address typed in, and the page would become a signup
   // form for anyone who found the URL.
-  await supabaseClient.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  await supabaseClient.auth.signInWithOtp({ email, options: {
+    shouldCreateUser: false,
+    // Where the emailed link returns to. Without this it falls through to the
+    // project's Site URL - the EPA form, which cannot use the token - and that
+    // is exactly how the first test of this ended up on the wrong page.
+    emailRedirectTo: window.location.origin + window.location.pathname,
+  } });
 
-  btn.disabled = false; btn.textContent = 'Send another code';
-  document.getElementById('code-entry').style.display = 'block';
-  document.getElementById('code-token').focus();
+  btn.disabled = false; btn.textContent = 'Send another link';
+  document.getElementById('code-reveal').style.display = 'block';
   // Deliberately the same answer whether or not the address has an account.
-  codeMsg('If that address has an account, a code is on its way. It expires in an hour.', true);
+  codeMsg('If that address has an account, a sign-in link is on its way. Open it within the hour. If it says the link has expired, come back and send another.', true);
 }
 
 async function verifyCode() {
