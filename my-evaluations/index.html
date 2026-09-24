@@ -215,7 +215,82 @@
   footer { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--border);
            font-size: 11.5px; color: var(--slate-light); line-height: 1.7 }
 
+  /* ── Date range ────────────────────────────────────────────────── */
+  .filter-bar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+    background: var(--white); border: 1px solid var(--border);
+    padding: 10px 14px; margin-bottom: 12px;
+  }
+  .filter-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+                  color: var(--slate-light); font-weight: 700 }
+  .seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--border) }
+  .seg button {
+    font: inherit; font-size: 12.5px; padding: 6px 11px; cursor: pointer;
+    background: var(--white); color: var(--slate); border: 0; border-left: 1px solid var(--border);
+  }
+  .seg button:first-child { border-left: 0 }
+  .seg button:hover { background: var(--bg-soft) }
+  .seg button[aria-pressed="true"] { background: var(--navy); color: var(--white); font-weight: 600 }
+  .filter-bar label { font-size: 12.5px; color: var(--slate); display: inline-flex; align-items: center; gap: 6px }
+  .filter-bar input[type=date] {
+    font: inherit; font-size: 12.5px; padding: 5px 8px;
+    border: 1px solid var(--border); color: var(--navy); background: var(--white);
+  }
+  .range-line { font-size: 12.5px; color: var(--slate); margin: 0 0 14px }
+
+  /* ── Progress charts ───────────────────────────────────────────── */
+  /* One series per chart, in --teal-light. Hairline solid grid, 2px line,
+     8px+ markers ringed in the surface colour so they stay legible where they
+     sit on the line. */
+  .chart-card { background: var(--white); border: 1px solid var(--border); margin-bottom: 16px }
+  .chart-head {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 8px 14px; padding: 12px 16px 6px;
+  }
+  .chart-head h3 { font-size: 14px; font-weight: 700; color: var(--navy) }
+  .chart-controls { display: flex; flex-wrap: wrap; gap: 8px; max-width: 100% }
+  .chart-controls select {
+    font: inherit; font-size: 12.5px; padding: 5px 8px; max-width: 100%;
+    border: 1px solid var(--border); color: var(--navy); background: var(--white);
+  }
+  .chart { position: relative; padding: 4px 0 0; outline: none }
+  .chart:focus-visible { box-shadow: inset 0 0 0 2px var(--navy-light) }
+  .chart svg { display: block; overflow: visible }
+  .chart .grid line { stroke: var(--border-light); stroke-width: 1 }
+  .chart .grid line.base { stroke: var(--border) }
+  .chart .ax text { fill: var(--slate); font-size: 11px; font-variant-numeric: tabular-nums }
+  .chart .area { fill: var(--teal-light); fill-opacity: 0.08 }
+  .chart .line { fill: none; stroke: var(--teal-light); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round }
+  .chart .pt { fill: var(--teal-light); stroke: var(--white); stroke-width: 2 }
+  .chart .xhair { stroke: var(--slate-light); stroke-width: 1 }
+  .chart .hit { cursor: crosshair }
+  .chart-tip {
+    position: absolute; top: 8px; pointer-events: none; z-index: 5;
+    background: var(--white); border: 1px solid var(--border); box-shadow: var(--shadow-lg);
+    padding: 9px 11px; font-size: 12.5px; min-width: 170px; max-width: 280px;
+  }
+  .chart-tip .tip-date { font-size: 11px; color: var(--slate-light); margin-bottom: 4px }
+  .chart-tip .tip-row { display: flex; gap: 8px; align-items: baseline; padding-top: 5px }
+  .chart-tip .key { width: 12px; height: 2px; background: var(--teal-light); flex-shrink: 0; align-self: center }
+  .chart-tip .val { font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums }
+  .chart-tip .lab { color: var(--slate) }
+  .chart-tip .sub { font-size: 11px; color: var(--slate-light); padding-left: 20px }
+  .chart-note { font-size: 12px; color: var(--slate-light); padding: 2px 16px 0 }
+  .chart-empty { padding: 40px 16px; text-align: center; color: var(--slate-light); font-size: 13px }
+  .chart-foot {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline;
+    gap: 6px 16px; padding: 8px 16px 12px; font-size: 12px; color: var(--slate-light); line-height: 1.55;
+  }
+  .linkbtn {
+    background: none; border: 0; padding: 0; font: inherit; font-size: 12px;
+    color: var(--teal); cursor: pointer; text-decoration: underline; white-space: nowrap;
+  }
+  .chart-table { border-top: 1px solid var(--border-light) }
+  .chart-table .n-obs { white-space: normal }
+
   @media print {
+    .chart-tip, .chart-note { display: none !important }
+    .chart svg { width: 100%; height: auto }
     .auth-gate, .topbar .btn, .no-print { display: none !important }
     body { background: var(--white) }
     .ev-body { display: block !important }
@@ -364,7 +439,9 @@ function authMsg(text) {
 
 async function signOut() {
   await supabaseClient.auth.signOut();
-  ME = null; SUBS = [];
+  ME = null; SUBS = []; VIEW = [];
+  FILTER = { preset: 'all', from: '', to: '' };
+  CHART = { ms: 'all', rot: null, epa: 'all' };
   document.getElementById('content').style.display = 'none';
   document.getElementById('auth-gate').style.display = 'flex';
   document.getElementById('auth-password').value = '';
@@ -678,15 +755,37 @@ function render() {
     return;
   }
 
-  const dates = SUBS.map(s => s.dateStart).filter(Boolean).sort();
-  const allScores = SUBS.flatMap(s => Object.values(s.scores).filter(v => v !== 'na'));
+  main.innerHTML = head() + filterBar() + '<div id="report"></div>' + foot();
+  syncFilterControls();
+  renderReport();
+}
+
+// Everything beneath the date range. Re-run on every range change, so the date
+// controls are never rebuilt under the cursor - and every count, average, table
+// and chart below is computed from the same slice, so none can disagree.
+function renderReport() {
+  VIEW = visibleSubs();
+  const el = document.getElementById('report');
+  if (!el) return;
+  const range = `<p class="range-line">${esc(rangeLabel())} &middot; ${VIEW.length} of ${SUBS.length} evaluation${SUBS.length === 1 ? '' : 's'}</p>`;
+
+  if (!VIEW.length) {
+    el.innerHTML = range + `
+      <div class="empty"><div class="icon">&#128197;</div>
+        <p><strong>No evaluations in this date range.</strong></p>
+        <p style="font-size:13px;margin-top:6px">Widen the range above, or choose &ldquo;All time&rdquo;.</p>
+      </div>`;
+    return;
+  }
+
+  const allScores = VIEW.flatMap(s => Object.values(s.scores).filter(v => v !== 'na'));
   const overall = allScores.length ? allScores.reduce((a, b) => a + b, 0) / allScores.length : null;
 
-  main.innerHTML = head() + `
+  el.innerHTML = range + `
     <div class="stat-row">
-      <div class="stat-card"><div class="stat-label">Evaluations</div><div class="stat-value">${SUBS.length}</div></div>
-      <div class="stat-card"><div class="stat-label">Rotations</div><div class="stat-value">${new Set(SUBS.map(s => s.rotation)).size}</div></div>
-      <div class="stat-card"><div class="stat-label">Attendings</div><div class="stat-value">${new Set(SUBS.map(evaluatorFor)).size}</div></div>
+      <div class="stat-card"><div class="stat-label">Evaluations</div><div class="stat-value">${VIEW.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Rotations</div><div class="stat-value">${new Set(VIEW.map(s => s.rotation)).size}</div></div>
+      <div class="stat-card"><div class="stat-label">Attendings</div><div class="stat-value">${new Set(VIEW.map(evaluatorFor)).size}</div></div>
       <div class="stat-card"><div class="stat-label">Items Scored</div><div class="stat-value">${allScores.length}</div></div>
       <div class="stat-card"><div class="stat-label">Overall Average</div><div class="stat-value">${overall !== null ? overall.toFixed(2) : '&mdash;'}</div></div>
     </div>
@@ -701,11 +800,413 @@ function render() {
     </div>
 
     ${legend()}
+    ${chartsSection()}
     ${epaSection()}
     ${milestoneSection()}
     ${evaluationSection()}
-  ` + foot();
+  `;
+  renderCharts();
 }
+
+// ── Date range ───────────────────────────────────────────────────────────────
+//
+// One range, set in one row at the top, scoping everything beneath it. The
+// counts, averages, milestone table, both charts and the evaluation list are
+// all computed from VIEW, so no two figures on the page can describe different
+// windows of time.
+let FILTER = { preset: 'all', from: '', to: '' };
+let VIEW   = [];
+
+const PRESETS = [
+  ['all', 'All time'],
+  ['ay',  'This academic year'],
+  ['90',  'Last 90 days'],
+  ['30',  'Last 30 days'],
+];
+
+// Local calendar date. Never toISOString(): that is UTC, and west of Greenwich
+// it already reads as tomorrow for most of the evening.
+function isoLocal(d) {
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+function presetFrom(key) {
+  if (key === 'ay') return `${academicYearStart(isoLocal(new Date()))}-07-01`;
+  if (key === '90' || key === '30') {
+    const d = new Date();
+    d.setDate(d.getDate() - (Number(key) - 1));
+    return isoLocal(d);
+  }
+  return '';
+}
+
+function setPreset(key) {
+  FILTER = { preset: key, from: presetFrom(key), to: '' };
+  syncFilterControls();
+  renderReport();
+}
+
+function setCustomRange() {
+  const from = document.getElementById('f-from').value;
+  const to   = document.getElementById('f-to').value;
+  FILTER = { preset: (from || to) ? 'custom' : 'all', from, to };
+  syncFilterControls();
+  renderReport();
+}
+
+function syncFilterControls() {
+  document.querySelectorAll('.seg button').forEach(b =>
+    b.setAttribute('aria-pressed', String(b.dataset.preset === FILTER.preset)));
+  const f = document.getElementById('f-from'), t = document.getElementById('f-to');
+  if (f) f.value = FILTER.from;
+  if (t) t.value = FILTER.to;
+}
+
+function visibleSubs() {
+  return SUBS.filter(s =>
+    (!FILTER.from || (s.dateStart && s.dateStart >= FILTER.from)) &&
+    (!FILTER.to   || (s.dateStart && s.dateStart <= FILTER.to)));
+}
+
+function rangeLabel() {
+  if (FILTER.preset === 'all') return 'Showing all time';
+  const span = FILTER.from && FILTER.to ? `${fmtDate(FILTER.from)} to ${fmtDate(FILTER.to)}`
+             : FILTER.from ? `since ${fmtDate(FILTER.from)}`
+             : `up to ${fmtDate(FILTER.to)}`;
+  const name = (PRESETS.find(p => p[0] === FILTER.preset) || [])[1];
+  return name ? `Showing ${name.toLowerCase()}, ${span}` : `Showing ${span}`;
+}
+
+function filterBar() {
+  return `
+    <div class="filter-bar no-print" role="group" aria-label="Date range">
+      <span class="filter-label">Date range</span>
+      <div class="seg">${PRESETS.map(([k, l]) =>
+        `<button type="button" data-preset="${k}" aria-pressed="false" onclick="setPreset('${k}')">${esc(l)}</button>`).join('')}</div>
+      <label>From <input type="date" id="f-from" onchange="setCustomRange()"></label>
+      <label>To <input type="date" id="f-to" onchange="setCustomRange()"></label>
+    </div>`;
+}
+
+// ── Progress over time ───────────────────────────────────────────────────────
+//
+// Two line charts, one series each. One line per chart is deliberate: nineteen
+// milestones at once is a tangle nobody can read, so the reader picks which one
+// to plot. The pickers choose WHAT is plotted and are not filters - the date
+// range above still scopes both charts.
+//
+// Colour is --teal-light, one blue from the site palette. Not red or green: on a
+// developmental scale those read as a verdict. Not the page navy either, though
+// that was the first choice - run through the palette validator it fails the
+// lightness band and chroma floor, meaning it reads as ink rather than as data
+// and the line blends into the axis text. #2275AD passes every check at 5.0:1.
+let CHART = { ms: 'all', rot: null, epa: 'all' };
+const TABLE_OPEN  = new Set();
+const LAST_POINTS = {};
+const DAY   = 864e5;
+const dayMs = d => new Date(d + 'T12:00:00').getTime();
+const meanOf = a => a.reduce((x, y) => x + y, 0) / a.length;
+
+function chartsSection() {
+  return `
+    <h2 class="sect">Progress over time</h2>
+    <p class="sect-note">Each point is one evaluation. They come from different attendings, on different
+      days, in different settings &mdash; so read the direction across many points rather than the
+      step between two neighbours. Where two evaluations share a day, the line runs through their
+      average. Hover over a chart, or tab to it and use the arrow keys, to see each point. Every
+      chart also has a table view.</p>
+    <div id="charts"></div>`;
+}
+
+function renderCharts() {
+  const host = document.getElementById('charts');
+  if (!host) return;
+
+  let defs = {};
+  try { defs = milestoneDefs(ME.program); } catch (e) { defs = {}; }
+  const msCodes = Object.keys(defs).filter(c => VIEW.some(s => typeof (s.milestoneScores || {})[c] === 'number'));
+  if (CHART.ms !== 'all' && !msCodes.includes(CHART.ms)) CHART.ms = 'all';
+
+  const rotCount = new Map();
+  VIEW.forEach(s => rotCount.set(s.rotation, (rotCount.get(s.rotation) || 0) + 1));
+  const rots = [...rotCount.entries()]
+    .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])))
+    .map(e => e[0]);
+  if (!rots.includes(CHART.rot)) { CHART.rot = rots[0] || null; CHART.epa = 'all'; }
+
+  const epaText = new Map();
+  VIEW.filter(s => s.rotation === CHART.rot)
+      .forEach(s => epaRows(s).forEach(e => { if (!epaText.has(e.id)) epaText.set(e.id, e.text || e.id); }));
+  if (CHART.epa !== 'all' && !epaText.has(CHART.epa)) CHART.epa = 'all';
+
+  const clip = (t, n) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
+  const opt  = (v, label, sel) => `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(label)}</option>`;
+
+  host.innerHTML =
+    chartCard('ms', 'Milestones',
+      `<select aria-label="Milestone to plot" onchange="CHART.ms = this.value; renderCharts()">
+         ${opt('all', 'All milestones (average)', CHART.ms)}
+         ${msCodes.map(c => opt(c, `${c} — ${clip(defs[c], 58)}`, CHART.ms)).join('')}
+       </select>`,
+      CHART.ms === 'all'
+        ? 'Each point averages the milestones that evaluation touched, which depends on the rotation, so choose a single milestone for the clearest picture. Shown in half steps.'
+        : `${CHART.ms} — ${defs[CHART.ms] || ''}. Shown in half steps.`) +
+    chartCard('epa', 'EPAs by rotation',
+      `<select aria-label="Rotation" onchange="CHART.rot = this.value; CHART.epa = 'all'; renderCharts()">
+         ${rots.map(r => opt(r, `${r} (${rotCount.get(r)})`, CHART.rot)).join('')}
+       </select>
+       <select aria-label="EPA to plot" onchange="CHART.epa = this.value; renderCharts()">
+         ${opt('all', 'All EPAs on this rotation (average)', CHART.epa)}
+         ${[...epaText.entries()].map(([id, t]) => opt(id, clip(t, 64), CHART.epa)).join('')}
+       </select>`,
+      CHART.epa === 'all'
+        ? 'Each point averages the EPAs scored in one evaluation on this rotation. N/A items are left out.'
+        : 'One EPA, as scored by the attending. Evaluations where it was marked N/A are left out.');
+
+  drawChart('ms', milestonePoints(defs));
+  drawChart('epa', epaPoints());
+}
+
+function chartCard(id, title, controls, caption) {
+  const open = TABLE_OPEN.has(id);
+  return `
+    <div class="chart-card">
+      <div class="chart-head"><h3>${esc(title)}</h3><div class="chart-controls">${controls}</div></div>
+      <div class="chart" id="chart-${id}"></div>
+      <div class="chart-foot">
+        <span>${esc(caption)}</span>
+        <button type="button" class="linkbtn no-print" onclick="toggleTable('${id}', this)">${open ? 'Hide table' : 'Show as table'}</button>
+      </div>
+      <div class="chart-table" id="table-${id}"${open ? '' : ' hidden'}></div>
+    </div>`;
+}
+
+function toggleTable(id, btn) {
+  const el = document.getElementById('table-' + id);
+  el.hidden = !el.hidden;
+  if (el.hidden) TABLE_OPEN.delete(id); else TABLE_OPEN.add(id);
+  btn.textContent = el.hidden ? 'Show as table' : 'Hide table';
+}
+
+function milestonePoints(defs) {
+  const pts = [];
+  VIEW.forEach(s => {
+    const ms = s.milestoneScores || {};
+    let v, detail;
+    if (CHART.ms === 'all') {
+      const vals = Object.keys(defs).map(c => ms[c]).filter(x => typeof x === 'number');
+      if (!vals.length) return;
+      v = meanOf(vals);
+      detail = `average of ${vals.length} milestone${vals.length === 1 ? '' : 's'}`;
+    } else {
+      if (typeof ms[CHART.ms] !== 'number') return;
+      v = ms[CHART.ms];
+      detail = CHART.ms;
+    }
+    // Plotted and labelled in half steps, like every other milestone figure:
+    // the scale is ordinal, and a dot drawn at 2.24 would claim otherwise.
+    const y = halfStep(v);
+    pts.push({ sub: s, date: s.dateStart, y, label: y.toFixed(1), detail });
+  });
+  return pts;
+}
+
+function epaPoints() {
+  const pts = [];
+  VIEW.filter(s => s.rotation === CHART.rot).forEach(s => {
+    const rows = epaRows(s);
+    if (CHART.epa === 'all') {
+      const vals = rows.map(e => e.score).filter(x => x !== 'na' && x != null).map(Number);
+      if (!vals.length) return;
+      const y = meanOf(vals);
+      pts.push({ sub: s, date: s.dateStart, y, label: y.toFixed(1), detail: `average of ${vals.length} scored` });
+    } else {
+      const e = rows.find(r => r.id === CHART.epa);
+      if (!e || e.score === 'na' || e.score == null) return;
+      const y = Number(e.score);
+      pts.push({ sub: s, date: s.dateStart, y, label: String(y), detail: SCALE_LABELS[y] || '' });
+    }
+  });
+  return pts;
+}
+
+// The accessible twin of each chart: every plotted value, readable without a
+// pointer and without hovering.
+function fillTable(id, pts) {
+  const el = document.getElementById('table-' + id);
+  if (!el) return;
+  el.innerHTML = !pts.length ? '' : `
+    <table>
+      <thead><tr><th>Date</th><th>Rotation</th><th>Attending</th><th class="num">Value</th></tr></thead>
+      <tbody>${pts.map(p => `
+        <tr>
+          <td style="white-space:nowrap">${esc(fmtDate(p.date))}</td>
+          <td>${esc(p.sub.rotation)}</td>
+          <td>${escFaculty(evaluatorFor(p.sub))}</td>
+          <td class="num"><strong>${esc(p.label)}</strong>${p.detail ? `<div class="n-obs">${esc(p.detail)}</div>` : ''}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function drawChart(id, raw) {
+  const el = document.getElementById('chart-' + id);
+  if (!el) return;
+  LAST_POINTS[id] = raw;
+  const pts = raw.filter(p => p.date)
+                 .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  fillTable(id, pts);
+
+  if (!pts.length) {
+    el.removeAttribute('tabindex');
+    el.removeAttribute('aria-label');
+    el.innerHTML = '<div class="chart-empty">Nothing to plot for this selection in this date range.</div>';
+    return;
+  }
+
+  const W = Math.max(280, el.clientWidth), H = 236;
+  const m = { l: 36, r: 18, t: 14, b: 30 };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const f = n => n.toFixed(1);
+
+  // Time axis. A single date, or a cluster of a few days, gets a two-week window
+  // so the point is not pinned against an edge.
+  let t0 = dayMs(pts[0].date), t1 = dayMs(pts[pts.length - 1].date);
+  if (t1 - t0 < 14 * DAY) { const mid = (t0 + t1) / 2; t0 = mid - 7 * DAY; t1 = mid + 7 * DAY; }
+  else { const pad = (t1 - t0) * 0.04; t0 -= pad; t1 += pad; }
+  const X = t => m.l + (t - t0) / (t1 - t0) * pw;
+  const Y = v => m.t + (1 - v / 5) * ph;
+
+  // Ticks on real boundaries - Mondays for short spans, the 1st of the month
+  // for long ones - then thinned until labels have room.
+  const spanDays = (t1 - t0) / DAY;
+  let ticks = [];
+  if (spanDays > 75) {
+    const d = new Date(t0); d.setDate(1); d.setHours(12, 0, 0, 0); d.setMonth(d.getMonth() + 1);
+    for (; d.getTime() <= t1; d.setMonth(d.getMonth() + 1))
+      ticks.push({ t: d.getTime(), label: d.toLocaleDateString('en-US', { month: 'short' }) });
+  } else {
+    const step = spanDays > 35 ? 14 : 7;
+    const d = new Date(t0); d.setHours(12, 0, 0, 0);
+    while (d.getDay() !== 1) d.setDate(d.getDate() + 1);
+    for (; d.getTime() <= t1; d.setDate(d.getDate() + step))
+      ticks.push({ t: d.getTime(), label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) });
+  }
+  ticks = ticks.filter(k => X(k.t) > m.l + 16 && X(k.t) < W - m.r);
+  while (ticks.length > 2 && pw / ticks.length < 56) ticks = ticks.filter((_, i) => i % 2 === 0);
+
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">`;
+  s += '<g class="grid">';
+  for (let v = 0; v <= 5; v++)
+    s += `<line${v === 0 ? ' class="base"' : ''} x1="${m.l}" x2="${W - m.r}" y1="${f(Y(v))}" y2="${f(Y(v))}"/>`;
+  s += '</g><g class="ax">';
+  for (let v = 0; v <= 5; v++)
+    s += `<text x="${m.l - 10}" y="${f(Y(v) + 4)}" text-anchor="end">${v}</text>`;
+  ticks.forEach(k => { s += `<text x="${f(X(k.t))}" y="${H - 9}" text-anchor="middle">${esc(k.label)}</text>`; });
+  s += '</g>';
+
+  const P = pts.map(p => ({ ...p, x: X(dayMs(p.date)), yy: Y(p.y) }));
+
+  // One stop per date. Two evaluations on the same day share it: each keeps its
+  // own dot, the tooltip lists both, and the line passes through their average.
+  // Joining them directly would draw a vertical jump that reads as a sudden
+  // swing, when it is only two attendings rating the same day differently.
+  const groups = [];
+  P.forEach((p, i) => {
+    const g = groups[groups.length - 1];
+    if (g && g.date === p.date) g.idx.push(i); else groups.push({ date: p.date, x: p.x, idx: [i] });
+  });
+  groups.forEach(g => { g.yy = meanOf(g.idx.map(i => P[i].yy)); });
+
+  if (groups.length > 1) {
+    const d = groups.map((g, i) => `${i ? 'L' : 'M'}${f(g.x)},${f(g.yy)}`).join('');
+    const last = groups[groups.length - 1];
+    s += `<path class="area" d="${d}L${f(last.x)},${f(Y(0))}L${f(groups[0].x)},${f(Y(0))}Z"/>`;
+    s += `<path class="line" d="${d}"/>`;
+  }
+  s += `<line class="xhair" x1="0" x2="0" y1="${m.t}" y2="${f(Y(0))}" visibility="hidden"/>`;
+  P.forEach((p, i) => { s += `<circle class="pt" data-i="${i}" cx="${f(p.x)}" cy="${f(p.yy)}" r="4.5"/>`; });
+  // The hit area is the whole plot, not the 9px dots: the pointer snaps to the
+  // nearest date, so nobody has to land on a mark dead-centre.
+  s += `<rect class="hit" x="${m.l - 12}" y="0" width="${pw + 24}" height="${H - m.b + 6}" fill="transparent"/>`;
+  s += '</svg>';
+
+  el.innerHTML = s + '<div class="chart-tip" role="status" aria-live="polite" hidden></div>' +
+    (groups.length > 1 ? '' : P.length === 1
+      ? '<div class="chart-note">Only one evaluation here so far &mdash; a line needs at least two.</div>'
+      : '<div class="chart-note">These evaluations are all from one day &mdash; a line needs at least two dates.</div>');
+  el.setAttribute('tabindex', '0');
+  el.setAttribute('aria-label',
+    `${P.length} evaluation${P.length === 1 ? '' : 's'} plotted. Use the left and right arrow keys to step through them, or open the table view below.`);
+
+  const svgEl = el.querySelector('svg'), tip = el.querySelector('.chart-tip');
+  const hair = svgEl.querySelector('.xhair'), dots = [...svgEl.querySelectorAll('.pt')];
+  let cur = -1;
+
+  const showGroup = gi => {
+    cur = gi;
+    const g = groups[gi];
+    hair.setAttribute('x1', f(g.x)); hair.setAttribute('x2', f(g.x));
+    hair.setAttribute('visibility', 'visible');
+    dots.forEach(d => d.setAttribute('r', g.idx.includes(Number(d.dataset.i)) ? '6' : '4.5'));
+
+    // Built with textContent: attending names come from a table anyone can add
+    // a row to, so they are never concatenated into markup here.
+    tip.replaceChildren();
+    const hd = document.createElement('div');
+    hd.className = 'tip-date'; hd.textContent = fmtDate(g.date);
+    tip.appendChild(hd);
+    g.idx.forEach(i => {
+      const p = P[i];
+      const row = document.createElement('div'); row.className = 'tip-row';
+      const key = document.createElement('span'); key.className = 'key';
+      const val = document.createElement('span'); val.className = 'val'; val.textContent = p.label;
+      const lab = document.createElement('span'); lab.className = 'lab'; lab.textContent = p.detail;
+      row.append(key, val, lab);
+      const who = document.createElement('div'); who.className = 'sub';
+      who.textContent = `${evaluatorFor(p.sub)} · ${p.sub.rotation}`;
+      tip.append(row, who);
+    });
+    tip.hidden = false;
+    const w = tip.offsetWidth;
+    tip.style.left = (g.x + 14 + w > el.clientWidth ? Math.max(0, g.x - 14 - w) : g.x + 14) + 'px';
+  };
+  const hide = () => {
+    cur = -1; tip.hidden = true; hair.setAttribute('visibility', 'hidden');
+    dots.forEach(d => d.setAttribute('r', '4.5'));
+  };
+  const nearest = px => groups.reduce((b, g, i) => (Math.abs(g.x - px) < Math.abs(groups[b].x - px) ? i : b), 0);
+
+  const hit = svgEl.querySelector('.hit');
+  hit.addEventListener('pointermove', e => {
+    const r = svgEl.getBoundingClientRect();
+    showGroup(nearest((e.clientX - r.left) * (W / r.width)));
+  });
+  hit.addEventListener('pointerleave', hide);
+  el.onfocus = () => showGroup(cur < 0 ? groups.length - 1 : cur);
+  el.onblur  = hide;
+  el.onkeydown = e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const from = cur < 0 ? groups.length - 1 : cur;
+      showGroup(Math.max(0, Math.min(groups.length - 1, from + (e.key === 'ArrowRight' ? 1 : -1))));
+    } else if (e.key === 'Escape') hide();
+  };
+}
+
+// Redraw at the new width, reusing the points already computed. Only the SVG
+// is rebuilt, so an open picker or date field is never torn down mid-edit.
+let resizeTimer = null, lastChartWidth = 0;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const probe = document.getElementById('chart-ms');
+    if (!probe || probe.clientWidth === lastChartWidth) return;
+    lastChartWidth = probe.clientWidth;
+    Object.keys(LAST_POINTS).forEach(id => drawChart(id, LAST_POINTS[id]));
+  }, 150);
+});
 
 function head() {
   const pgy  = trainingYear(ME.program, ME.class_year);
@@ -731,7 +1232,7 @@ function legend() {
 // ── EPA averages, grouped by rotation ────────────────────────────────────────
 function epaSection() {
   const byRot = new Map();
-  SUBS.forEach(sub => {
+  VIEW.forEach(sub => {
     if (!byRot.has(sub.rotation)) byRot.set(sub.rotation, { evals: 0, epas: new Map() });
     const r = byRot.get(sub.rotation);
     r.evals++;
@@ -785,7 +1286,7 @@ function milestoneSection() {
   try { defs = milestoneDefs(ME.program); } catch (e) { return ''; }
 
   const acc = new Map();
-  SUBS.forEach(s => Object.entries(s.milestoneScores || {}).forEach(([code, v]) => {
+  VIEW.forEach(s => Object.entries(s.milestoneScores || {}).forEach(([code, v]) => {
     if (typeof v !== 'number') return;
     if (!acc.has(code)) acc.set(code, []);
     acc.get(code).push(v);
@@ -824,7 +1325,7 @@ function milestoneSection() {
 
 // ── Individual evaluations ───────────────────────────────────────────────────
 function evaluationSection() {
-  const cards = SUBS.map((sub, i) => {
+  const cards = VIEW.map((sub, i) => {
     const rows = epaRows(sub);
     const vals = rows.map(e => e.score).filter(v => v !== 'na' && v != null).map(Number);
     const avg  = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
