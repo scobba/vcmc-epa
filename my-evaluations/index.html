@@ -242,6 +242,8 @@
            onkeydown="if(event.key==='Enter') signIn()" style="margin-top:8px">
     <button class="btn btn-primary" style="width:100%; margin-top:12px"
             onclick="signIn()" id="auth-btn">Sign In</button>
+    <p class="auth-hint"><a href="#" onclick="showCodeGate(); return false;"><strong>Email me a sign-in code instead</strong></a><br>
+    Use this the first time, or if a link from us did not work.</p>
     <p class="auth-hint"><a href="#" id="forgot-link" onclick="forgotPassword(); return false;">Forgot your password?</a></p>
     <p class="auth-hint">You can only see evaluations written about you.<br>
     Contact your program coordinator if you cannot sign in.</p>
@@ -264,7 +266,36 @@
            style="margin-top:8px" onkeydown="if(event.key==='Enter') setPassword()">
     <button class="btn btn-primary" style="width:100%; margin-top:12px"
             onclick="setPassword()" id="pw-btn">Save and continue</button>
+    <p class="auth-hint" id="pw-skip" style="display:none"><a href="#" onclick="skipPassword(); return false;">Skip for now</a> &mdash; you can keep signing in with an emailed code.</p>
     <p class="auth-hint">At least 8 characters. Please do not reuse a hospital or EHR password.</p>
+  </div>
+</div>
+
+<!-- Codes, not links.
+     Invite and reset emails carry a single-use link, and hospital email security
+     fetches every link it sees to scan it - which spends the token about 13
+     seconds after it is sent, long before the person clicks. A six-digit code
+     has no URL to fetch, so a scanner cannot consume it. -->
+<div class="auth-gate" id="code-gate" style="display:none">
+  <div class="auth-box">
+    <img src="https://static.wixstatic.com/media/48ea68_21770b96de134293966db6558bd3d23a~mv2.png/v1/fill/w_75,h_79,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/vcmc-fmr-icon.png" alt="VCMC FM Residency Logo">
+    <div class="auth-eyebrow">My Evaluations</div>
+    <h2><strong>Sign In</strong> with a Code</h2>
+    <p>We will email you a six-digit code. Codes still work when your email system blocks or rewrites links.</p>
+    <div id="code-message" class="auth-message" style="display:none"></div>
+    <input type="email" id="code-email" placeholder="Email address" autocomplete="email"
+           onkeydown="if(event.key==='Enter') sendCode()">
+    <button class="btn btn-primary" style="width:100%; margin-top:12px"
+            onclick="sendCode()" id="code-send-btn">Email me a code</button>
+    <div id="code-entry" style="display:none">
+      <input type="text" id="code-token" placeholder="6-digit code" inputmode="numeric"
+             autocomplete="one-time-code" maxlength="6" style="margin-top:10px; text-align:center;
+             letter-spacing:.35em; font-size:19px; font-weight:700"
+             onkeydown="if(event.key==='Enter') verifyCode()">
+      <button class="btn btn-primary" style="width:100%; margin-top:12px"
+              onclick="verifyCode()" id="code-verify-btn">Sign in</button>
+    </div>
+    <p class="auth-hint"><a href="#" onclick="showSignIn(); return false;">Back to password sign-in</a></p>
   </div>
 </div>
 
@@ -295,6 +326,7 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 // and the `type=invite` that tells us why they are here - is already gone.
 const ENTRY_HASH = window.location.hash || '';
 const FROM_EMAIL_LINK = /type=(invite|recovery|signup)/.test(ENTRY_HASH);
+const LINK_ERROR = (/error_code=([a-z_]+)/.exec(ENTRY_HASH) || [])[1] || null;
 
 const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -337,24 +369,110 @@ async function signOut() {
 
 async function checkAuth() {
   const { data: { session } } = await supabaseClient.auth.getSession();
+
+  // A link that arrives already spent. Email security scanners fetch every URL
+  // they see, which consumes a single-use token long before the person clicks,
+  // and Supabase then redirects here with an error rather than a session. Say so
+  // - a bare sign-in box with no explanation sends people to the coordinator.
+  if (!session && LINK_ERROR) {
+    showSignIn();
+    authMsg(LINK_ERROR === 'otp_expired'
+      ? 'That link had already been used or had expired. Email security often opens links automatically, which uses them up. Use a sign-in code instead — the option is below.'
+      : 'That link could not be used. Try a sign-in code instead — the option is below.');
+    return;
+  }
   if (!session) return;
   // Arrived from an invitation or a reset link: they have a session but no
   // password they know. Send them to set one before anything else.
-  if (FROM_EMAIL_LINK) { showPasswordGate(); return; }
+  if (FROM_EMAIL_LINK) { showPasswordGate(false); return; }
   await show();
 }
 
 // A reset link can also surface as an event rather than in the hash, depending
 // on how the client consumed the URL. Either route lands in the same place.
 supabaseClient.auth.onAuthStateChange((event) => {
-  if (event === 'PASSWORD_RECOVERY') showPasswordGate();
+  if (event === 'PASSWORD_RECOVERY') showPasswordGate(false);
 });
 
-function showPasswordGate() {
+function showPasswordGate(skippable) {
   document.getElementById('auth-gate').style.display = 'none';
+  document.getElementById('code-gate').style.display = 'none';
   document.getElementById('content').style.display = 'none';
   document.getElementById('pw-gate').style.display = 'flex';
+  document.getElementById('pw-skip').style.display = skippable ? 'block' : 'none';
   document.getElementById('pw-new').focus();
+}
+
+function showSignIn() {
+  document.getElementById('code-gate').style.display = 'none';
+  document.getElementById('pw-gate').style.display = 'none';
+  document.getElementById('auth-gate').style.display = 'flex';
+}
+
+function showCodeGate() {
+  // carry across whatever they already typed, so they do not type it twice
+  const typed = document.getElementById('auth-email').value.trim();
+  if (typed) document.getElementById('code-email').value = typed;
+  document.getElementById('auth-gate').style.display = 'none';
+  document.getElementById('code-gate').style.display = 'flex';
+  document.getElementById('code-email').focus();
+}
+
+function codeMsg(text, ok) {
+  const m = document.getElementById('code-message');
+  m.textContent = text;
+  m.className = 'auth-message' + (ok ? '' : ' error');
+  m.style.cssText = ok
+    ? 'display:block;background:var(--teal-pale);color:var(--teal);border:1px solid var(--teal-light)'
+    : 'display:block';
+}
+
+async function sendCode() {
+  const email = document.getElementById('code-email').value.trim();
+  if (!email || !email.includes('@')) return codeMsg('Please enter your email address.');
+  const btn = document.getElementById('code-send-btn');
+  btn.disabled = true; btn.textContent = 'Sending…';
+
+  // shouldCreateUser:false matters. Without it this endpoint would happily make
+  // an account for any address typed in, and the page would become a signup
+  // form for anyone who found the URL.
+  await supabaseClient.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+
+  btn.disabled = false; btn.textContent = 'Send another code';
+  document.getElementById('code-entry').style.display = 'block';
+  document.getElementById('code-token').focus();
+  // Deliberately the same answer whether or not the address has an account.
+  codeMsg('If that address has an account, a code is on its way. It expires in an hour.', true);
+}
+
+async function verifyCode() {
+  const email = document.getElementById('code-email').value.trim();
+  const token = document.getElementById('code-token').value.trim().replace(/\D/g, '');
+  if (token.length !== 6) return codeMsg('The code is six digits.');
+  const btn = document.getElementById('code-verify-btn');
+  btn.disabled = true; btn.textContent = 'Checking…';
+
+  // Which type a code carries depends on which email produced it: an invitation,
+  // a password reset, or a plain sign-in request. The code itself looks the same
+  // either way, and asking the person which email it came from would be a silly
+  // question, so try each.
+  let ok = false;
+  for (const type of ['email', 'invite', 'recovery', 'magiclink']) {
+    const { error } = await supabaseClient.auth.verifyOtp({ email, token, type });
+    if (!error) { ok = true; break; }
+  }
+
+  btn.disabled = false; btn.textContent = 'Sign in';
+  if (!ok) return codeMsg('That code was not accepted. It may have expired — send another one.');
+
+  document.getElementById('code-gate').style.display = 'none';
+  showPasswordGate(true);   // offer a password, but they can keep using codes
+}
+
+async function skipPassword() {
+  document.getElementById('pw-gate').style.display = 'none';
+  history.replaceState(null, '', window.location.pathname);
+  await show();
 }
 
 function pwMsg(text) {
