@@ -4,6 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EPA Evaluation — VCMC Family Medicine Residency</title>
+
+<!-- Auth emails land here, and this page cannot use them.
+     Supabase sends people to the project's Site URL, which is this page. An
+     invitation, a password reset or a sign-in link therefore arrives with its
+     token in the URL fragment, and nothing here consumes it: the fragment is
+     discarded and the person is left looking at a blank evaluation form with no
+     idea why. Forward to the page that does handle it, fragment intact.
+
+     First thing in the document on purpose - before the stylesheet, before any
+     other script - so it redirects without rendering a form nobody asked for.
+     Setting Site URL to /my-evaluations/ makes this never fire, which is the
+     better fix; this stays as the thing that catches it being wrong again. -->
+<script>
+(function () {
+  var h = window.location.hash || '';
+  if (/access_token=|error_code=|type=(invite|recovery|signup|magiclink)/.test(h)) {
+    window.location.replace('/my-evaluations/' + h);
+  }
+})();
+</script>
+
 <style>
   :root {
     --navy: #1A2744;
