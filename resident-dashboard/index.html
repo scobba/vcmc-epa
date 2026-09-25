@@ -748,6 +748,66 @@
   }
 
   /* ── Print styles ── */
+  /* ── By Resident: progress charts and EPA averages ─────────────────
+     Same chart styling as /my-evaluations/, so staff and residents see the
+     same picture. One series per chart in --teal-light (the page navy fails the
+     palette validator's lightness and chroma checks and reads as ink). */
+  .rd-h { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+          color: var(--slate-light); margin: 6px 0 6px }
+  .rd-note { font-size: 12.5px; color: var(--slate-light); line-height: 1.6; margin: 0 0 14px; max-width: 820px }
+  .rd-num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums }
+  .rd-obs { font-size: 11.5px; color: var(--slate-light); white-space: nowrap }
+  .avg-chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 46px; height: 27px; padding: 0 8px;
+    font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
+  }
+  .chart-card { background: var(--white); border: 1px solid var(--border); margin-bottom: 16px }
+  .chart-head {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 8px 14px; padding: 12px 16px 6px;
+  }
+  .chart-head h3 { font-size: 14px; font-weight: 700; color: var(--navy) }
+  .chart-controls { display: flex; flex-wrap: wrap; gap: 8px; max-width: 100% }
+  .chart-controls select {
+    font: inherit; font-size: 12.5px; padding: 5px 8px; max-width: 100%;
+    border: 1px solid var(--border); color: var(--navy); background: var(--white);
+  }
+  .chart { position: relative; padding: 4px 0 0; outline: none }
+  .chart:focus-visible { box-shadow: inset 0 0 0 2px var(--navy-light) }
+  .chart svg { display: block; overflow: visible }
+  .chart .grid line { stroke: var(--border-light); stroke-width: 1 }
+  .chart .grid line.base { stroke: var(--border) }
+  .chart .ax text { fill: var(--slate); font-size: 11px; font-variant-numeric: tabular-nums }
+  .chart .area { fill: var(--teal-light); fill-opacity: 0.08 }
+  .chart .line { fill: none; stroke: var(--teal-light); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round }
+  .chart .pt { fill: var(--teal-light); stroke: var(--white); stroke-width: 2 }
+  .chart .xhair { stroke: var(--slate-light); stroke-width: 1 }
+  .chart .hit { cursor: crosshair }
+  .chart-tip {
+    position: absolute; top: 8px; pointer-events: none; z-index: 5;
+    background: var(--white); border: 1px solid var(--border); box-shadow: var(--shadow-lg);
+    padding: 9px 11px; font-size: 12.5px; min-width: 170px; max-width: 280px;
+  }
+  .chart-tip .tip-date { font-size: 11px; color: var(--slate-light); margin-bottom: 4px }
+  .chart-tip .tip-row { display: flex; gap: 8px; align-items: baseline; padding-top: 5px }
+  .chart-tip .key { width: 12px; height: 2px; background: var(--teal-light); flex-shrink: 0; align-self: center }
+  .chart-tip .val { font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums }
+  .chart-tip .lab { color: var(--slate) }
+  .chart-tip .sub { font-size: 11px; color: var(--slate-light); padding-left: 20px }
+  .chart-note { font-size: 12px; color: var(--slate-light); padding: 2px 16px 0 }
+  .chart-empty { padding: 40px 16px; text-align: center; color: var(--slate-light); font-size: 13px }
+  .chart-foot {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline;
+    gap: 6px 16px; padding: 8px 16px 12px; font-size: 12px; color: var(--slate-light); line-height: 1.55;
+  }
+  .linkbtn {
+    background: none; border: 0; padding: 0; font: inherit; font-size: 12px;
+    color: var(--teal); cursor: pointer; text-decoration: underline; white-space: nowrap;
+  }
+  .chart-table { border-top: 1px solid var(--border-light) }
+  .chart-table .rd-obs { white-space: normal }
+
   @media print {
     .app-header, .admin-tabs, .filter-bar, .btn,
     .modal-overlay, .app-footer { display: none !important; }
@@ -1605,6 +1665,360 @@ function populateResidentRotationFilter() {
     rotations.map(r => `<option value="${r}" ${r === cur ? 'selected' : ''}>${r}</option>`).join('');
 }
 
+// ══════════════════════════════════════════════════
+// BY RESIDENT — progress charts and EPA averages
+//
+// The same two charts a resident sees on /my-evaluations/, plus the per-EPA
+// averages by rotation, drawn from this tab's own filtered slice - so the date,
+// rotation and evaluator filters above scope them like everything else here.
+//
+// DUPLICATED from my-evaluations/index.html (renderCharts / drawChart and their
+// helpers), adapted to this page: displayEvaluatorName() instead of that page's
+// evaluatorFor(), escFaculty() instead of esc(), rd- prefixes on every name and
+// id. Kept as a copy, per this repo's single-page convention, rather than
+// refactoring the live resident page. Fix a chart bug in one, fix it in the other.
+// ══════════════════════════════════════════════════
+let RD_CHART = { ms: 'all', rot: null, epa: 'all' };   // kept across residents, so a
+const RD_TABLE_OPEN = new Set();                        // milestone can be compared
+const RD_LAST = {};                                     // between people directly
+let RD_SUBS = [];
+const RD_DAY = 864e5;
+const rdDayMs = d => new Date(d + 'T12:00:00').getTime();
+const rdMean  = a => a.reduce((x, y) => x + y, 0) / a.length;
+const rdDate  = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+const rdStep  = v => Math.max(0, Math.min(5, Math.round(Number(v))));
+
+function rdProgressSection() {
+  return `
+    <h4 class="rd-h">Progress over time</h4>
+    <p class="rd-note">Each point is one evaluation, and the filters above apply. Where two evaluations
+      share a day, the line runs through their average. Read the direction across many points rather
+      than the step between two &mdash; they come from different attendings, days and settings. The
+      milestone and EPA you pick stay selected as you move between residents.</p>
+    <div id="rd-charts"></div>`;
+}
+
+// Per-EPA averages for each rotation, grouped by EPA id so a reworded EPA stays
+// one row. Every average shows the count it rests on, and N/A is left out of the
+// average rather than counted as zero.
+function rdEpaAveragesSection(subs) {
+  const byRot = new Map();
+  subs.forEach(s => {
+    if (!byRot.has(s.rotation)) byRot.set(s.rotation, { evals: 0, epas: new Map() });
+    const r = byRot.get(s.rotation);
+    r.evals++;
+    epaRows(s).forEach(e => {
+      const key = e.id || e.text;
+      if (!r.epas.has(key)) r.epas.set(key, { text: e.text, vals: [], na: 0 });
+      const rec = r.epas.get(key);
+      rec.text = e.text || rec.text;
+      if (e.score === 'na' || e.score == null) rec.na++; else rec.vals.push(Number(e.score));
+    });
+  });
+
+  const tables = [...byRot.entries()].sort((a, b) => b[1].evals - a[1].evals).map(([rot, r]) => `
+    <div class="table-wrap" style="margin-bottom:16px">
+      <table>
+        <thead><tr>
+          <th>${escFaculty(rot)} <span style="font-weight:400;text-transform:none;letter-spacing:0">&middot; ${r.evals} evaluation${r.evals === 1 ? '' : 's'}</span></th>
+          <th class="rd-num">Scored</th><th class="rd-num">Average</th>
+        </tr></thead>
+        <tbody>${[...r.epas.values()].map(e => {
+          const n = e.vals.length, avg = n ? rdMean(e.vals) : null;
+          return `
+            <tr>
+              <td>${escFaculty(e.text)}</td>
+              <td class="rd-num rd-obs">${n ? n + '&times;' : ''}${e.na ? `<div>${e.na} N/A</div>` : ''}</td>
+              <td class="rd-num">${avg === null ? '<span class="rd-obs">not observed</span>'
+                : `<span class="avg-chip score-${rdStep(avg)}">${avg.toFixed(2)}</span>`}</td>
+            </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`).join('');
+
+  return `
+    <h4 class="rd-h">EPA averages by rotation</h4>
+    <p class="rd-note">Every EPA this ${learnerNoun(false).toLowerCase()} has been scored on, averaged within its
+      rotation. &ldquo;Scored&rdquo; is how many times it was actually rated; most rest on one or two.</p>
+    ${tables}`;
+}
+
+function rdRenderCharts() {
+  const host = document.getElementById('rd-charts');
+  if (!host) return;
+  const subs = RD_SUBS;
+
+  let defs = {};
+  try { defs = milestoneDefs(currentProgram); } catch (e) { defs = {}; }
+  const msCodes = Object.keys(defs).filter(c => subs.some(s => typeof (s.milestoneScores || {})[c] === 'number'));
+  if (RD_CHART.ms !== 'all' && !msCodes.includes(RD_CHART.ms)) RD_CHART.ms = 'all';
+
+  const rotCount = new Map();
+  subs.forEach(s => rotCount.set(s.rotation, (rotCount.get(s.rotation) || 0) + 1));
+  const rots = [...rotCount.entries()]
+    .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])))
+    .map(e => e[0]);
+  if (!rots.includes(RD_CHART.rot)) RD_CHART.rot = rots[0] || null;
+
+  const epaText = new Map();
+  subs.filter(s => s.rotation === RD_CHART.rot)
+      .forEach(s => epaRows(s).forEach(e => { const k = e.id || e.text; if (!epaText.has(k)) epaText.set(k, e.text || k); }));
+  if (RD_CHART.epa !== 'all' && !epaText.has(RD_CHART.epa)) RD_CHART.epa = 'all';
+
+  const clip = (t, n) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
+  const opt  = (v, label, sel) => `<option value="${escFaculty(v)}"${v === sel ? ' selected' : ''}>${escFaculty(label)}</option>`;
+
+  host.innerHTML =
+    rdChartCard('ms', 'Milestones',
+      `<select aria-label="Milestone to plot" onchange="RD_CHART.ms = this.value; rdRenderCharts()">
+         ${opt('all', 'All milestones (average)', RD_CHART.ms)}
+         ${msCodes.map(c => opt(c, `${c} — ${clip(defs[c], 58)}`, RD_CHART.ms)).join('')}
+       </select>`,
+      RD_CHART.ms === 'all'
+        ? 'Each point averages the milestones that evaluation touched, which depends on the rotation, so choose a single milestone for the clearest picture. Shown in half steps.'
+        : `${RD_CHART.ms} — ${defs[RD_CHART.ms] || ''}. Shown in half steps.`) +
+    rdChartCard('epa', 'EPAs by rotation',
+      `<select aria-label="Rotation" onchange="RD_CHART.rot = this.value; RD_CHART.epa = 'all'; rdRenderCharts()">
+         ${rots.map(r => opt(r, `${r} (${rotCount.get(r)})`, RD_CHART.rot)).join('')}
+       </select>
+       <select aria-label="EPA to plot" onchange="RD_CHART.epa = this.value; rdRenderCharts()">
+         ${opt('all', 'All EPAs on this rotation (average)', RD_CHART.epa)}
+         ${[...epaText.entries()].map(([id, t]) => opt(id, clip(t, 64), RD_CHART.epa)).join('')}
+       </select>`,
+      RD_CHART.epa === 'all'
+        ? 'Each point averages the EPAs scored in one evaluation on this rotation. N/A items are left out.'
+        : 'One EPA, as scored by the attending. Evaluations where it was marked N/A are left out.');
+
+  rdDrawChart('ms', rdMilestonePoints(defs));
+  rdDrawChart('epa', rdEpaPoints());
+}
+
+function rdChartCard(id, title, controls, caption) {
+  const open = RD_TABLE_OPEN.has(id);
+  return `
+    <div class="chart-card">
+      <div class="chart-head"><h3>${escFaculty(title)}</h3><div class="chart-controls">${controls}</div></div>
+      <div class="chart" id="rd-chart-${id}"></div>
+      <div class="chart-foot">
+        <span>${escFaculty(caption)}</span>
+        <button type="button" class="linkbtn" onclick="rdToggleTable('${id}', this)">${open ? 'Hide table' : 'Show as table'}</button>
+      </div>
+      <div class="chart-table" id="rd-table-${id}"${open ? '' : ' hidden'}></div>
+    </div>`;
+}
+
+function rdToggleTable(id, btn) {
+  const el = document.getElementById('rd-table-' + id);
+  el.hidden = !el.hidden;
+  if (el.hidden) RD_TABLE_OPEN.delete(id); else RD_TABLE_OPEN.add(id);
+  btn.textContent = el.hidden ? 'Show as table' : 'Hide table';
+}
+
+function rdMilestonePoints(defs) {
+  const pts = [];
+  RD_SUBS.forEach(s => {
+    const ms = s.milestoneScores || {};
+    let v, detail;
+    if (RD_CHART.ms === 'all') {
+      const vals = Object.keys(defs).map(c => ms[c]).filter(x => typeof x === 'number');
+      if (!vals.length) return;
+      v = rdMean(vals);
+      detail = `average of ${vals.length} milestone${vals.length === 1 ? '' : 's'}`;
+    } else {
+      if (typeof ms[RD_CHART.ms] !== 'number') return;
+      v = ms[RD_CHART.ms];
+      detail = RD_CHART.ms;
+    }
+    const y = halfStep(v);   // plotted and labelled in half steps, as every milestone figure is
+    pts.push({ sub: s, date: s.dateStart, y, label: y.toFixed(1), detail });
+  });
+  return pts;
+}
+
+function rdEpaPoints() {
+  const pts = [];
+  RD_SUBS.filter(s => s.rotation === RD_CHART.rot).forEach(s => {
+    const rows = epaRows(s);
+    if (RD_CHART.epa === 'all') {
+      const vals = rows.map(e => e.score).filter(x => x !== 'na' && x != null).map(Number);
+      if (!vals.length) return;
+      const y = rdMean(vals);
+      pts.push({ sub: s, date: s.dateStart, y, label: y.toFixed(2), detail: `average of ${vals.length} scored` });
+    } else {
+      const e = rows.find(r => (r.id || r.text) === RD_CHART.epa);
+      if (!e || e.score === 'na' || e.score == null) return;
+      const y = Number(e.score);
+      pts.push({ sub: s, date: s.dateStart, y, label: String(y), detail: SCALE_LABELS[y] || '' });
+    }
+  });
+  return pts;
+}
+
+function rdFillTable(id, pts) {
+  const el = document.getElementById('rd-table-' + id);
+  if (!el) return;
+  el.innerHTML = !pts.length ? '' : `
+    <table>
+      <thead><tr><th>Date</th><th>Rotation</th><th>Evaluator</th><th class="rd-num">Value</th></tr></thead>
+      <tbody>${pts.map(p => `
+        <tr>
+          <td style="white-space:nowrap">${escFaculty(rdDate(p.date))}</td>
+          <td>${escFaculty(p.sub.rotation)}</td>
+          <td>${escFaculty(displayEvaluatorName(p.sub))}</td>
+          <td class="rd-num"><strong>${escFaculty(p.label)}</strong>${p.detail ? `<div class="rd-obs">${escFaculty(p.detail)}</div>` : ''}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function rdDrawChart(id, raw) {
+  const el = document.getElementById('rd-chart-' + id);
+  if (!el) return;
+  RD_LAST[id] = raw;
+  const pts = raw.filter(p => p.date)
+                 .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  rdFillTable(id, pts);
+
+  if (!pts.length) {
+    el.removeAttribute('tabindex');
+    el.removeAttribute('aria-label');
+    el.innerHTML = '<div class="chart-empty">Nothing to plot for this selection with the current filters.</div>';
+    return;
+  }
+  // Drawn while the tab is hidden, the container has no width. switchAdminTab()
+  // re-renders on show, so skip rather than draw a chart 280px wide.
+  if (!el.clientWidth) return;
+
+  const W = Math.max(280, el.clientWidth), H = 236;
+  const m = { l: 36, r: 18, t: 14, b: 30 };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const f = n => n.toFixed(1);
+
+  let t0 = rdDayMs(pts[0].date), t1 = rdDayMs(pts[pts.length - 1].date);
+  if (t1 - t0 < 14 * RD_DAY) { const mid = (t0 + t1) / 2; t0 = mid - 7 * RD_DAY; t1 = mid + 7 * RD_DAY; }
+  else { const pad = (t1 - t0) * 0.04; t0 -= pad; t1 += pad; }
+  const X = t => m.l + (t - t0) / (t1 - t0) * pw;
+  const Y = v => m.t + (1 - v / 5) * ph;
+
+  const spanDays = (t1 - t0) / RD_DAY;
+  let ticks = [];
+  if (spanDays > 75) {
+    const d = new Date(t0); d.setDate(1); d.setHours(12, 0, 0, 0); d.setMonth(d.getMonth() + 1);
+    for (; d.getTime() <= t1; d.setMonth(d.getMonth() + 1))
+      ticks.push({ t: d.getTime(), label: d.toLocaleDateString('en-US', { month: 'short' }) });
+  } else {
+    const step = spanDays > 35 ? 14 : 7;
+    const d = new Date(t0); d.setHours(12, 0, 0, 0);
+    while (d.getDay() !== 1) d.setDate(d.getDate() + 1);
+    for (; d.getTime() <= t1; d.setDate(d.getDate() + step))
+      ticks.push({ t: d.getTime(), label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) });
+  }
+  ticks = ticks.filter(k => X(k.t) > m.l + 16 && X(k.t) < W - m.r);
+  while (ticks.length > 2 && pw / ticks.length < 56) ticks = ticks.filter((_, i) => i % 2 === 0);
+
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">`;
+  s += '<g class="grid">';
+  for (let v = 0; v <= 5; v++)
+    s += `<line${v === 0 ? ' class="base"' : ''} x1="${m.l}" x2="${W - m.r}" y1="${f(Y(v))}" y2="${f(Y(v))}"/>`;
+  s += '</g><g class="ax">';
+  for (let v = 0; v <= 5; v++)
+    s += `<text x="${m.l - 10}" y="${f(Y(v) + 4)}" text-anchor="end">${v}</text>`;
+  ticks.forEach(k => { s += `<text x="${f(X(k.t))}" y="${H - 9}" text-anchor="middle">${escFaculty(k.label)}</text>`; });
+  s += '</g>';
+
+  const P = pts.map(p => ({ ...p, x: X(rdDayMs(p.date)), yy: Y(p.y) }));
+  const groups = [];
+  P.forEach((p, i) => {
+    const g = groups[groups.length - 1];
+    if (g && g.date === p.date) g.idx.push(i); else groups.push({ date: p.date, x: p.x, idx: [i] });
+  });
+  groups.forEach(g => { g.yy = rdMean(g.idx.map(i => P[i].yy)); });
+
+  if (groups.length > 1) {
+    const d = groups.map((g, i) => `${i ? 'L' : 'M'}${f(g.x)},${f(g.yy)}`).join('');
+    const last = groups[groups.length - 1];
+    s += `<path class="area" d="${d}L${f(last.x)},${f(Y(0))}L${f(groups[0].x)},${f(Y(0))}Z"/>`;
+    s += `<path class="line" d="${d}"/>`;
+  }
+  s += `<line class="xhair" x1="0" x2="0" y1="${m.t}" y2="${f(Y(0))}" visibility="hidden"/>`;
+  P.forEach((p, i) => { s += `<circle class="pt" data-i="${i}" cx="${f(p.x)}" cy="${f(p.yy)}" r="4.5"/>`; });
+  s += `<rect class="hit" x="${m.l - 12}" y="0" width="${pw + 24}" height="${H - m.b + 6}" fill="transparent"/>`;
+  s += '</svg>';
+
+  el.innerHTML = s + '<div class="chart-tip" role="status" aria-live="polite" hidden></div>' +
+    (groups.length > 1 ? '' : P.length === 1
+      ? '<div class="chart-note">Only one evaluation here &mdash; a line needs at least two.</div>'
+      : '<div class="chart-note">These evaluations are all from one day &mdash; a line needs at least two dates.</div>');
+  el.setAttribute('tabindex', '0');
+  el.setAttribute('aria-label',
+    `${P.length} evaluation${P.length === 1 ? '' : 's'} plotted. Use the left and right arrow keys to step through them, or open the table view below.`);
+
+  const svgEl = el.querySelector('svg'), tip = el.querySelector('.chart-tip');
+  const hair = svgEl.querySelector('.xhair'), dots = [...svgEl.querySelectorAll('.pt')];
+  let cur = -1;
+
+  const showGroup = gi => {
+    cur = gi;
+    const g = groups[gi];
+    hair.setAttribute('x1', f(g.x)); hair.setAttribute('x2', f(g.x));
+    hair.setAttribute('visibility', 'visible');
+    dots.forEach(d => d.setAttribute('r', g.idx.includes(Number(d.dataset.i)) ? '6' : '4.5'));
+    // textContent throughout: evaluator names come from a table anyone can add to.
+    tip.replaceChildren();
+    const hd = document.createElement('div');
+    hd.className = 'tip-date'; hd.textContent = rdDate(g.date);
+    tip.appendChild(hd);
+    g.idx.forEach(i => {
+      const p = P[i];
+      const row = document.createElement('div'); row.className = 'tip-row';
+      const key = document.createElement('span'); key.className = 'key';
+      const val = document.createElement('span'); val.className = 'val'; val.textContent = p.label;
+      const lab = document.createElement('span'); lab.className = 'lab'; lab.textContent = p.detail;
+      row.append(key, val, lab);
+      const who = document.createElement('div'); who.className = 'sub';
+      who.textContent = `${displayEvaluatorName(p.sub)} · ${p.sub.rotation}`;
+      tip.append(row, who);
+    });
+    tip.hidden = false;
+    const w = tip.offsetWidth;
+    tip.style.left = (g.x + 14 + w > el.clientWidth ? Math.max(0, g.x - 14 - w) : g.x + 14) + 'px';
+  };
+  const hide = () => {
+    cur = -1; tip.hidden = true; hair.setAttribute('visibility', 'hidden');
+    dots.forEach(d => d.setAttribute('r', '4.5'));
+  };
+  const nearest = px => groups.reduce((b, g, i) => (Math.abs(g.x - px) < Math.abs(groups[b].x - px) ? i : b), 0);
+
+  const hit = svgEl.querySelector('.hit');
+  hit.addEventListener('pointermove', e => {
+    const r = svgEl.getBoundingClientRect();
+    showGroup(nearest((e.clientX - r.left) * (W / r.width)));
+  });
+  hit.addEventListener('pointerleave', hide);
+  el.onfocus = () => showGroup(cur < 0 ? groups.length - 1 : cur);
+  el.onblur  = hide;
+  el.onkeydown = e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const from = cur < 0 ? groups.length - 1 : cur;
+      showGroup(Math.max(0, Math.min(groups.length - 1, from + (e.key === 'ArrowRight' ? 1 : -1))));
+    } else if (e.key === 'Escape') hide();
+  };
+}
+
+// Redraw at the new width from the points already computed; only the SVG is
+// rebuilt, so an open picker is never torn down.
+let rdResizeTimer = null, rdLastWidth = 0;
+window.addEventListener('resize', () => {
+  clearTimeout(rdResizeTimer);
+  rdResizeTimer = setTimeout(() => {
+    const probe = document.getElementById('rd-chart-ms');
+    if (!probe || !probe.clientWidth || probe.clientWidth === rdLastWidth) return;
+    rdLastWidth = probe.clientWidth;
+    Object.keys(RD_LAST).forEach(id => rdDrawChart(id, RD_LAST[id]));
+  }, 150);
+});
+
 // ── Resident Detail Tab ──
 function renderResidentDetail() {
   const resFilter    = document.getElementById('filter-resident-detail')?.value || '';
@@ -1663,6 +2077,9 @@ function renderResidentDetail() {
         </div>
       `).join('')}
     </div>
+
+    ${rdProgressSection()}
+    ${rdEpaAveragesSection(subs)}
 
     <h4 style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--slate-light); margin-bottom:14px; padding-top:4px">Milestone Averages</h4>
     <div class="milestone-grid" style="margin-bottom:28px">
@@ -1730,6 +2147,9 @@ function renderResidentDetail() {
         }).join('') || '<div style="color:var(--slate-light); font-size:13px; font-style:italic">No narrative comments on file.</div>'}
     </div>
   `;
+
+  RD_SUBS = subs;
+  rdRenderCharts();
 }
 
 // ══════════════════════════════════════════════════
@@ -2443,18 +2863,21 @@ function renderEvaluators() {
 // still shown under its raw id rather than silently dropped.
 function epaRows(sub) {
   if (Array.isArray(sub.scoresDetail) && sub.scoresDetail.length) {
-    return sub.scoresDetail.map(r => ({ text: r.text || r.id, score: r.score }));
+    // id carried through so averages group by EPA rather than by wording - a
+    // reworded EPA keeps its id and stays one row. Extra field; callers that
+    // read only text and score are unaffected.
+    return sub.scoresDetail.map(r => ({ id: r.id, text: r.text || r.id, score: r.score }));
   }
   const defs = epaDefsFor(sub.program, sub.rotation);
   const rows = [];
   const seen = new Set();
   defs.forEach(epa => {
     if (sub.scores[epa.id] === undefined) return;
-    rows.push({ text: epa.text, score: sub.scores[epa.id] });
+    rows.push({ id: epa.id, text: epa.text, score: sub.scores[epa.id] });
     seen.add(epa.id);
   });
   Object.entries(sub.scores || {}).forEach(([id, score]) => {
-    if (!seen.has(id)) rows.push({ text: id, score });
+    if (!seen.has(id)) rows.push({ id, text: id, score });
   });
   return rows;
 }
