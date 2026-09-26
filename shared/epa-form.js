@@ -161,7 +161,41 @@ function selectRotationForm(name) {
   target.innerHTML = '';
   renderEPAFormInto(name, target);
   window.scrollTo(0, 0);
+  updateScaleDock();
 }
+
+// ── The scale reference that follows the evaluator ──────────────────────────
+//
+// The full legend sits above the first question and has scrolled away by the
+// third, so a compact copy docks once it has gone: a side rail where the window
+// is wide enough and a strip under the header where it is not (the page CSS
+// decides which). It shows only while questions are on screen, not over the
+// evaluator card above them or the narrative below. It is aria-hidden because
+// it repeats the full legend, which stays in the reading order.
+function updateScaleDock() {
+  const dock   = document.getElementById('scale-dock');
+  const legend = document.getElementById('scale-legend');
+  if (!dock || !legend) return;
+  const header    = document.querySelector('.app-header');
+  const questions = document.querySelectorAll('#form-content .epa-question');
+  const last      = questions[questions.length - 1];
+  const top       = header ? header.getBoundingClientRect().bottom : 0;
+  const pastLegend = legend.getBoundingClientRect().bottom < top;
+  // Judged by the last question rather than by the narrative box: at the foot
+  // of a short page the narrative never climbs far, and a strip left over the
+  // top of a phone while someone types their comments is in the way.
+  const questionsLeft = !!last && last.getBoundingClientRect().bottom > top + 80;
+  dock.classList.toggle('show', pastLegend && questionsLeft);
+}
+
+let scaleDockQueued = false;
+function queueScaleDock() {
+  if (scaleDockQueued) return;
+  scaleDockQueued = true;
+  requestAnimationFrame(() => { scaleDockQueued = false; updateScaleDock(); });
+}
+window.addEventListener('scroll', queueScaleDock, { passive: true });
+window.addEventListener('resize', queueScaleDock);
 
 // Kept because the rotation buttons and some older links call it by this name.
 function selectRotation(name) {
@@ -219,15 +253,19 @@ function todayLocalISO() {
 function renderEPAFormInto(rotationName, el) {
   const epas = activeEpas(PROGRAM, rotationName);
 
+  // `short` is for the docked scale on a phone, where seven columns leave about
+  // 45px each. "sup." stays on levels 1-3: a bare "Complete" reads as the top of
+  // the scale rather than the bottom.
   const scaleOpts = [
-    { val: 0, label: 'Not Yet Entrustable', color: '#5C7488' },
-    { val: 1, label: 'Complete Supervision', color: '#4E6E85' },
-    { val: 2, label: 'Partial Supervision', color: '#41667C' },
-    { val: 3, label: 'Minimal Supervision', color: '#355B74' },
-    { val: 4, label: 'As if Independent', color: '#264A6A' },
-    { val: 5, label: 'Aspirational', color: '#1A2744' },
-    { val: 'na', label: 'N/A', color: '#68727E' },
+    { val: 0, label: 'Not Yet Entrustable', short: 'Not yet', color: '#5C7488' },
+    { val: 1, label: 'Complete Supervision', short: 'Complete sup.', color: '#4E6E85' },
+    { val: 2, label: 'Partial Supervision', short: 'Partial sup.', color: '#41667C' },
+    { val: 3, label: 'Minimal Supervision', short: 'Minimal sup.', color: '#355B74' },
+    { val: 4, label: 'As if Independent', short: 'As if indep.', color: '#264A6A' },
+    { val: 5, label: 'Aspirational', short: 'Aspira&shy;tional', color: '#1A2744' },
+    { val: 'na', label: 'Not Applicable', short: 'Not observed', color: '#68727E' },
   ];
+  const scaleNum = o => o.val === 'na' ? 'N/A' : o.val;
 
   el.innerHTML = `
     <div class="form-header">
@@ -262,7 +300,7 @@ function renderEPAFormInto(rotationName, el) {
       </div>
     </div>
 
-    <div class="scale-legend">
+    <div class="scale-legend" id="scale-legend">
       <h4>Entrustment Scale Reference</h4>
       <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:10px; margin-top:4px">
         <div style="display:flex; gap:10px; align-items:flex-start">
@@ -296,6 +334,20 @@ function renderEPAFormInto(rotationName, el) {
       </div>
     </div>
 
+    <div class="scale-dock" id="scale-dock" aria-hidden="true">
+      <div class="scale-dock-inner">
+        <div class="scale-dock-title">Entrustment Scale</div>
+        <div class="scale-dock-items">
+          ${scaleOpts.map(o => `
+            <div class="scale-dock-item">
+              <span class="scale-dock-chip" style="background:${o.color}">${scaleNum(o)}</span>
+              <span class="scale-dock-label"><span class="full">${o.label}</span><span class="short">${o.short}</span></span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+
     ${epas.map((epa, i) => `
       <div class="epa-question">
         <div class="question-header">
@@ -307,9 +359,9 @@ function renderEPAFormInto(rotationName, el) {
           ${scaleOpts.map(o => `
             <div class="scale-option" data-val="${o.val}">
               <input type="radio" name="epa-${epa.id}" id="epa-${epa.id}-${o.val}" value="${o.val}">
-              <label for="epa-${epa.id}-${o.val}">
+              <label for="epa-${epa.id}-${o.val}" title="${scaleNum(o)} &mdash; ${o.label}">
                 <div class="scale-pip"></div>
-                <div class="scale-label">${o.val === 'na' ? 'N/A' : o.val}</div>
+                <div class="scale-label">${scaleNum(o)}</div>
               </label>
             </div>
           `).join('')}

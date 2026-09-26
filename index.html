@@ -325,6 +325,72 @@
     border-bottom: 1px solid var(--border);
   }
 
+  /* Docked scale: a compact copy of the legend that follows the evaluator once
+     the full one scrolls away (updateScaleDock in shared/epa-form.js). A strip
+     under the header by default, its columns lined up over the answer buttons;
+     a side rail beside the questions where the window has room for one. */
+  .scale-dock {
+    position: fixed; top: 68px; left: 0; right: 0; z-index: 90;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 4px 14px rgba(26,39,68,0.08);
+    pointer-events: none;
+    opacity: 0; visibility: hidden; transform: translateY(-6px);
+    transition: opacity 0.18s, transform 0.18s, visibility 0s linear 0.18s;
+  }
+  .scale-dock.show {
+    opacity: 1; visibility: visible; transform: none;
+    transition: opacity 0.18s, transform 0.18s, visibility 0s;
+  }
+  .scale-dock-inner { max-width: 800px; margin: 0 auto; padding: 8px 24px 9px; }
+  .scale-dock-title { display: none; }
+  /* Padding matches an .epa-question's border, padding and the buttons' own
+     34px indent, so each label sits over the button it describes. */
+  .scale-dock-items {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+    padding: 0 25px 0 61px;
+  }
+  .scale-dock-item { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+  .scale-dock-chip {
+    min-width: 22px; height: 20px; padding: 0 4px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: white; flex-shrink: 0;
+  }
+  .scale-dock-label { font-size: 10.5px; font-weight: 600; color: var(--slate); line-height: 1.25; }
+  .scale-dock-label .short { display: none; }
+  html { scroll-padding-top: 150px; } /* keyboard focus lands clear of the strip */
+
+  @media (min-width: 1260px) {
+    .scale-dock {
+      top: 92px; left: calc(50% + 416px); right: auto; width: 196px;
+      border: 1px solid var(--border); transform: translateX(-6px);
+    }
+    .scale-dock-inner { padding: 14px 16px 16px; }
+    .scale-dock-title {
+      display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.14em; color: var(--navy);
+      padding-bottom: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--border);
+    }
+    .scale-dock-items { grid-template-columns: 1fr; gap: 9px; padding: 0; }
+    .scale-dock-item { flex-direction: row; text-align: left; gap: 10px; }
+    .scale-dock-chip { min-width: 30px; height: 22px; }
+    .scale-dock-label { font-size: 12px; }
+    html { scroll-padding-top: 90px; }
+  }
+  @media (max-width: 640px) {
+    .scale-dock { top: 56px; }
+    .scale-dock-inner { padding: 7px 10px 8px; }
+    .scale-dock-items { gap: 3px; padding: 0; }
+    .scale-dock-label { font-size: 9.5px; }
+    .scale-dock-label .full { display: none; }
+    .scale-dock-label .short { display: inline; }
+    html { scroll-padding-top: 130px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scale-dock, .scale-dock.show { transition: none; transform: none; }
+  }
+  @media print { .scale-dock { display: none; } }
+
   /* EPA Questions */
   .epa-question {
     background: var(--white);
@@ -877,7 +943,7 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 // shared/definitions.js and sql/010_add_program_discriminator.sql.
 const PROGRAM = 'fm';
 </script>
-<script src="shared/epa-form.js?v=3"></script>
+<script src="shared/epa-form.js?v=4"></script>
 
 </body>
 </html>
