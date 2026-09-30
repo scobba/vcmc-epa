@@ -757,6 +757,13 @@
   .rd-note { font-size: 12.5px; color: var(--slate-light); line-height: 1.6; margin: 0 0 14px; max-width: 820px }
   .rd-num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums }
   .rd-obs { font-size: 11.5px; color: var(--slate-light); white-space: nowrap }
+  .rd-ct-head { font-size: 12.5px; font-weight: 700; color: var(--navy); margin: 4px 0 6px }
+  .rd-ct-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px }
+  .rd-ct { display: inline-flex; align-items: baseline; gap: 7px; padding: 5px 10px; font-size: 12px;
+           color: var(--slate); background: var(--white); border: 1px solid var(--border) }
+  .rd-ct-n { font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums }
+  .rd-ct.zero { color: var(--slate-light); border-style: dashed }
+  .rd-ct.zero .rd-ct-n { color: var(--slate-light); font-weight: 400 }
   .avg-chip {
     display: inline-flex; align-items: center; justify-content: center;
     min-width: 46px; height: 27px; padding: 0 8px;
@@ -1234,6 +1241,7 @@ async function loadSubmissions() {
       evaluatorId:     row.evaluator_id     || null,
       rotationDetail:  row.rotation_detail  || null,
       rotationDetailId: row.rotation_detail_id || null,
+      caseTypes:       Array.isArray(row.case_types) ? row.case_types : null,
       dates:           row.date_start || '',
       dateStart:       row.date_start,
       dateEnd:         row.date_end,
@@ -2019,6 +2027,42 @@ window.addEventListener('resize', () => {
   }, 150);
 });
 
+// ── Types of care precepted ──
+// A context listed in CASE_TYPES (definitions.js) records which types of care
+// each evaluation covered, in `caseTypes`. NULL means the context does not ask
+// or the row predates formVersion 2026.4 - it is never inferred from scores.
+
+// The stored keys as words, for the evaluation pop-up and the CSV; '' when none.
+function caseTypesText(s) {
+  return (s.caseTypes || []).map(k => caseTypeLabel(s.program, s.rotation, k)).join('; ');
+}
+
+// Per context that asks, how many of these evaluations covered each type of
+// care. Every current type is listed, zeros included: a zero is the gap the CCC
+// is looking for. One evaluation can cover several types, so the counts can sum
+// to more than the evaluations. Rows from before the question are counted apart.
+function rdCaseTypesSection(subs) {
+  const blocks = [];
+  for (const ctx of [...new Set(subs.map(s => s.rotation))].sort()) {
+    const cfg = caseTypesFor(currentProgram, ctx);
+    if (!cfg) continue;
+    const inCtx    = subs.filter(s => s.rotation === ctx);
+    const recorded = inCtx.filter(s => Array.isArray(s.caseTypes));
+    const counts   = new Map();
+    recorded.forEach(s => s.caseTypes.forEach(k => counts.set(k, (counts.get(k) || 0) + 1)));
+    const keys = [...cfg.types.map(t => t.key), ...[...counts.keys()].filter(k => !cfg.types.some(t => t.key === k))];
+    const older = inCtx.length - recorded.length;
+    blocks.push(`
+      <div class="rd-ct-head">${escFaculty(ctx)}</div>
+      <div class="rd-ct-grid">
+        ${keys.map(k => `<span class="rd-ct${counts.get(k) ? '' : ' zero'}"><span class="rd-ct-n">${counts.get(k) || 0}</span>${escFaculty(caseTypeLabel(currentProgram, ctx, k))}</span>`).join('')}
+      </div>
+      <p class="rd-note">${recorded.length} evaluation${recorded.length === 1 ? '' : 's'} recorded ${recorded.length === 1 ? 'its' : 'their'} types of care${older ? `. ${older} earlier evaluation${older === 1 ? '' : 's'} here predate${older === 1 ? 's' : ''} the question and ${older === 1 ? 'is' : 'are'} not counted` : ''}.</p>`);
+  }
+  if (!blocks.length) return '';
+  return `<h4 class="rd-h">Types of care precepted</h4>${blocks.join('')}`;
+}
+
 // ── Resident Detail Tab ──
 function renderResidentDetail() {
   const resFilter    = document.getElementById('filter-resident-detail')?.value || '';
@@ -2078,6 +2122,7 @@ function renderResidentDetail() {
       `).join('')}
     </div>
 
+    ${rdCaseTypesSection(subs)}
     ${rdProgressSection()}
     ${rdEpaAveragesSection(subs)}
 
@@ -2900,6 +2945,7 @@ function openModal(sub) {
         <div><span style="color:var(--slate-light)">Dates Supervised:</span><br><strong>${sub.dates}</strong></div>
         <div><span style="color:var(--slate-light)">Clinical context:</span><br><strong>${sub.rotation}</strong>${sub.rotationDetail ? `<div style="font-size:11px;font-weight:400;color:var(--slate-light)">${escFaculty(sub.rotationDetail)}</div>` : ''}</div>
         <div><span style="color:var(--slate-light)">Form version:</span><br><strong>${sub.formVersion || '—'}</strong></div>
+        ${sub.caseTypes && sub.caseTypes.length ? `<div style="grid-column:1 / -1"><span style="color:var(--slate-light)">Types of care precepted:</span><br><strong>${escFaculty(caseTypesText(sub))}</strong></div>` : ''}
       </div>
     </div>
 
@@ -2956,7 +3002,7 @@ function exportCSV() {
   if (allSubmissions.length === 0) { alert('No submissions to export.'); return; }
 
   const milestones = Object.keys(milestoneDefs(currentProgram));
-  const headers = ['Date', 'Resident', 'Rotation', 'Procedure / Subspecialty', 'Evaluator', 'Evaluator Typed As', 'Supervision Date', 'Form Version', 'Avg Score', 'Narrative', ...milestones];
+  const headers = ['Date', 'Resident', 'Rotation', 'Procedure / Subspecialty', 'Evaluator', 'Evaluator Typed As', 'Supervision Date', 'Form Version', 'Avg Score', 'Narrative', ...milestones, 'Types of Care'];
 
   const rows = allSubmissions.map(s => {
     const numericScores = Object.values(s.scores).filter(v => v !== 'na');
@@ -2966,7 +3012,7 @@ function exportCSV() {
     const milestoneVals = milestones.map(m =>
       s.milestoneScores[m] !== undefined ? halfStep(s.milestoneScores[m]).toFixed(1) : '');
     const narrative = `"${(s.narrative || '').replace(/"/g, '""')}"`;
-    return [date, residentName(s), s.rotation, s.rotationDetail || '', displayEvaluatorName(s), s.evaluatorName, s.dates, s.formVersion || '', avg, narrative, ...milestoneVals].join(',');
+    return [date, residentName(s), s.rotation, s.rotationDetail || '', displayEvaluatorName(s), s.evaluatorName, s.dates, s.formVersion || '', avg, narrative, ...milestoneVals, caseTypesText(s)].join(',');
   });
 
   const csv = [headers.join(','), ...rows].join('\n');

@@ -83,6 +83,18 @@ const MILESTONE_DEFS_FM = {
 const EPA_WH5 = { id: 'wh5', text: 'Provide routine prenatal care', context: 'Consider: initial and subsequent prenatal visits including dating and risk assessment; prenatal labs and screening tests; fetal growth and maternal health monitoring; screening for gestational diabetes and preeclampsia; delivery plan development.', milestones: ['PC3','PC2','MK1'] };
 const EPA_WH6 = { id: 'wh6', text: 'Evaluate and manage early pregnancy complications', context: 'Consider: vaginal bleeding in early pregnancy (threatened, inevitable, incomplete, missed abortion); ectopic pregnancy diagnosis and management; quantitative hCG and early ultrasound interpretation; counseling patients about pregnancy loss with sensitivity.', milestones: ['PC1','ICS1','MK1'] };
 
+//
+// The Outpatient Pediatrics EPAs below are also asked in Continuity Care Clinic
+// when the preceptor ticks one of its pediatric types of care. opeds3 (child
+// abuse and neglect) is asked only in Outpatient Pediatrics.
+const EPA_OPEDS1 = { id: 'opeds1', text: 'Conduct well-child visits across developmental stages', context: 'Consider: age-appropriate growth and developmental assessment (ASQ, M-CHAT); growth curves; immunizations per CDC/ACIP schedule; anticipatory guidance; developmental delay identification and referral.', milestones: ['PC3','MK1'] };
+const EPA_OPEDS2 = { id: 'opeds2', text: 'Evaluate and manage common pediatric outpatient conditions', context: 'Consider: otitis media, pharyngitis, URI, eczema, asthma, ADHD; differentiating viral from bacterial illness; age- and weight-appropriate medications; subspecialty referral.', milestones: ['PC2','PC4','MK1'] };
+const EPA_OPEDS4 = { id: 'opeds4', text: 'Provide adolescent-specific care', context: 'Consider: confidential screening for depression, substance use, sexual health, eating disorders; contraceptive counseling; minor consent and confidentiality laws; gender-affirming care needs.', milestones: ['ICS1','PC3','PROF1'] };
+const EPA_OPEDS5 = { id: 'opeds5', text: 'Communicate with families about vaccine hesitancy and preventive care', context: 'Consider: motivational interviewing for parental vaccine concerns; addressing misinformation non-judgmentally; shared decision-making; documenting declined vaccines.', milestones: ['ICS1','MK1'] };
+const EPA_OPEDS6 = { id: 'opeds6', text: 'Evaluate and manage the newborn in the outpatient setting', context: 'Consider: newborn discharge exam and early visits; feeding adequacy; weight gain and jaundice; newborn screening results; congenital anomalies; postpartum depression screening.', milestones: ['PC1','MK1','PC3'] };
+const EPA_OPEDS7 = { id: 'opeds7', text: 'Coordinate care for children with special health care needs', context: 'Consider: medical home model for complex conditions (autism, cerebral palsy); coordinating subspecialists, therapists, school systems; individualized care plans; insurance/authorization navigation.', milestones: ['SBP2','PC2','SBP3'] };
+const EPA_OPEDS8 = { id: 'opeds8', text: 'Evaluate and manage behavioral and mental health concerns in children and adolescents', context: 'Consider: ADHD, anxiety, depression and behavior problems; validated screeners (e.g., Vanderbilt, PHQ-A); safety assessment; coordination with schools; when to refer.', milestones: ['PC2','MK1','ICS1'] };
+
 const ROTATIONS_FM = {
   'Inpatient Medicine': {
     epas: [
@@ -119,19 +131,27 @@ const ROTATIONS_FM = {
       { id: 'pp2', text: 'Screen for and manage postpartum depression and anxiety', context: 'Consider: EPDS or PHQ-9; safety assessment; treatment options compatible with breastfeeding; referral pathways.', milestones: ['PC2','MK1','ICS1'] },
       { id: 'pp3', text: 'Support breastfeeding and manage common lactation problems', context: 'Consider: latch and milk supply; nipple pain; mastitis; medications while breastfeeding; lactation consultant referral.', milestones: ['PC3','MK1','ICS1'] },
       { id: 'pp4', text: 'Counsel on contraception and birth spacing', context: 'Consider: postpartum contraceptive options including LARC; compatibility with breastfeeding; interpregnancy interval.', milestones: ['PC3','ICS1'] },
+      // Asked when a pediatric type of care is ticked; shared with Outpatient Pediatrics.
+      EPA_OPEDS1,
+      EPA_OPEDS2,
+      EPA_OPEDS4,
+      EPA_OPEDS5,
+      EPA_OPEDS6,
+      EPA_OPEDS7,
+      EPA_OPEDS8,
     ]
   },
   'Outpatient Pediatrics': {
     epas: [
-      { id: 'opeds1', text: 'Conduct well-child visits across developmental stages', context: 'Consider: age-appropriate growth and developmental assessment (ASQ, M-CHAT); growth curves; immunizations per CDC/ACIP schedule; anticipatory guidance; developmental delay identification and referral.', milestones: ['PC3','MK1'] },
-      { id: 'opeds2', text: 'Evaluate and manage common pediatric outpatient conditions', context: 'Consider: otitis media, pharyngitis, URI, eczema, asthma, ADHD; differentiating viral from bacterial illness; age- and weight-appropriate medications; subspecialty referral.', milestones: ['PC2','PC4','MK1'] },
+      EPA_OPEDS1,
+      EPA_OPEDS2,
       { id: 'opeds3', text: 'Identify and respond to child abuse and neglect', context: 'Consider: recognizing concerning physical findings; behavioral indicators of abuse; mandatory reporting obligations; objective documentation; coordination with social services and CPS.', milestones: ['PROF1','SBP2'] },
-      { id: 'opeds4', text: 'Provide adolescent-specific care', context: 'Consider: confidential screening for depression, substance use, sexual health, eating disorders; contraceptive counseling; minor consent and confidentiality laws; gender-affirming care needs.', milestones: ['ICS1','PC3','PROF1'] },
-      { id: 'opeds5', text: 'Communicate with families about vaccine hesitancy and preventive care', context: 'Consider: motivational interviewing for parental vaccine concerns; addressing misinformation non-judgmentally; shared decision-making; documenting declined vaccines.', milestones: ['ICS1','MK1'] },
-      { id: 'opeds6', text: 'Evaluate and manage the newborn in the outpatient setting', context: 'Consider: newborn discharge exam and early visits; feeding adequacy; weight gain and jaundice; newborn screening results; congenital anomalies; postpartum depression screening.', milestones: ['PC1','MK1','PC3'] },
-      { id: 'opeds7', text: 'Coordinate care for children with special health care needs', context: 'Consider: medical home model for complex conditions (autism, cerebral palsy); coordinating subspecialists, therapists, school systems; individualized care plans; insurance/authorization navigation.', milestones: ['SBP2','PC2','SBP3'] },
+      EPA_OPEDS4,
+      EPA_OPEDS5,
+      EPA_OPEDS6,
+      EPA_OPEDS7,
       // Added 2026-09-30 (formVersion 2026.4) for the ABFM core outcome on mental health at all ages.
-      { id: 'opeds8', text: 'Evaluate and manage behavioral and mental health concerns in children and adolescents', context: 'Consider: ADHD, anxiety, depression and behavior problems; validated screeners (e.g., Vanderbilt, PHQ-A); safety assessment; coordination with schools; when to refer.', milestones: ['PC2','MK1','ICS1'] },
+      EPA_OPEDS8,
     ]
   },
   'Emergency Department': {
@@ -408,7 +428,8 @@ const PROGRAMS = {
     // change to the fellowship's EPAs says nothing about the residency's.
     // 2026.4 (2026-09-30): 14 EPAs added (afmc10-12, pp1-4, sport1-5, opeds8,
     // med9), Sports Medicine Clinic added, and Continuity Care Clinic asks only
-    // the EPAs for the types of care precepted (CASE_TYPES_FM, `case_types`).
+    // the EPAs for the types of care precepted (CASE_TYPES_FM, `case_types`),
+    // including prenatal (wh5-6) and pediatric (opeds1-2, 4-8) care.
     formVersion: '2026.4',
     // Length of training, in years. Used to derive a learner’s PGY from their
     // graduation year — see trainingYear(). The residency expanded from three
@@ -582,17 +603,23 @@ const CONTEXT_ALIASES_AM = {};
 //   context that no type claims is asked at every visit rather than never, and
 //   reported (caseTypesFor), so a new EPA can never silently vanish.
 // - An EPA belongs to one type at most. A second claim is ignored and reported.
+// `group` only arranges the checkboxes under headings on the form.
 const CASE_TYPES_FM = {
   'Continuity Care Clinic': {
     always: ['afmc5', 'afmc6', 'afmc8'],
     types: [
-      { key: 'acute',      label: 'Acute care visit',                     epas: ['afmc3', 'afmc12'] },
-      { key: 'chronic',    label: 'Chronic illness management',           epas: ['afmc1', 'afmc11'] },
-      { key: 'mental',     label: 'Mental health management',             epas: ['afmc9'] },
-      { key: 'preventive', label: 'Preventive health and wellness visit', epas: ['afmc2', 'afmc10', 'afmc7'] },
-      { key: 'prenatal',   label: 'Prenatal care',                        epas: ['wh5', 'wh6'] },
-      { key: 'postpartum', label: 'Postpartum care',                      epas: ['pp1', 'pp2', 'pp3', 'pp4'] },
-      { key: 'procedure',  label: 'Office procedure',                     epas: ['afmc4'] },
+      { key: 'acute',       group: 'General',   label: 'Acute care visit',                     epas: ['afmc3', 'afmc12'] },
+      { key: 'chronic',     group: 'General',   label: 'Chronic illness management',           epas: ['afmc1', 'afmc11'] },
+      { key: 'mental',      group: 'General',   label: 'Mental health management',             epas: ['afmc9'] },
+      { key: 'preventive',  group: 'General',   label: 'Preventive health and wellness visit', epas: ['afmc2', 'afmc10', 'afmc7'] },
+      { key: 'procedure',   group: 'General',   label: 'Office procedure',                     epas: ['afmc4'] },
+      { key: 'prenatal',    group: 'Pregnancy', label: 'Prenatal care',                        epas: ['wh5', 'wh6'] },
+      { key: 'postpartum',  group: 'Pregnancy', label: 'Postpartum care',                      epas: ['pp1', 'pp2', 'pp3', 'pp4'] },
+      { key: 'well_child',  group: 'Pediatric', label: 'Well-child visit',                     epas: ['opeds1', 'opeds5'] },
+      { key: 'newborn',     group: 'Pediatric', label: 'Newborn visit',                        epas: ['opeds6'] },
+      { key: 'peds_sick',   group: 'Pediatric', label: 'Pediatric acute or chronic care',      epas: ['opeds2', 'opeds7'] },
+      { key: 'adolescent',  group: 'Pediatric', label: 'Adolescent visit',                     epas: ['opeds4'] },
+      { key: 'peds_mental', group: 'Pediatric', label: 'Pediatric behavioral or mental health', epas: ['opeds8'] },
     ],
   },
 };
@@ -699,7 +726,7 @@ function caseTypesFor(program, contextName) {
   }).map(id => byId.get(id));
   const always = take(cfg.always || [], 'always');
   const types = cfg.types.filter(t => !t.retired)
-    .map(t => ({ key: t.key, label: t.label, epas: take(t.epas, t.key) }))
+    .map(t => ({ key: t.key, group: t.group || null, label: t.label, epas: take(t.epas, t.key) }))
     .filter(t => t.epas.length);
   for (const [id, epa] of byId) {
     if (!claimed.has(id)) {

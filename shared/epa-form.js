@@ -394,14 +394,16 @@ function renderEPAFormInto(rotationName, el) {
     <div class="evaluator-card case-types-card">
       <h3>Types of Care Precepted *</h3>
       <p class="case-types-hint">Tick every type of care you precepted with this ${LEARNER}. Each opens its EPAs below${caseTypes.always.length ? `, after the ${caseTypes.always.length} asked at every visit` : ''}.</p>
-      <div class="case-types-grid">
-        ${caseTypes.types.map(t => `
-          <label class="case-type">
-            <input type="checkbox" name="case-type" value="${t.key}" onchange="onCaseTypesChange()">
-            <span class="case-type-label">${escFaculty(t.label)}</span>
-            <span class="case-type-n">${t.epas.length} EPA${t.epas.length === 1 ? '' : 's'}</span>
-          </label>`).join('')}
-      </div>
+      ${caseTypeGroups(caseTypes.types).map(g => `
+        ${g.name ? `<h4 class="case-types-group">${escFaculty(g.name)}</h4>` : ''}
+        <div class="case-types-grid">
+          ${g.types.map(t => `
+            <label class="case-type">
+              <input type="checkbox" name="case-type" value="${t.key}" onchange="onCaseTypesChange()">
+              <span class="case-type-label">${escFaculty(t.label)}</span>
+              <span class="case-type-n">${t.epas.length} EPA${t.epas.length === 1 ? '' : 's'}</span>
+            </label>`).join('')}
+        </div>`).join('')}
     </div>` : '';
 
   el.innerHTML = `
@@ -525,6 +527,18 @@ function onCaseTypesChange() {
   });
   renumberQuestions();
   queueScaleDock();
+}
+
+// Consecutive types sharing a `group` go under one heading, in config order.
+// Types with no group form one unheaded block.
+function caseTypeGroups(types) {
+  const groups = [];
+  for (const t of types) {
+    const last = groups[groups.length - 1];
+    if (last && last.name === t.group) last.types.push(t);
+    else groups.push({ name: t.group, types: [t] });
+  }
+  return groups;
 }
 
 function renumberQuestions() {
