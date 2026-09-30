@@ -22,6 +22,10 @@
 //   - To remove an EPA from the form, mark it `retired: true`. activeEpas()
 //     drops it from the form, buildScoresDetail() and computeMilestoneScores(),
 //     while its definition stays here to label older rows. Never delete an entry.
+//   - An EPA asked in more than one context is ONE object referenced from each
+//     (EPA_WH5, EPA_WH6), never two copies - see the note above ROTATIONS_FM.
+//   - CASE_TYPES keys are append-only like EPA ids; they are stored in
+//     epa_submissions.case_types.
 //   - Milestone codes in an EPA's `milestones` must exist in that program's
 //     entry in MILESTONE_DEFS_BY_PROGRAM. A code that is valid for one program
 //     is not automatically valid for the other, and the overlap is not an
@@ -67,6 +71,18 @@ const MILESTONE_DEFS_FM = {
   ICS3: 'Communication within Health Care Systems'
 };
 
+// ── EPAs asked in more than one context ─────────────────────────────────────
+// An EPA may appear in several contexts only as the SAME object: defined once
+// here and referenced from each context's list, so it has one id, one wording
+// and one milestone mapping wherever it is asked. Two copies would drift, and
+// one id would then mean two things. A context that needs different wording
+// needs a different EPA with a new id.
+//
+// The two prenatal EPAs belong to Women's Health Clinic and are also asked in
+// Continuity Care Clinic when the preceptor ticks "Prenatal care".
+const EPA_WH5 = { id: 'wh5', text: 'Provide routine prenatal care', context: 'Consider: initial and subsequent prenatal visits including dating and risk assessment; prenatal labs and screening tests; fetal growth and maternal health monitoring; screening for gestational diabetes and preeclampsia; delivery plan development.', milestones: ['PC3','PC2','MK1'] };
+const EPA_WH6 = { id: 'wh6', text: 'Evaluate and manage early pregnancy complications', context: 'Consider: vaginal bleeding in early pregnancy (threatened, inevitable, incomplete, missed abortion); ectopic pregnancy diagnosis and management; quantitative hCG and early ultrasound interpretation; counseling patients about pregnancy loss with sensitivity.', milestones: ['PC1','ICS1','MK1'] };
+
 const ROTATIONS_FM = {
   'Inpatient Medicine': {
     epas: [
@@ -77,6 +93,8 @@ const ROTATIONS_FM = {
       { id: 'med5', text: 'Communicate with patients and families about diagnosis, prognosis, and goals of care', context: 'Consider: delivering difficult news sensitively; conducting family meetings; shared decision-making regarding treatment plans and advance directives; health literacy–appropriate language; managing conflict.', milestones: ['ICS1','PROF1'] },
       { id: 'med6', text: 'Document clinical reasoning in inpatient notes', context: 'Consider: organized admission, progress, and discharge notes reflecting diagnostic and therapeutic reasoning; avoiding inappropriate copy-pasting; updating the problem list; timely documentation.', milestones: ['ICS3'] },
       { id: 'med7', text: 'Perform Procedures', context: 'Consider: obtaining informed consent; proper technique (e.g., paracentesis, central venous catheter insertion, thoracentesis, lumbar puncture); sterile technique; recognizing and managing complications; accurate documentation.', milestones: ['PC5'] },
+      // Added 2026-09-30 (formVersion 2026.4) for the ABFM core outcome on leading teams.
+      { id: 'med9', text: 'Lead the inpatient team', context: 'Consider: running efficient rounds; delegating to and supervising interns and students; setting the day\'s priorities; closed-loop communication; building a team where people feel safe to speak up.', milestones: ['ICS2','SBP2','PROF2'] },
     ]
   },
   'Continuity Care Clinic': {
@@ -90,6 +108,17 @@ const ROTATIONS_FM = {
       { id: 'afmc7', text: 'Engage in panel management and population health', context: 'Consider: using EHR tools to identify care gaps; chart audits; outreach to patients needing preventive services; participating in quality improvement initiatives.', milestones: ['PC3','SBP1'] },
       { id: 'afmc8', text: 'Demonstrate patient-centered communication across diverse encounters', context: 'Consider: motivational interviewing; shared decision-making; health literacy–appropriate language; recognizing cultural and language barriers; maintaining therapeutic relationships in challenging encounters.', milestones: ['ICS1','PROF1'] },
       { id: 'afmc9', text: 'Evaluate and manage patients with mental health conditions in the primary care setting', context: 'Consider: screening for depression, anxiety, PTSD, and substance use disorders; initiating and managing psychotropic medications; safety planning for patients with suicidal ideation; warm handoffs and collaborative care coordination with behavioral health; recognizing limitations and appropriate referral.', milestones: ['PC2','MK1','ICS1'] },
+      // Added 2026-09-30 (formVersion 2026.4). This context now asks which types
+      // of care were precepted and shows only their EPAs - see CASE_TYPES_FM.
+      { id: 'afmc10', text: 'Provide preventive and wellness care for older adults', context: 'Consider: functional and cognitive screening; falls risk; advance care planning; screening and immunizations that fit life expectancy; caregiver support.', milestones: ['PC3','PC2'] },
+      { id: 'afmc11', text: 'Optimize medication regimens, including deprescribing', context: 'Consider: medication reconciliation; polypharmacy review; Beers criteria and renal dosing; cost, access and adherence; shared decisions about stopping medications.', milestones: ['PC2','MK1'] },
+      { id: 'afmc12', text: 'Evaluate and manage musculoskeletal complaints', context: 'Consider: focused musculoskeletal exam; red flags; imaging decisions; conservative management; referral to sports medicine, physical therapy or orthopedics.', milestones: ['PC4','MK2'] },
+      EPA_WH5,   // asked when "Prenatal care" is ticked; shared with Women's Health Clinic
+      EPA_WH6,
+      { id: 'pp1', text: 'Conduct a comprehensive postpartum visit', context: 'Consider: physical recovery; follow-up of hypertension and gestational diabetes; warning signs; return to activity; infant feeding and sleep plans.', milestones: ['PC3','PC2'] },
+      { id: 'pp2', text: 'Screen for and manage postpartum depression and anxiety', context: 'Consider: EPDS or PHQ-9; safety assessment; treatment options compatible with breastfeeding; referral pathways.', milestones: ['PC2','MK1','ICS1'] },
+      { id: 'pp3', text: 'Support breastfeeding and manage common lactation problems', context: 'Consider: latch and milk supply; nipple pain; mastitis; medications while breastfeeding; lactation consultant referral.', milestones: ['PC3','MK1','ICS1'] },
+      { id: 'pp4', text: 'Counsel on contraception and birth spacing', context: 'Consider: postpartum contraceptive options including LARC; compatibility with breastfeeding; interpregnancy interval.', milestones: ['PC3','ICS1'] },
     ]
   },
   'Outpatient Pediatrics': {
@@ -101,6 +130,8 @@ const ROTATIONS_FM = {
       { id: 'opeds5', text: 'Communicate with families about vaccine hesitancy and preventive care', context: 'Consider: motivational interviewing for parental vaccine concerns; addressing misinformation non-judgmentally; shared decision-making; documenting declined vaccines.', milestones: ['ICS1','MK1'] },
       { id: 'opeds6', text: 'Evaluate and manage the newborn in the outpatient setting', context: 'Consider: newborn discharge exam and early visits; feeding adequacy; weight gain and jaundice; newborn screening results; congenital anomalies; postpartum depression screening.', milestones: ['PC1','MK1','PC3'] },
       { id: 'opeds7', text: 'Coordinate care for children with special health care needs', context: 'Consider: medical home model for complex conditions (autism, cerebral palsy); coordinating subspecialists, therapists, school systems; individualized care plans; insurance/authorization navigation.', milestones: ['SBP2','PC2','SBP3'] },
+      // Added 2026-09-30 (formVersion 2026.4) for the ABFM core outcome on mental health at all ages.
+      { id: 'opeds8', text: 'Evaluate and manage behavioral and mental health concerns in children and adolescents', context: 'Consider: ADHD, anxiety, depression and behavior problems; validated screeners (e.g., Vanderbilt, PHQ-A); safety assessment; coordination with schools; when to refer.', milestones: ['PC2','MK1','ICS1'] },
     ]
   },
   'Emergency Department': {
@@ -178,8 +209,8 @@ const ROTATIONS_FM = {
       { id: 'wh2', text: 'Evaluate and manage common gynecologic complaints', context: 'Consider: abnormal uterine bleeding, vaginitis, pelvic pain, dysmenorrhea, menopause symptoms, urinary incontinence; appropriate diagnostic workup; evidence-based treatment; gynecologic referral indications.', milestones: ['PC2','MK1'] },
       { id: 'wh3', text: 'Provide contraceptive management including LARC procedures', context: 'Consider: counseling on all contraceptive methods including efficacy, risks, and benefits; LARC insertion and removal; complication management; contraceptive myths; patient autonomy.', milestones: ['PC5','ICS1'] },
       { id: 'wh4', text: 'Perform colposcopy and manage abnormal cervical cancer screening results', context: 'Consider: interpreting Pap smear and HPV co-testing results per ASCCP guidelines; colposcopy with directed biopsy; transformation zone identification; biopsy result follow-up and management counseling.', milestones: ['PC5','PBLI1'] },
-      { id: 'wh5', text: 'Provide routine prenatal care', context: 'Consider: initial and subsequent prenatal visits including dating and risk assessment; prenatal labs and screening tests; fetal growth and maternal health monitoring; screening for gestational diabetes and preeclampsia; delivery plan development.', milestones: ['PC3','PC2','MK1'] },
-      { id: 'wh6', text: 'Evaluate and manage early pregnancy complications', context: 'Consider: vaginal bleeding in early pregnancy (threatened, inevitable, incomplete, missed abortion); ectopic pregnancy diagnosis and management; quantitative hCG and early ultrasound interpretation; counseling patients about pregnancy loss with sensitivity.', milestones: ['PC1','ICS1','MK1'] },
+      EPA_WH5,   // shared with Continuity Care Clinic - defined above ROTATIONS_FM
+      EPA_WH6,
       { id: 'wh7', text: 'Counsel patients on menopause management and hormone therapy', context: 'Consider: menopausal symptom assessment; HRT risks and benefits per current evidence; non-hormonal alternatives; osteoporosis and cardiovascular risk screening; sexual health concerns; shared decision-making.', milestones: ['PC2','PBLI1','ICS1'] },
     ]
   },
@@ -274,6 +305,19 @@ const ROTATIONS_FM = {
       { id: 'schol6', text: 'Produce written scholarly output', context: 'Consider: abstracts, posters, protocols, case reports, or manuscripts; writing to the venue\'s requirements and deadlines; honest reporting of limitations; obtaining IRB review or quality-improvement exemption where required; finishing what was started.', milestones: ['ICS3','PBLI1'] },
     ]
   },
+  // Added 2026-09-30 (formVersion 2026.4) for the ABFM core outcome on
+  // musculoskeletal health. If one attending precepts this clinic, its scores
+  // alone come from a single rater; afmc12 in Continuity Care Clinic is the
+  // second source of musculoskeletal evidence.
+  'Sports Medicine Clinic': {
+    epas: [
+      { id: 'sport1', text: 'Evaluate and manage musculoskeletal injuries and conditions', context: 'Consider: focused history and exam with special tests; back, shoulder and knee pain; sprains, strains and tendinopathy; sports concussion; red flags; return to activity.', milestones: ['PC4','PC1','MK2'] },
+      { id: 'sport2', text: 'Interpret musculoskeletal imaging', context: 'Consider: plain films of the extremities and spine; fracture recognition; decision rules (e.g., Ottawa); when MRI or ultrasound adds value.', milestones: ['MK1','MK2'] },
+      { id: 'sport3', text: 'Perform musculoskeletal procedures', context: 'Consider: large joint injection and aspiration; trigger point injections; splinting and bracing; informed consent, technique and aftercare.', milestones: ['PC5'] },
+      { id: 'sport4', text: 'Prescribe exercise, rehabilitation and injury prevention', context: 'Consider: home exercise programs; physical therapy referral; activity modification; return-to-play plans.', milestones: ['PC3','ICS1'] },
+      { id: 'sport5', text: 'Perform a pre-participation physical evaluation', context: 'Consider: cardiac and concussion history; focused exam; clearance decisions; communicating with families, schools and coaches.', milestones: ['PC3','ICS3'] },
+    ]
+  },
 
 };
 
@@ -362,7 +406,10 @@ const PROGRAMS = {
     // Bump when the measurement changes for THIS program: an EPA reworded,
     // added or retired, or a milestone mapping altered. Per program, because a
     // change to the fellowship's EPAs says nothing about the residency's.
-    formVersion: '2026.3',
+    // 2026.4 (2026-09-30): 14 EPAs added (afmc10-12, pp1-4, sport1-5, opeds8,
+    // med9), Sports Medicine Clinic added, and Continuity Care Clinic asks only
+    // the EPAs for the types of care precepted (CASE_TYPES_FM, `case_types`).
+    formVersion: '2026.4',
     // Length of training, in years. Used to derive a learner’s PGY from their
     // graduation year — see trainingYear(). The residency expanded from three
     // years to four and every class now on the roster is a four-year class; if a
@@ -493,7 +540,7 @@ const CONTEXT_GROUPS_FM = [
       'Inpatient Surgery', 'Inpatient Palliative Care', 'Inpatient Subspecialty Consultation'] },
   { name: 'Emergency & Urgent Care', contexts: ['Emergency Department', 'Urgent Care'] },
   { name: 'Outpatient & Specialty Clinics', contexts: ['Outpatient Pediatrics', 'Women\'s Health Clinic',
-      'Outpatient Subspecialty Clinic', 'Addiction Medicine', 'Procedural Care'] },
+      'Sports Medicine Clinic', 'Outpatient Subspecialty Clinic', 'Addiction Medicine', 'Procedural Care'] },
   { name: 'Community, Professionalism & Scholarship', contexts: ['Backpack / Street Medicine',
       'Community Medicine', 'Professionalism', 'Scholarly & Quality Improvement Activity'] },
 ];
@@ -516,16 +563,47 @@ const CONTEXT_ALIASES_FM = {
   'Women\'s Health Clinic':        ['WH', 'gyn', 'OB/GYN', 'womens'],
   'Addiction Medicine':            ['addiction', 'SUD', 'MAT', 'MOUD'],
   'Procedural Care':               ['procedure', 'procedures clinic'],
+  'Sports Medicine Clinic':        ['sports', 'sports med', 'MSK', 'musculoskeletal', 'ortho'],
   'Backpack / Street Medicine':    ['street', 'backpack', 'homeless', 'outreach'],
   'Scholarly & Quality Improvement Activity': ['QI', 'research', 'scholarship', 'journal club'],
 };
 const CONTEXT_ALIASES_AM = {};
+
+// ── Types of care precepted ──────────────────────────────────────────────────
+//
+// A context listed here asks the preceptor which types of care they precepted
+// and shows only those types' EPAs, plus the `always` EPAs asked at every visit.
+// This measures, so unlike the groups above a change here bumps formVersion.
+//
+// - `key` is stored in epa_submissions.case_types (sql/016) and is APPEND-ONLY,
+//   exactly like an EPA id: never renamed, never reused. Retire a type with
+//   `retired: true`; it leaves the form and stays here to label older rows.
+// - Every EPA listed must be in that context's `epas`. An active EPA of the
+//   context that no type claims is asked at every visit rather than never, and
+//   reported (caseTypesFor), so a new EPA can never silently vanish.
+// - An EPA belongs to one type at most. A second claim is ignored and reported.
+const CASE_TYPES_FM = {
+  'Continuity Care Clinic': {
+    always: ['afmc5', 'afmc6', 'afmc8'],
+    types: [
+      { key: 'acute',      label: 'Acute care visit',                     epas: ['afmc3', 'afmc12'] },
+      { key: 'chronic',    label: 'Chronic illness management',           epas: ['afmc1', 'afmc11'] },
+      { key: 'mental',     label: 'Mental health management',             epas: ['afmc9'] },
+      { key: 'preventive', label: 'Preventive health and wellness visit', epas: ['afmc2', 'afmc10', 'afmc7'] },
+      { key: 'prenatal',   label: 'Prenatal care',                        epas: ['wh5', 'wh6'] },
+      { key: 'postpartum', label: 'Postpartum care',                      epas: ['pp1', 'pp2', 'pp3', 'pp4'] },
+      { key: 'procedure',  label: 'Office procedure',                     epas: ['afmc4'] },
+    ],
+  },
+};
+const CASE_TYPES_AM = {};
 
 const MILESTONE_DEFS_BY_PROGRAM  = { fm: MILESTONE_DEFS_FM,  am: MILESTONE_DEFS_AM };
 const ROTATIONS_BY_PROGRAM       = { fm: ROTATIONS_FM,       am: ROTATIONS_AM };
 const ROTATION_DETAIL_BY_PROGRAM = { fm: ROTATION_DETAIL_FM, am: ROTATION_DETAIL_AM };
 const CONTEXT_GROUPS_BY_PROGRAM  = { fm: CONTEXT_GROUPS_FM,  am: CONTEXT_GROUPS_AM };
 const CONTEXT_ALIASES_BY_PROGRAM = { fm: CONTEXT_ALIASES_FM, am: CONTEXT_ALIASES_AM };
+const CASE_TYPES_BY_PROGRAM      = { fm: CASE_TYPES_FM,      am: CASE_TYPES_AM };
 
 // ── Accessors ────────────────────────────────────────────────────────────────
 // Every one of these takes the program first and refuses to guess. Throwing is
@@ -600,6 +678,44 @@ function contextGroupsFor(program) {
 // Search aliases for one context; [] when it has none.
 function contextAliasesFor(program, contextName) {
   return CONTEXT_ALIASES_BY_PROGRAM[assertProgram(program)][contextName] || [];
+}
+
+// The case-type configuration for a context as the form should use it, or null
+// when the context asks nothing. Resolved against the context's ACTIVE EPAs:
+// `always` and each type's `epas` become EPA objects, retired types and EPAs
+// drop out, an EPA claimed twice keeps its first claim, and any active EPA no
+// type claims joins `always`. Problems are reported on the console, never
+// thrown - a mistake here should cost a warning, not the evaluation.
+function caseTypesFor(program, contextName) {
+  const cfg = CASE_TYPES_BY_PROGRAM[assertProgram(program)][contextName];
+  if (!cfg) return null;
+  const byId = new Map(activeEpas(program, contextName).map(e => [e.id, e]));
+  const claimed = new Set();
+  const take = (ids, where) => ids.filter(id => {
+    if (!byId.has(id)) { console.warn(`CASE_TYPES: ${where} lists "${id}", which is not an active EPA of ${contextName}`); return false; }
+    if (claimed.has(id)) { console.warn(`CASE_TYPES: "${id}" is claimed twice; ${where} ignored`); return false; }
+    claimed.add(id);
+    return true;
+  }).map(id => byId.get(id));
+  const always = take(cfg.always || [], 'always');
+  const types = cfg.types.filter(t => !t.retired)
+    .map(t => ({ key: t.key, label: t.label, epas: take(t.epas, t.key) }))
+    .filter(t => t.epas.length);
+  for (const [id, epa] of byId) {
+    if (!claimed.has(id)) {
+      console.warn(`CASE_TYPES: "${id}" belongs to no type of ${contextName}; asked at every visit`);
+      always.push(epa);
+    }
+  }
+  return { always, types };
+}
+
+// A stored case-type key's label, for any key ever defined (retired included),
+// so an older row still reads in words. Falls back to the key itself.
+function caseTypeLabel(program, contextName, key) {
+  const cfg = CASE_TYPES_BY_PROGRAM[assertProgram(program)][contextName];
+  const t = cfg && cfg.types.find(x => x.key === key);
+  return t ? t.label : key;
 }
 
 // ── Training level ───────────────────────────────────────────────────────────

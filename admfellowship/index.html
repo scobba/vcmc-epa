@@ -370,6 +370,26 @@
   }
   @media print { .scale-dock { display: none; } }
 
+  /* Types of care precepted (CASE_TYPES in shared/definitions.js): the
+     checkboxes, and the heading over each section of EPAs they open. */
+  .case-types-hint { font-size: 12.5px; color: var(--slate); line-height: 1.55; margin: -6px 0 14px; }
+  .case-types-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+  .case-type {
+    display: flex; align-items: center; gap: 10px; padding: 11px 12px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--white); transition: border-color 0.12s;
+  }
+  .case-type:hover { border-color: var(--navy); }
+  .case-type:has(input:checked) { border-color: var(--navy); box-shadow: inset 3px 0 0 var(--navy); }
+  .case-type:focus-within { outline: 2px solid rgba(26,39,68,0.25); outline-offset: 1px; }
+  .case-type input { width: 16px; height: 16px; margin: 0; flex-shrink: 0; accent-color: var(--navy); }
+  .case-type-label { flex: 1; font-size: 13px; font-weight: 600; color: var(--navy); line-height: 1.35; }
+  .case-type-n { font-size: 11px; color: var(--slate-light); white-space: nowrap; }
+  .epa-section[hidden] { display: none; }
+  .epa-section-title {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--navy); margin: 26px 0 10px;
+  }
+
   /* EPA Questions */
   .epa-question {
     background: var(--white);
@@ -913,7 +933,7 @@
 </footer>
 
 <script src="../shared/text-matching.js?v=1"></script>
-<script src="../shared/definitions.js?v=12"></script>
+<script src="../shared/definitions.js?v=13"></script>
 <script src="../shared/faculty-roster.js?v=2"></script>
 <script src="../shared/detail-options.js?v=1"></script>
 <script>
@@ -947,7 +967,7 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 // PROGRAMS in shared/definitions.js and sql/010_add_program_discriminator.sql.
 const PROGRAM = 'am';
 </script>
-<script src="../shared/epa-form.js?v=5"></script>
+<script src="../shared/epa-form.js?v=6"></script>
 
 </body>
 </html>

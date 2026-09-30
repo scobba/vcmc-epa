@@ -271,7 +271,10 @@ function updateScaleDock() {
   const legend = document.getElementById('scale-legend');
   if (!dock || !legend) return;
   const header    = document.querySelector('.app-header');
-  const questions = document.querySelectorAll('#form-content .epa-question');
+  // The last question ON SCREEN: a section hidden because its type of care is
+  // unticked measures as zero and would hide the dock at the top of the form.
+  const questions = [...document.querySelectorAll('#form-content .epa-question')]
+    .filter(q => q.offsetParent !== null);
   const last      = questions[questions.length - 1];
   const top       = header ? header.getBoundingClientRect().bottom : 0;
   const pastLegend = legend.getBoundingClientRect().bottom < top;
@@ -361,6 +364,46 @@ function renderEPAFormInto(rotationName, el) {
   ];
   const scaleNum = o => o.val === 'na' ? 'N/A' : o.val;
 
+  // Numbers are filled in by renumberQuestions(), counting only the questions
+  // on screen, so ticking a type of care never leaves a gap in the sequence.
+  const question = epa => `
+      <div class="epa-question" data-epa="${epa.id}">
+        <div class="question-header">
+          <div class="question-num"></div>
+          <div class="question-text">I trust this ${LEARNER} to&hellip; ${epa.text}</div>
+        </div>
+        <div class="question-context">${epa.context}</div>
+        <div class="scale-options">
+          ${scaleOpts.map(o => `
+            <div class="scale-option" data-val="${o.val}">
+              <input type="radio" name="epa-${epa.id}" id="epa-${epa.id}-${o.val}" value="${o.val}">
+              <label for="epa-${epa.id}-${o.val}" title="${scaleNum(o)} &mdash; ${o.label}">
+                <div class="scale-pip"></div>
+                <div class="scale-label">${scaleNum(o)}</div>
+              </label>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+
+  // A context with types of care (CASE_TYPES in definitions.js) asks which were
+  // precepted, and each ticked type opens its section of EPAs. Everything else
+  // gets its one flat list, exactly as before.
+  const caseTypes = caseTypesFor(PROGRAM, rotationName);
+  const caseTypesCard = caseTypes ? `
+    <div class="evaluator-card case-types-card">
+      <h3>Types of Care Precepted *</h3>
+      <p class="case-types-hint">Tick every type of care you precepted with this ${LEARNER}. Each opens its EPAs below${caseTypes.always.length ? `, after the ${caseTypes.always.length} asked at every visit` : ''}.</p>
+      <div class="case-types-grid">
+        ${caseTypes.types.map(t => `
+          <label class="case-type">
+            <input type="checkbox" name="case-type" value="${t.key}" onchange="onCaseTypesChange()">
+            <span class="case-type-label">${escFaculty(t.label)}</span>
+            <span class="case-type-n">${t.epas.length} EPA${t.epas.length === 1 ? '' : 's'}</span>
+          </label>`).join('')}
+      </div>
+    </div>` : '';
+
   el.innerHTML = `
     <div class="form-header">
       <div class="rotation-label">EPA Evaluation</div>
@@ -393,6 +436,8 @@ function renderEPAFormInto(rotationName, el) {
         ${detailFieldMarkup(rotationName)}
       </div>
     </div>
+
+    ${caseTypesCard}
 
     <div class="scale-legend" id="scale-legend">
       <h4>Entrustment Scale Reference</h4>
@@ -442,26 +487,18 @@ function renderEPAFormInto(rotationName, el) {
       </div>
     </div>
 
-    ${epas.map((epa, i) => `
-      <div class="epa-question">
-        <div class="question-header">
-          <div class="question-num">${i + 1}</div>
-          <div class="question-text">I trust this ${LEARNER} to&hellip; ${epa.text}</div>
-        </div>
-        <div class="question-context">${epa.context}</div>
-        <div class="scale-options">
-          ${scaleOpts.map(o => `
-            <div class="scale-option" data-val="${o.val}">
-              <input type="radio" name="epa-${epa.id}" id="epa-${epa.id}-${o.val}" value="${o.val}">
-              <label for="epa-${epa.id}-${o.val}" title="${scaleNum(o)} &mdash; ${o.label}">
-                <div class="scale-pip"></div>
-                <div class="scale-label">${scaleNum(o)}</div>
-              </label>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `).join('')}
+    ${caseTypes ? `
+      ${caseTypes.always.length ? `
+        <div class="epa-section" data-section="always">
+          <h3 class="epa-section-title">Asked at every visit</h3>
+          ${caseTypes.always.map(question).join('')}
+        </div>` : ''}
+      ${caseTypes.types.map(t => `
+        <div class="epa-section" data-section="${t.key}" hidden>
+          <h3 class="epa-section-title">${escFaculty(t.label)}</h3>
+          ${t.epas.map(question).join('')}
+        </div>`).join('')}
+    ` : epas.map(question).join('')}
 
     <div class="narrative-card">
       <h3>Narrative Comments</h3>
@@ -473,6 +510,41 @@ function renderEPAFormInto(rotationName, el) {
       <button class="btn btn-primary" onclick="submitForm('${rotationName.replace(/'/g, "\\'")}')">Submit Evaluation</button>
     </div>
   `;
+  renumberQuestions();
+}
+
+// ── Types of care ────────────────────────────────────────────────────────────
+//
+// Unticking a type hides its section but keeps any answers in it, so ticking it
+// again restores them. Only the sections on screen are read at submit, so a
+// hidden section's answers are never sent.
+function onCaseTypesChange() {
+  document.querySelectorAll('#form-content input[name="case-type"]').forEach(box => {
+    const section = document.querySelector(`#form-content .epa-section[data-section="${box.value}"]`);
+    if (section) section.hidden = !box.checked;
+  });
+  renumberQuestions();
+  queueScaleDock();
+}
+
+function renumberQuestions() {
+  let n = 0;
+  document.querySelectorAll('#form-content .epa-question').forEach(q => {
+    const shown = !q.closest('.epa-section') || !q.closest('.epa-section').hidden;
+    q.querySelector('.question-num').textContent = shown ? ++n : '';
+  });
+}
+
+// The EPAs this evaluation asks: every active EPA for a context without types
+// of care; for one with them, the always-asked EPAs plus those of each ticked
+// type, in the form's order. `caseTypes` is the ticked keys, or null when the
+// context does not ask.
+function askedEpas(rotationName) {
+  const cfg = caseTypesFor(PROGRAM, rotationName);
+  if (!cfg) return { epas: activeEpas(PROGRAM, rotationName), caseTypes: null };
+  const ticked = cfg.types.filter(t =>
+    document.querySelector(`#form-content input[name="case-type"][value="${t.key}"]`)?.checked);
+  return { epas: [...cfg.always, ...ticked.flatMap(t => t.epas)], caseTypes: ticked.map(t => t.key) };
 }
 
 // ── Submit ───────────────────────────────────────────────────────────────────
@@ -519,10 +591,16 @@ async function submitForm(rotationName) {
   const fmt = d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const dates = fmt(dateStart);
 
+  const { epas: asked, caseTypes } = askedEpas(rotationName);
+  if (caseTypes && !caseTypes.length) {
+    alert('Please tick at least one type of care you precepted.');
+    return;
+  }
+
   const scores = {};
   let allAnswered = true;
 
-  for (const epa of activeEpas(PROGRAM, rotationName)) {
+  for (const epa of asked) {
     const checked = document.querySelector(`input[name="epa-${epa.id}"]:checked`);
     if (!checked) { allAnswered = false; break; }
     scores[epa.id] = checked.value === 'na' ? 'na' : parseInt(checked.value);
@@ -541,6 +619,7 @@ async function submitForm(rotationName) {
     evaluatorId: null,   // filled in at save time once the roster row is resolved
     rotationDetail,
     rotationDetailId: null,   // filled in at save time once the list entry resolves
+    caseTypes,                // ticked type keys, or null when the context does not ask
     dates,
     dateStart,
     dateEnd: dateStart,
@@ -730,6 +809,7 @@ async function saveSubmission(sub) {
     evaluator_id:    sub.evaluatorId ?? null,
     rotation_detail:    sub.rotationDetail ?? null,
     rotation_detail_id: sub.rotationDetailId ?? null,
+    case_types:      sub.caseTypes ?? null,   // sql/016 - must exist before this ships
     date_start:      sub.dateStart || '',
     date_end:        sub.dateStart || '',
     scores:          sub.scores,
