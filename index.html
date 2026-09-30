@@ -573,6 +573,28 @@
   .rotation-btn:hover { border-color: var(--navy); background: var(--bg-soft); }
   .rotation-btn.selected { border-color: var(--navy); background: var(--navy); color: white; }
 
+  /* Clinical context picker: search box, grouped headings, and the EPA that a
+     search matched shown under a context's name (filterContexts in
+     shared/epa-form.js). */
+  .rotation-selector [hidden] { display: none !important; }
+  .rotation-btn { display: flex; flex-direction: column; gap: 3px; }
+  .context-search {
+    width: 100%; font: inherit; font-size: 14px; padding: 10px 12px; margin-bottom: 18px;
+    border: 1px solid var(--border); border-radius: 0; color: var(--navy); background: var(--white);
+  }
+  .context-search:focus { border-color: var(--navy); outline: 2px solid rgba(26,39,68,0.12); outline-offset: 0; }
+  .context-group + .context-group { margin-top: 20px; }
+  .context-group-name {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--slate-light); margin-bottom: 8px;
+  }
+  .context-hit { font-size: 11px; font-weight: 400; color: var(--slate); line-height: 1.35; }
+  .context-hit:empty { display: none; }
+  .context-none { font-size: 13px; color: var(--slate-light); line-height: 1.6; }
+  @media (max-width: 640px) {
+    .context-search { font-size: 16px; } /* below 16px, iPhones zoom the page on focus */
+  }
+
   /* ── Admin View ── */
   .admin-container {
     max-width: 1100px;
@@ -855,7 +877,7 @@
   <div class="landing">
     <div class="landing-eyebrow">Resident Assessment Tool</div>
     <h1><strong>EPA</strong> Evaluation System</h1>
-    <p class="landing-sub">Select a rotation below to complete an entrustable professional activity evaluation for a resident you supervised. Please provide the resident with verbal feedback as well.</p>
+    <p class="landing-sub">Select a clinical context below to complete an entrustable professional activity evaluation for a resident you supervised. Please provide the resident with verbal feedback as well.</p>
     <div class="landing-divider"></div>
   </div>
   <div class="form-container" style="padding-top:0">
@@ -909,7 +931,7 @@
 </footer>
 
 <script src="shared/text-matching.js?v=1"></script>
-<script src="shared/definitions.js?v=11"></script>
+<script src="shared/definitions.js?v=12"></script>
 <script src="shared/faculty-roster.js?v=2"></script>
 <script src="shared/detail-options.js?v=1"></script>
 <script>
@@ -943,7 +965,7 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 // shared/definitions.js and sql/010_add_program_discriminator.sql.
 const PROGRAM = 'fm';
 </script>
-<script src="shared/epa-form.js?v=4"></script>
+<script src="shared/epa-form.js?v=5"></script>
 
 </body>
 </html>

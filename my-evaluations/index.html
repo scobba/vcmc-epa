@@ -396,7 +396,7 @@ const SUPABASE_URL  = 'https://ubqecdyhgejqoweltagl.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
 </script>
 <script src="../shared/text-matching.js?v=1"></script>
-<script src="../shared/definitions.js?v=11"></script>
+<script src="../shared/definitions.js?v=12"></script>
 <script src="../shared/faculty-roster.js?v=2"></script>
 <script>
 // Read before the client is created. supabase-js consumes the URL hash during
@@ -799,7 +799,7 @@ function renderReport() {
   el.innerHTML = range + `
     <div class="stat-row">
       <div class="stat-card"><div class="stat-label">Evaluations</div><div class="stat-value">${VIEW.length}</div></div>
-      <div class="stat-card"><div class="stat-label">Rotations</div><div class="stat-value">${new Set(VIEW.map(s => s.rotation)).size}</div></div>
+      <div class="stat-card"><div class="stat-label">Clinical contexts</div><div class="stat-value">${new Set(VIEW.map(s => s.rotation)).size}</div></div>
       <div class="stat-card"><div class="stat-label">Attendings</div><div class="stat-value">${new Set(VIEW.map(evaluatorFor)).size}</div></div>
       <div class="stat-card"><div class="stat-label">Items Scored</div><div class="stat-value">${allScores.length}</div></div>
       <div class="stat-card"><div class="stat-label">Overall Average</div><div class="stat-value">${overall !== null ? overall.toFixed(2) : '&mdash;'}</div></div>
@@ -965,18 +965,18 @@ function renderCharts() {
          ${msCodes.map(c => opt(c, `${c} — ${clip(defs[c], 58)}`, CHART.ms)).join('')}
        </select>`,
       CHART.ms === 'all'
-        ? 'Each point averages the milestones that evaluation touched, which depends on the rotation, so choose a single milestone for the clearest picture. Shown in half steps.'
+        ? 'Each point averages the milestones that evaluation touched, which depends on the clinical context, so choose a single milestone for the clearest picture. Shown in half steps.'
         : `${CHART.ms} — ${defs[CHART.ms] || ''}. Shown in half steps.`) +
-    chartCard('epa', 'EPAs by rotation',
-      `<select aria-label="Rotation" onchange="CHART.rot = this.value; CHART.epa = 'all'; renderCharts()">
+    chartCard('epa', 'EPAs by clinical context',
+      `<select aria-label="Clinical context" onchange="CHART.rot = this.value; CHART.epa = 'all'; renderCharts()">
          ${rots.map(r => opt(r, `${r} (${rotCount.get(r)})`, CHART.rot)).join('')}
        </select>
        <select aria-label="EPA to plot" onchange="CHART.epa = this.value; renderCharts()">
-         ${opt('all', 'All EPAs on this rotation (average)', CHART.epa)}
+         ${opt('all', 'All EPAs in this context (average)', CHART.epa)}
          ${[...epaText.entries()].map(([id, t]) => opt(id, clip(t, 64), CHART.epa)).join('')}
        </select>`,
       CHART.epa === 'all'
-        ? 'Each point averages the EPAs scored in one evaluation on this rotation. N/A items are left out.'
+        ? 'Each point averages the EPAs scored in one evaluation in this context. N/A items are left out.'
         : 'One EPA, as scored by the attending. Evaluations where it was marked N/A are left out.');
 
   drawChart('ms', milestonePoints(defs));
@@ -1053,7 +1053,7 @@ function fillTable(id, pts) {
   if (!el) return;
   el.innerHTML = !pts.length ? '' : `
     <table>
-      <thead><tr><th>Date</th><th>Rotation</th><th>Attending</th><th class="num">Value</th></tr></thead>
+      <thead><tr><th>Date</th><th>Clinical context</th><th>Attending</th><th class="num">Value</th></tr></thead>
       <tbody>${pts.map(p => `
         <tr>
           <td style="white-space:nowrap">${esc(fmtDate(p.date))}</td>
@@ -1288,8 +1288,8 @@ function epaSection() {
 
   return `
     <h2 class="sect">Average by activity</h2>
-    <p class="sect-note">Every EPA you have been scored on, averaged across your evaluations for that
-      rotation. The &ldquo;scored&rdquo; column is how many times an attending actually rated it &mdash;
+    <p class="sect-note">Every EPA you have been scored on, averaged across your evaluations in that
+      clinical context. The &ldquo;scored&rdquo; column is how many times an attending actually rated it &mdash;
       an average of one observation is one person's view on one day. Items marked N/A were not
       observed and are left out of the average rather than counted as zero.</p>
     ${cards}`;
@@ -1329,7 +1329,7 @@ function milestoneSection() {
       scores above rather than rated separately. Reported to the nearest half step, because the
       underlying scale is ordinal and a figure like 2.24 would imply a precision it does not have.
       ${missing.length ? `${missing.length} of the ${Object.keys(defs).length} subcompetencies have no
-      data yet &mdash; they are only reached by rotations you have not been evaluated on.` : ''}</p>
+      data yet &mdash; they are only reached by clinical contexts you have not been evaluated in.` : ''}</p>
     <div class="card">
       <table>
         <thead><tr><th>Code</th><th>Subcompetency</th><th class="num">Scored</th><th class="num">Average</th></tr></thead>

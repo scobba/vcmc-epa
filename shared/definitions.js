@@ -482,9 +482,50 @@ const ROTATIONS_AM = {
 
 const ROTATION_DETAIL_AM = {};
 
+// How the form's picker groups clinical contexts under headings. Display only:
+// nothing is stored from it and it changes no measurement, so editing it needs
+// no formVersion bump. A context missing from the list still appears, under
+// "Other", so a newly added one can never silently vanish from the form. A
+// program with no entry gets one unheaded list.
+const CONTEXT_GROUPS_FM = [
+  { name: 'Continuity Clinic', contexts: ['Continuity Care Clinic'] },
+  { name: 'Inpatient', contexts: ['Inpatient Medicine', 'ICU', 'Inpatient Pediatrics', 'Labor & Delivery',
+      'Inpatient Surgery', 'Inpatient Palliative Care', 'Inpatient Subspecialty Consultation'] },
+  { name: 'Emergency & Urgent Care', contexts: ['Emergency Department', 'Urgent Care'] },
+  { name: 'Outpatient & Specialty Clinics', contexts: ['Outpatient Pediatrics', 'Women\'s Health Clinic',
+      'Outpatient Subspecialty Clinic', 'Addiction Medicine', 'Procedural Care'] },
+  { name: 'Community, Professionalism & Scholarship', contexts: ['Backpack / Street Medicine',
+      'Community Medicine', 'Professionalism', 'Scholarly & Quality Improvement Activity'] },
+];
+const CONTEXT_GROUPS_AM = [];
+
+// Other words faculty use for a context, searched as if part of its name, so
+// "L&D" finds Labor & Delivery and "peds" finds both pediatrics contexts.
+// Display only, like the groups.
+const CONTEXT_ALIASES_FM = {
+  'Continuity Care Clinic':        ['CCC', 'FMC', 'clinic', 'continuity'],
+  'Inpatient Medicine':            ['wards', 'hospital medicine', 'IM'],
+  'ICU':                           ['intensive care', 'critical care', 'MICU'],
+  'Inpatient Pediatrics':          ['peds', 'pediatric wards', 'PICU'],
+  'Labor & Delivery':              ['L&D', 'OB', 'obstetrics', 'labor'],
+  'Inpatient Surgery':             ['surgery', 'OR', 'gen surg'],
+  'Inpatient Palliative Care':     ['palliative', 'hospice', 'end of life'],
+  'Emergency Department':          ['ED', 'ER', 'emergency'],
+  'Urgent Care':                   ['UC'],
+  'Outpatient Pediatrics':         ['peds', 'peds clinic', 'well child'],
+  'Women\'s Health Clinic':        ['WH', 'gyn', 'OB/GYN', 'womens'],
+  'Addiction Medicine':            ['addiction', 'SUD', 'MAT', 'MOUD'],
+  'Procedural Care':               ['procedure', 'procedures clinic'],
+  'Backpack / Street Medicine':    ['street', 'backpack', 'homeless', 'outreach'],
+  'Scholarly & Quality Improvement Activity': ['QI', 'research', 'scholarship', 'journal club'],
+};
+const CONTEXT_ALIASES_AM = {};
+
 const MILESTONE_DEFS_BY_PROGRAM  = { fm: MILESTONE_DEFS_FM,  am: MILESTONE_DEFS_AM };
 const ROTATIONS_BY_PROGRAM       = { fm: ROTATIONS_FM,       am: ROTATIONS_AM };
 const ROTATION_DETAIL_BY_PROGRAM = { fm: ROTATION_DETAIL_FM, am: ROTATION_DETAIL_AM };
+const CONTEXT_GROUPS_BY_PROGRAM  = { fm: CONTEXT_GROUPS_FM,  am: CONTEXT_GROUPS_AM };
+const CONTEXT_ALIASES_BY_PROGRAM = { fm: CONTEXT_ALIASES_FM, am: CONTEXT_ALIASES_AM };
 
 // ── Accessors ────────────────────────────────────────────────────────────────
 // Every one of these takes the program first and refuses to guess. Throwing is
@@ -531,6 +572,34 @@ function rotationDetailFor(program, rotationName) {
 // Rotation names within a program that collect a rotation_detail value.
 function rotationsWithDetail(program) {
   return Object.keys(ROTATION_DETAIL_BY_PROGRAM[assertProgram(program)]);
+}
+
+// The program's contexts as [{ name, contexts: [...] }] for the form's picker,
+// in CONTEXT_GROUPS order. Every defined context appears exactly once: one the
+// grouping omits lands in a trailing "Other" group (or, for a program with no
+// grouping, in a single group whose name is null). A grouped name that is not a
+// defined context is a typo in CONTEXT_GROUPS, reported and skipped.
+function contextGroupsFor(program) {
+  const names = rotationNamesFor(program);
+  const placed = new Set();
+  const groups = [];
+  for (const g of CONTEXT_GROUPS_BY_PROGRAM[assertProgram(program)] || []) {
+    const contexts = g.contexts.filter(n => {
+      if (!names.includes(n)) { console.warn(`CONTEXT_GROUPS: "${n}" is not a ${program} context`); return false; }
+      if (placed.has(n)) return false;
+      placed.add(n);
+      return true;
+    });
+    if (contexts.length) groups.push({ name: g.name, contexts });
+  }
+  const rest = names.filter(n => !placed.has(n));
+  if (rest.length) groups.push({ name: groups.length ? 'Other' : null, contexts: rest });
+  return groups;
+}
+
+// Search aliases for one context; [] when it has none.
+function contextAliasesFor(program, contextName) {
+  return CONTEXT_ALIASES_BY_PROGRAM[assertProgram(program)][contextName] || [];
 }
 
 // ── Training level ───────────────────────────────────────────────────────────

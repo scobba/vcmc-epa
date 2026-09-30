@@ -105,11 +105,19 @@ function showView(name) {
   else if (name === 'form') showForm();
 }
 
-// ── Landing (rotation selector) ──────────────────────────────────────────────
-function renderFormLanding() {
+// ── Landing (clinical context selector) ──────────────────────────────────────
+//
+// "Clinical context" is the on-screen word for what the code, the database and
+// definitions.js all call a rotation. The list now holds block rotations, visit
+// types and activities, and "rotation" described only the first. The rename is
+// words on screen only: `rotation` stays the column and the identifier.
+//
+// `rosterOnly` is for the re-render when the rosters arrive: only the roster line
+// changes then, so a search already being typed is not wiped mid-word.
+function renderFormLanding({ rosterOnly = false } = {}) {
   selectedRotation = null;
   const el = document.getElementById('form-content-landing') || document.getElementById('form-content');
-  const rotationNames = rotationNamesFor(PROGRAM);
+  const groups = contextGroupsFor(PROGRAM);
 
   // A real name never starts with "[" — loadResidents() uses that shape for its
   // placeholders, so this counts people rather than error messages.
@@ -133,25 +141,111 @@ function renderFormLanding() {
         ✓ ${rosterCount} ${LEARNERS} loaded
        </div>`;
 
-  // A program with no rotations defined yet would otherwise render an empty grid
-  // that looks like a loading failure.
-  const grid = rotationNames.length
-    ? `<div class="rotation-grid">
-        ${rotationNames.map(r => `
-          <button class="rotation-btn" onclick="selectRotationForm('${r.replace(/'/g, "\\'")}')">${r}</button>
-        `).join('')}
-      </div>`
+  const statusEl = el.querySelector('#landing-roster-status');
+  if (rosterOnly && statusEl) {
+    statusEl.innerHTML = residentStatus;
+    return;
+  }
+
+  // A program with no contexts defined yet would otherwise render an empty grid
+  // that looks like a loading failure. A program with a single unnamed group
+  // (the fellowship's three) gets no headings and no search box: neither helps
+  // with three buttons.
+  const many = groups.reduce((n, g) => n + g.contexts.length, 0) > 8;
+  const picker = groups.length
+    ? `${many ? `
+        <input type="search" id="context-search" class="context-search" autocomplete="off"
+               placeholder="Search by name or by what the EPAs cover (e.g. L&amp;D, IUD, handoffs)&hellip;"
+               aria-label="Search clinical contexts" aria-controls="context-groups"
+               oninput="filterContexts(this.value)" onkeydown="contextSearchKey(event)">` : ''}
+       <div id="context-groups">
+        ${groups.map(g => `
+          <div class="context-group">
+            ${g.name ? `<h4 class="context-group-name">${escFaculty(g.name)}</h4>` : ''}
+            <div class="rotation-grid">
+              ${g.contexts.map(r => `
+                <button class="rotation-btn" data-context="${escFaculty(r)}" onclick="selectRotationForm(this.dataset.context)">
+                  <span class="context-name">${escFaculty(r)}</span>
+                  <span class="context-hit"></span>
+                </button>`).join('')}
+            </div>
+          </div>`).join('')}
+       </div>
+       <p class="context-none" id="context-none" role="status" hidden></p>`
     : `<div style="font-size:13px;color:var(--slate-light);line-height:1.6">
-        No rotations are configured for this program yet.
+        No clinical contexts are configured for this program yet.
        </div>`;
 
   el.innerHTML = `
     <div class="rotation-selector">
-      <h3>Select a Rotation to Begin</h3>
-      ${residentStatus}
-      ${grid}
+      <h3>What are you evaluating?</h3>
+      <div id="landing-roster-status">${residentStatus}</div>
+      ${picker}
     </div>
   `;
+}
+
+// ── Searching the contexts ───────────────────────────────────────────────────
+//
+// Every typed word must appear in the context's name, or in the name together
+// with one of its active EPAs (wording or "Consider" prompts). So "IUD" finds
+// the contexts that ask about IUDs though none is named for them, and
+// "inpatient procedures" finds Inpatient Medicine's procedures EPA. A context's
+// aliases (contextAliasesFor) count as part of its name, so "L&D" works. When the
+// match came from an EPA, that EPA is shown under the name, so the evaluator can
+// see why a context they did not search for is on the list.
+function searchText(s) {
+  return String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+    .replace(/['’]/g, '').replace(/[^a-z0-9&]+/g, ' ').trim();
+}
+
+// Each typed word matches the start of a word ("handoff" finds "handoffs"); one
+// or two letters must match a whole word, or "ED" would find every "managed".
+function contextMatch(name, words) {
+  if (!words.length) return { epa: null };
+  const has = text => {
+    const tokens = searchText(text).split(' ');
+    return words.every(w => tokens.some(t => w.length <= 2 ? t === w : t.startsWith(w)));
+  };
+  const called = `${name} ${contextAliasesFor(PROGRAM, name).join(' ')}`;
+  if (has(called)) return { epa: null };
+  const epa = activeEpas(PROGRAM, name).find(e => has(`${called} ${e.text} ${e.context || ''}`));
+  return epa ? { epa: epa.text } : null;
+}
+
+function filterContexts(query) {
+  const words = searchText(query).split(' ').filter(Boolean);
+  let shown = 0;
+  document.querySelectorAll('#context-groups .context-group').forEach(group => {
+    let inGroup = 0;
+    group.querySelectorAll('.rotation-btn').forEach(btn => {
+      const hit = contextMatch(btn.dataset.context, words);
+      btn.hidden = !hit;
+      btn.querySelector('.context-hit').textContent = hit && hit.epa ? hit.epa : '';
+      if (hit) inGroup++;
+    });
+    group.hidden = inGroup === 0;
+    shown += inGroup;
+  });
+  const none = document.getElementById('context-none');
+  if (none) {
+    none.hidden = shown > 0;
+    none.textContent = shown ? '' : `Nothing matches “${query.trim()}”. Try one word, or clear the search to see every clinical context.`;
+  }
+}
+
+// Enter opens the context when the search has narrowed the list to one;
+// Escape clears the search.
+function contextSearchKey(ev) {
+  if (ev.key === 'Enter') {
+    const visible = [...document.querySelectorAll('#context-groups .rotation-btn')]
+      .filter(b => !b.hidden && !b.closest('.context-group').hidden);
+    if (visible.length === 1) { ev.preventDefault(); visible[0].click(); }
+  } else if (ev.key === 'Escape' && ev.target.value) {
+    ev.preventDefault();
+    ev.target.value = '';
+    filterContexts('');
+  }
 }
 
 function selectRotationForm(name) {
@@ -375,7 +469,7 @@ function renderEPAFormInto(rotationName, el) {
     </div>
 
     <div class="submit-bar">
-      <button class="btn btn-secondary" onclick="goHome()">&larr; Change Rotation</button>
+      <button class="btn btn-secondary" onclick="goHome()">&larr; Change Clinical Context</button>
       <button class="btn btn-primary" onclick="submitForm('${rotationName.replace(/'/g, "\\'")}')">Submit Evaluation</button>
     </div>
   `;
@@ -670,7 +764,7 @@ function showSuccess(resident, rotation) {
     <div class="success-screen">
       <div class="success-icon">✓</div>
       <h2>Evaluation <strong>Submitted</strong></h2>
-      <p>Your evaluation of <strong>${resident}</strong> for the <strong>${rotation}</strong> rotation has been recorded. Please remember to also provide verbal feedback directly to the ${LEARNER}.</p>
+      <p>Your evaluation of <strong>${resident}</strong> in <strong>${rotation}</strong> has been recorded. Please remember to also provide verbal feedback directly to the ${LEARNER}.</p>
       <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap">
         <button class="btn btn-primary" onclick="goHome()">Submit Another</button>
       </div>
@@ -684,7 +778,7 @@ async function init() {
   // All three rosters in parallel. None blocks the others, and a failure in any
   // leaves a visible placeholder rather than an empty picker.
   await Promise.all([loadResidents(), loadFaculty(), loadDetailOptions()]);
-  renderFormLanding(); // re-render once the rosters are in
+  renderFormLanding({ rosterOnly: true }); // the roster line, once the rosters are in
 }
 
 init();

@@ -976,7 +976,7 @@
         <option value="">All Residents</option>
       </select>
       <select id="filter-rotation-milestones" onchange="renderMilestones()">
-        <option value="">All Rotations</option>
+        <option value="">All Clinical Contexts</option>
       </select>
     </div>
     <div id="milestone-grid-container"></div>
@@ -986,7 +986,7 @@
     <div class="filter-bar">
       <input id="search-submissions" type="text" placeholder="Search by resident or evaluator…" oninput="renderSubmissions()">
       <select id="filter-rotation-submissions" onchange="renderSubmissions()">
-        <option value="">All Rotations</option>
+        <option value="">All Clinical Contexts</option>
       </select>
       <select id="filter-resident-submissions" onchange="renderSubmissions()">
         <option value="">All Residents</option>
@@ -996,7 +996,7 @@
       <table>
         <thead>
           <tr>
-            <th>Date</th><th>Resident</th><th>Rotation</th>
+            <th>Date</th><th>Resident</th><th>Clinical Context</th>
             <th>Evaluator</th><th>Avg Score</th><th></th>
           </tr>
         </thead>
@@ -1013,7 +1013,7 @@
       <input type="date" id="filter-res-date-start" onchange="renderResidentDetail()" title="Filter from date">
       <input type="date" id="filter-res-date-end" onchange="renderResidentDetail()" title="Filter to date">
       <select id="filter-res-rotation" onchange="renderResidentDetail()">
-        <option value="">All Rotations</option>
+        <option value="">All Clinical Contexts</option>
       </select>
       <input type="text" id="filter-res-evaluator" placeholder="Filter by evaluator…" oninput="renderResidentDetail()" style="min-width:180px">
       <button class="btn btn-secondary" onclick="clearResidentFilters()" style="font-size:10px;letter-spacing:0.1em;padding:8px 14px">✕ Clear Filters</button>
@@ -1024,7 +1024,7 @@
   <div id="admin-tab-evaluators" class="admin-tab-content" style="display:none">
     <div class="filter-bar" style="flex-wrap:wrap;gap:10px;margin-bottom:12px">
       <select id="filter-eval-rotation" onchange="renderEvaluators()">
-        <option value="">All Rotations</option>
+        <option value="">All Clinical Contexts</option>
       </select>
       <input type="date" id="filter-eval-date-start" onchange="renderEvaluators()" title="Filter from date">
       <input type="date" id="filter-eval-date-end" onchange="renderEvaluators()" title="Filter to date">
@@ -1032,8 +1032,8 @@
               title="Compare each evaluation against others like it, instead of against the whole pool">
         <option value="">No adjustment</option>
         <option value="pgy">Adjust for PGY</option>
-        <option value="rotation">Adjust for rotation</option>
-        <option value="pgyrot">Adjust for PGY + rotation</option>
+        <option value="rotation">Adjust for clinical context</option>
+        <option value="pgyrot">Adjust for PGY + clinical context</option>
       </select>
     </div>
     <div id="evaluators-container"></div>
@@ -1046,7 +1046,7 @@
         <option value="">All Residents</option>
       </select>
       <select id="filter-proc-rotation" onchange="renderProcedures()">
-        <option value="">All Rotations</option>
+        <option value="">All Clinical Contexts</option>
       </select>
       <input type="date" id="filter-proc-date-start" onchange="renderProcedures()" title="Filter from date">
       <input type="date" id="filter-proc-date-end" onchange="renderProcedures()" title="Filter to date">
@@ -1074,7 +1074,7 @@
 </footer>
 
 <script src="../shared/text-matching.js?v=1"></script>
-<script src="../shared/definitions.js?v=11"></script>
+<script src="../shared/definitions.js?v=12"></script>
 <script src="../shared/faculty-roster.js?v=2"></script>
 <script src="../shared/detail-options.js?v=1"></script>
 <script>
@@ -1517,7 +1517,7 @@ function populateFilterDropdowns() {
     const el = document.getElementById(id);
     if (!el) return;
     const cur = el.value;
-    el.innerHTML = `<option value="">All Rotations</option>` +
+    el.innerHTML = `<option value="">All Clinical Contexts</option>` +
       rotations.map(r => `<option value="${r}" ${r === cur ? 'selected' : ''}>${r}</option>`).join('');
   });
 
@@ -1661,7 +1661,7 @@ function populateResidentRotationFilter() {
   const el = document.getElementById('filter-res-rotation');
   if (!el) return;
   const cur = el.value;
-  el.innerHTML = '<option value="">All Rotations</option>' +
+  el.innerHTML = '<option value="">All Clinical Contexts</option>' +
     rotations.map(r => `<option value="${r}" ${r === cur ? 'selected' : ''}>${r}</option>`).join('');
 }
 
@@ -1737,9 +1737,9 @@ function rdEpaAveragesSection(subs) {
     </div>`).join('');
 
   return `
-    <h4 class="rd-h">EPA averages by rotation</h4>
+    <h4 class="rd-h">EPA averages by clinical context</h4>
     <p class="rd-note">Every EPA this ${learnerNoun(false).toLowerCase()} has been scored on, averaged within its
-      rotation. &ldquo;Scored&rdquo; is how many times it was actually rated; most rest on one or two.</p>
+      clinical context. &ldquo;Scored&rdquo; is how many times it was actually rated; most rest on one or two.</p>
     ${tables}`;
 }
 
@@ -1775,18 +1775,18 @@ function rdRenderCharts() {
          ${msCodes.map(c => opt(c, `${c} — ${clip(defs[c], 58)}`, RD_CHART.ms)).join('')}
        </select>`,
       RD_CHART.ms === 'all'
-        ? 'Each point averages the milestones that evaluation touched, which depends on the rotation, so choose a single milestone for the clearest picture. Shown in half steps.'
+        ? 'Each point averages the milestones that evaluation touched, which depends on the clinical context, so choose a single milestone for the clearest picture. Shown in half steps.'
         : `${RD_CHART.ms} — ${defs[RD_CHART.ms] || ''}. Shown in half steps.`) +
-    rdChartCard('epa', 'EPAs by rotation',
-      `<select aria-label="Rotation" onchange="RD_CHART.rot = this.value; RD_CHART.epa = 'all'; rdRenderCharts()">
+    rdChartCard('epa', 'EPAs by clinical context',
+      `<select aria-label="Clinical context" onchange="RD_CHART.rot = this.value; RD_CHART.epa = 'all'; rdRenderCharts()">
          ${rots.map(r => opt(r, `${r} (${rotCount.get(r)})`, RD_CHART.rot)).join('')}
        </select>
        <select aria-label="EPA to plot" onchange="RD_CHART.epa = this.value; rdRenderCharts()">
-         ${opt('all', 'All EPAs on this rotation (average)', RD_CHART.epa)}
+         ${opt('all', 'All EPAs in this context (average)', RD_CHART.epa)}
          ${[...epaText.entries()].map(([id, t]) => opt(id, clip(t, 64), RD_CHART.epa)).join('')}
        </select>`,
       RD_CHART.epa === 'all'
-        ? 'Each point averages the EPAs scored in one evaluation on this rotation. N/A items are left out.'
+        ? 'Each point averages the EPAs scored in one evaluation in this context. N/A items are left out.'
         : 'One EPA, as scored by the attending. Evaluations where it was marked N/A are left out.');
 
   rdDrawChart('ms', rdMilestonePoints(defs));
@@ -1859,7 +1859,7 @@ function rdFillTable(id, pts) {
   if (!el) return;
   el.innerHTML = !pts.length ? '' : `
     <table>
-      <thead><tr><th>Date</th><th>Rotation</th><th>Evaluator</th><th class="rd-num">Value</th></tr></thead>
+      <thead><tr><th>Date</th><th>Clinical Context</th><th>Evaluator</th><th class="rd-num">Value</th></tr></thead>
       <tbody>${pts.map(p => `
         <tr>
           <td style="white-space:nowrap">${escFaculty(rdDate(p.date))}</td>
@@ -2065,7 +2065,7 @@ function renderResidentDetail() {
   container.innerHTML = `
     <div style="margin-bottom:24px">
       <h3 style="font-size:18px; font-weight:700; color:var(--navy); margin-bottom:4px">${resFilter}</h3>
-      <p style="font-size:13px; color:var(--slate)">${subs.length} evaluation${subs.length !== 1 ? 's' : ''} across ${rotationBreakdown.length} rotation${rotationBreakdown.length !== 1 ? 's' : ''}</p>
+      <p style="font-size:13px; color:var(--slate)">${subs.length} evaluation${subs.length !== 1 ? 's' : ''} across ${rotationBreakdown.length} clinical context${rotationBreakdown.length !== 1 ? 's' : ''}</p>
     </div>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:24px">
@@ -2104,7 +2104,7 @@ function renderResidentDetail() {
     <div class="table-wrap" style="margin-bottom:28px">
       <table>
         <thead>
-          <tr><th>Date</th><th>Rotation</th><th>Evaluator</th><th>Avg Score</th><th></th></tr>
+          <tr><th>Date</th><th>Clinical Context</th><th>Evaluator</th><th>Avg Score</th><th></th></tr>
         </thead>
         <tbody>
           ${[...subs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(s => {
@@ -2208,7 +2208,7 @@ function renderProcedures() {
 
   if (inScope.length === 0) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">&#129513;</div>
-      <p>No evaluations yet from the rotations that record a procedure or subspecialty.</p></div>`;
+      <p>No evaluations yet from the clinical contexts that record a procedure or subspecialty.</p></div>`;
     return;
   }
 
@@ -2643,8 +2643,8 @@ const MIN_EVALUATOR_N = 5;
 const ADJUST_STRATA = {
   '':         { label: 'No adjustment',             key: () => 'all' },
   'pgy':      { label: 'Adjust for PGY',            key: s => { const p = pgyOf(s); return p === null ? null : 'p' + p; } },
-  'rotation': { label: 'Adjust for rotation',       key: s => s.rotation || null },
-  'pgyrot':   { label: 'Adjust for PGY + rotation', key: s => { const p = pgyOf(s); return (p === null || !s.rotation) ? null : 'p' + p + '|' + s.rotation; } },
+  'rotation': { label: 'Adjust for clinical context',       key: s => s.rotation || null },
+  'pgyrot':   { label: 'Adjust for PGY + clinical context', key: s => { const p = pgyOf(s); return (p === null || !s.rotation) ? null : 'p' + p + '|' + s.rotation; } },
 };
 
 // The evaluator a submission is counted under. Prefers the id captured at
@@ -2772,8 +2772,8 @@ function renderEvaluators() {
   // With no resolvable levels at all â a one-year fellowship, or a roster that
   // failed to load â the case-mix line would read "level unknown" on every row.
   const showMix    = levelKnown > 0;
-  const stratumWord = adjustKey === 'rotation' ? 'rotation'
-                    : adjustKey === 'pgyrot'   ? 'training level and rotation'
+  const stratumWord = adjustKey === 'rotation' ? 'clinical context'
+                    : adjustKey === 'pgyrot'   ? 'training level and clinical context'
                     : 'training level';
 
   el.innerHTML = `
@@ -2798,7 +2798,7 @@ function renderEvaluators() {
       <table>
         <thead>
           <tr>
-            <th>Evaluator</th><th>Evaluations</th><th>${learnerNoun(true)}</th><th>Rotations</th>
+            <th>Evaluator</th><th>Evaluations</th><th>${learnerNoun(true)}</th><th>Contexts</th>
             <th>Avg Score</th>
             <th title="${adjusting ? 'Mean of (score minus the mean for that evaluation&rsquo;s ' + stratumWord + ')' : 'Mean score minus the overall mean'}">vs. All${adjusting ? ' (adj.)' : ''}</th>
             <th>N/A Rate</th><th>Narratives</th><th>Most Recent</th>
@@ -2898,7 +2898,7 @@ function openModal(sub) {
         <div><span style="color:var(--slate-light)">Evaluator:</span><br><strong>${escFaculty(displayEvaluatorName(sub))}</strong>${displayEvaluatorName(sub) !== sub.evaluatorName ? `<div style="font-size:11px;font-weight:400;color:var(--slate-light)">typed as &ldquo;${escFaculty(sub.evaluatorName)}&rdquo;</div>` : ''}</div>
         <div><span style="color:var(--slate-light)">Submitted:</span><br><strong>${date}</strong></div>
         <div><span style="color:var(--slate-light)">Dates Supervised:</span><br><strong>${sub.dates}</strong></div>
-        <div><span style="color:var(--slate-light)">Rotation:</span><br><strong>${sub.rotation}</strong>${sub.rotationDetail ? `<div style="font-size:11px;font-weight:400;color:var(--slate-light)">${escFaculty(sub.rotationDetail)}</div>` : ''}</div>
+        <div><span style="color:var(--slate-light)">Clinical context:</span><br><strong>${sub.rotation}</strong>${sub.rotationDetail ? `<div style="font-size:11px;font-weight:400;color:var(--slate-light)">${escFaculty(sub.rotationDetail)}</div>` : ''}</div>
         <div><span style="color:var(--slate-light)">Form version:</span><br><strong>${sub.formVersion || '—'}</strong></div>
       </div>
     </div>
