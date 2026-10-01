@@ -390,6 +390,9 @@
   .case-type-label { flex: 1; font-size: 13px; font-weight: 600; color: var(--navy); line-height: 1.35; }
   .case-type-n { font-size: 11px; color: var(--slate-light); white-space: nowrap; }
   .epa-section[hidden] { display: none; }
+  /* The "which one?" field a type of care asks, above that type's EPAs. */
+  .section-detail { background: var(--bg-soft); border: 1px solid var(--border); padding: 16px 24px 14px; margin-bottom: 10px; }
+  .section-detail .form-group { max-width: 420px; }
   .epa-section-title {
     font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em;
     color: var(--navy); margin: 26px 0 10px;
@@ -938,7 +941,7 @@
 </footer>
 
 <script src="../shared/text-matching.js?v=1"></script>
-<script src="../shared/definitions.js?v=13"></script>
+<script src="../shared/definitions.js?v=14"></script>
 <script src="../shared/faculty-roster.js?v=2"></script>
 <script src="../shared/detail-options.js?v=1"></script>
 <script>
@@ -972,7 +975,7 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 // PROGRAMS in shared/definitions.js and sql/010_add_program_discriminator.sql.
 const PROGRAM = 'am';
 </script>
-<script src="../shared/epa-form.js?v=6"></script>
+<script src="../shared/epa-form.js?v=7"></script>
 
 </body>
 </html>

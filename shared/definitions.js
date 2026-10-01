@@ -612,7 +612,12 @@ const CASE_TYPES_FM = {
       { key: 'chronic',     group: 'General',   label: 'Chronic illness management',           epas: ['afmc1', 'afmc11'] },
       { key: 'mental',      group: 'General',   label: 'Mental health management',             epas: ['afmc9'] },
       { key: 'preventive',  group: 'General',   label: 'Preventive health and wellness visit', epas: ['afmc2', 'afmc10', 'afmc7'] },
-      { key: 'procedure',   group: 'General',   label: 'Office procedure',                     epas: ['afmc4'] },
+      // `detail` asks "which one?" when this type is ticked, exactly as a context in
+      // ROTATION_DETAIL does: same list (the `procedure` category Procedural Care
+      // uses), same columns (rotation_detail, rotation_detail_id). An evaluation
+      // holds one detail, so at most one type per context may carry this.
+      { key: 'procedure',   group: 'General',   label: 'Office procedure',                     epas: ['afmc4'],
+        detail: { category: 'procedure', label: 'Which procedure?', hint: 'Pick from the list, or type a new one and it will be added for next time.' } },
       { key: 'prenatal',    group: 'Pregnancy', label: 'Prenatal care',                        epas: ['wh5', 'wh6'] },
       { key: 'postpartum',  group: 'Pregnancy', label: 'Postpartum care',                      epas: ['pp1', 'pp2', 'pp3', 'pp4'] },
       { key: 'well_child',  group: 'Pediatric', label: 'Well-child visit',                     epas: ['opeds1', 'opeds5'] },
@@ -726,7 +731,7 @@ function caseTypesFor(program, contextName) {
   }).map(id => byId.get(id));
   const always = take(cfg.always || [], 'always');
   const types = cfg.types.filter(t => !t.retired)
-    .map(t => ({ key: t.key, group: t.group || null, label: t.label, epas: take(t.epas, t.key) }))
+    .map(t => ({ key: t.key, group: t.group || null, label: t.label, detail: t.detail || null, epas: take(t.epas, t.key) }))
     .filter(t => t.epas.length);
   for (const [id, epa] of byId) {
     if (!claimed.has(id)) {
@@ -735,6 +740,39 @@ function caseTypesFor(program, contextName) {
     }
   }
   return { always, types };
+}
+
+// The "which one?" question that applies to an evaluation, or null. A context
+// in ROTATION_DETAIL always asks. A context with types of care asks only when a
+// type carrying `detail` was ticked, so pass the ticked keys - for a stored row,
+// its case_types. Every reader of rotation_detail goes through this, so a
+// Continuity evaluation without "Office procedure" is never counted as one
+// that should have named a procedure and did not.
+function detailConfigFor(program, contextName, caseTypes) {
+  const whole = rotationDetailFor(program, contextName);
+  if (whole) return whole;
+  const cfg = CASE_TYPES_BY_PROGRAM[assertProgram(program)][contextName];
+  if (!cfg || !Array.isArray(caseTypes)) return null;
+  const t = cfg.types.find(x => x.detail && caseTypes.includes(x.key));
+  return t ? t.detail : null;
+}
+
+// Every context that can record a detail: those that always ask, then those
+// where a type of care asks. For listing and labelling, not for deciding
+// whether one row should have a value - that is detailConfigFor().
+function contextsWithDetail(program) {
+  const byType = Object.entries(CASE_TYPES_BY_PROGRAM[assertProgram(program)])
+    .filter(([, cfg]) => cfg.types.some(t => t.detail)).map(([name]) => name);
+  return [...new Set([...rotationsWithDetail(program), ...byType])];
+}
+
+// The label of a context's detail question, whichever way it asks.
+function contextDetailLabel(program, contextName) {
+  const whole = rotationDetailFor(program, contextName);
+  if (whole) return whole.label;
+  const cfg = CASE_TYPES_BY_PROGRAM[assertProgram(program)][contextName];
+  const t = cfg && cfg.types.find(x => x.detail);
+  return t ? t.detail.label : 'Detail';
 }
 
 // A stored case-type key's label, for any key ever defined (retired included),

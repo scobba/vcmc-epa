@@ -309,7 +309,13 @@ function selectRotation(name) {
 // genuinely new adds it for the next person, and a near-miss is offered before a
 // second spelling is created. Same contract as the evaluator field.
 function detailFieldMarkup(rotationName) {
-  const cfg = rotationDetailFor(PROGRAM, rotationName);
+  return detailFieldHtml(rotationDetailFor(PROGRAM, rotationName));
+}
+
+// The field itself, for a context that always asks (in the evaluator card) or
+// for a type of care that asks when ticked (inside that type's section). An
+// evaluation holds one detail, so there is only ever one of these on the form.
+function detailFieldHtml(cfg) {
   if (!cfg) return '';
   const n = pickableDetailOptions(cfg.category).length;
   const status = detailOptionsLoaded
@@ -329,7 +335,7 @@ function detailFieldMarkup(rotationName) {
 // undefined when the rotation asks and nothing was entered, which the caller
 // treats as a validation failure — distinct from "not applicable".
 function readRotationDetail(rotationName) {
-  if (!rotationDetailFor(PROGRAM, rotationName)) return null;
+  if (!detailConfigFor(PROGRAM, rotationName, askedEpas(rotationName).caseTypes)) return null;
   const el = document.getElementById('field-rotation-detail');
   const v = (el?.value || '').trim();
   return v || undefined;
@@ -390,6 +396,10 @@ function renderEPAFormInto(rotationName, el) {
   // precepted, and each ticked type opens its section of EPAs. Everything else
   // gets its one flat list, exactly as before.
   const caseTypes = caseTypesFor(PROGRAM, rotationName);
+  // One detail field at most, in the first type that asks for one - and none at
+  // all if the context itself already asks in the evaluator card.
+  const detailType = caseTypes && !rotationDetailFor(PROGRAM, rotationName)
+    ? caseTypes.types.find(t => t.detail) : null;
   const caseTypesCard = caseTypes ? `
     <div class="evaluator-card case-types-card">
       <h3>Types of Care Precepted *</h3>
@@ -498,6 +508,7 @@ function renderEPAFormInto(rotationName, el) {
       ${caseTypes.types.map(t => `
         <div class="epa-section" data-section="${t.key}" hidden>
           <h3 class="epa-section-title">${escFaculty(t.label)}</h3>
+          ${t.detail && t === detailType ? `<div class="section-detail">${detailFieldHtml(t.detail)}</div>` : ''}
           ${t.epas.map(question).join('')}
         </div>`).join('')}
     ` : epas.map(question).join('')}
@@ -598,7 +609,7 @@ async function submitForm(rotationName) {
   // "this rotation does not ask".
   const rotationDetail = readRotationDetail(rotationName);
   if (rotationDetail === undefined) {
-    alert('Please answer "' + rotationDetailFor(PROGRAM, rotationName).label + '"');
+    alert('Please answer "' + detailConfigFor(PROGRAM, rotationName, askedEpas(rotationName).caseTypes).label + '"');
     return;
   }
 
@@ -655,7 +666,7 @@ async function submitForm(rotationName) {
 // Step 1 of 2: is this typed procedure/subspecialty a variant of one already on
 // the list? Rotations that collect no detail fall straight through.
 async function checkDetailThenEvaluator(submission, rotationName) {
-  const cfg = rotationDetailFor(PROGRAM, rotationName);
+  const cfg = detailConfigFor(PROGRAM, rotationName, submission.caseTypes);
   const typed = submission.rotationDetail;
   if (cfg && typed && !findDetailMatch(cfg.category, typed)) {
     const close = findCloseDetailMatch(cfg.category, typed);
@@ -736,7 +747,7 @@ async function proceedWithEvaluation(submission, rotationName) {
   // new so the next evaluator picks it instead of retyping a variant. Same
   // best-effort contract as the evaluator below: a list problem leaves the id
   // null and the evaluation keeps the typed text.
-  const detailCfg = rotationDetailFor(PROGRAM, rotationName);
+  const detailCfg = detailConfigFor(PROGRAM, rotationName, submission.caseTypes);
   if (detailCfg && submission.rotationDetail) {
     try {
       const opt = await registerDetailOption(detailCfg.category, submission.rotationDetail);

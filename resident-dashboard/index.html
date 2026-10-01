@@ -1081,7 +1081,7 @@
 </footer>
 
 <script src="../shared/text-matching.js?v=1"></script>
-<script src="../shared/definitions.js?v=13"></script>
+<script src="../shared/definitions.js?v=14"></script>
 <script src="../shared/faculty-roster.js?v=2"></script>
 <script src="../shared/detail-options.js?v=1"></script>
 <script>
@@ -2211,22 +2211,24 @@ function renderResidentDetail() {
 // when it resolves — so a merged duplicate collapses — otherwise exactly what
 // was typed, rather than dropping the row.
 function displayDetailName(s) {
-  const cfg = rotationDetailFor(s.program, s.rotation);
+  const cfg = detailConfigFor(s.program, s.rotation, s.caseTypes);
   if (!cfg) return s.rotationDetail;
   const ident = resolveDetailIdentity(cfg.category, s.rotationDetailId, s.rotationDetail);
   return ident ? ident.name : s.rotationDetail;
 }
 
 function detailRotations() {
-  return rotationsWithDetail(currentProgram);
+  return contextsWithDetail(currentProgram);
 }
 
 // Rows from rotations that record a detail. `unlabelled` counts rows submitted
 // before the field existed — they are real evaluations and are reported, not
 // quietly dropped from the denominator.
 function detailSubmissions(subs) {
-  const rots = detailRotations();
-  const inScope = subs.filter(s => rots.indexOf(s.rotation) !== -1);
+  // In scope = this evaluation was asked for a detail. For a context with types
+  // of care that is only the rows where the asking type was ticked: a Continuity
+  // visit with no office procedure is not a procedure left unlabelled.
+  const inScope = subs.filter(s => detailConfigFor(s.program, s.rotation, s.caseTypes));
   return {
     withDetail: inScope.filter(s => s.rotationDetail),
     unlabelled: inScope.filter(s => !s.rotationDetail),
@@ -2281,7 +2283,7 @@ function renderProcedures() {
 
   if (unlabelled.length) {
     html += `<div style="font-size:12.5px;color:var(--slate);background:var(--amber-pale);border:1px solid var(--gold-border);padding:10px 14px;margin-bottom:16px">
-      ${unlabelled.length} evaluation${unlabelled.length === 1 ? '' : 's'} from these rotations
+      ${unlabelled.length} evaluation${unlabelled.length === 1 ? '' : 's'} from these clinical contexts
       ${unlabelled.length === 1 ? 'was' : 'were'} submitted before the form asked what it was about, so
       ${unlabelled.length === 1 ? 'it is' : 'they are'} counted in the totals but cannot be broken down.
     </div>`;
@@ -2297,7 +2299,7 @@ function renderProcedures() {
       <div class="merge-section-head">${escFaculty(rot)} &mdash; ${total} logged</div>
       <div class="table-wrap" style="margin-bottom:8px">
         <table>
-          <thead><tr><th>${escFaculty((rotationDetailFor(currentProgram, rot) || {}).label || 'Detail')}</th>
+          <thead><tr><th>${escFaculty(contextDetailLabel(currentProgram, rot))}</th>
             <th style="width:110px">Count</th><th style="width:110px">Residents</th><th style="width:130px">Avg Score</th></tr></thead>
           <tbody>
             ${rows.map(r => {
@@ -2376,7 +2378,7 @@ function detailDuplicateCandidates(category) {
 
 function detailUseCount(optionId) {
   return allSubmissions.filter(s => {
-    const cfg = rotationDetailFor(s.program, s.rotation);
+    const cfg = detailConfigFor(s.program, s.rotation, s.caseTypes);
     if (!cfg) return false;
     const ident = resolveDetailIdentity(cfg.category, s.rotationDetailId, s.rotationDetail);
     return ident && String(ident.id) === String(optionId);
