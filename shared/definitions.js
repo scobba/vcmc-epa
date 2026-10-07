@@ -78,8 +78,11 @@ const MILESTONE_DEFS_FM = {
 // one id would then mean two things. A context that needs different wording
 // needs a different EPA with a new id.
 //
-// The two prenatal EPAs belong to Women's Health Clinic and are also asked in
-// Continuity Care Clinic when the preceptor ticks "Prenatal care".
+// These Women's Health Clinic EPAs are also asked in Continuity Care Clinic, when
+// the preceptor ticks well-woman (wh1), contraception (wh3) or prenatal care
+// (wh5, wh6).
+const EPA_WH1 = { id: 'wh1', text: 'Provide comprehensive well-woman care', context: 'Consider: pelvic exams and Pap smears; clinical breast exams; age-appropriate cancer screening; STI screening and counseling; HPV immunization; USPSTF and ACOG guidelines; sexual health and reproductive planning.', milestones: ['PC3','PC5'] };
+const EPA_WH3 = { id: 'wh3', text: 'Provide contraceptive management including LARC procedures', context: 'Consider: counseling on all contraceptive methods including efficacy, risks, and benefits; LARC insertion and removal; complication management; contraceptive myths; patient autonomy.', milestones: ['PC5','ICS1'] };
 const EPA_WH5 = { id: 'wh5', text: 'Provide routine prenatal care', context: 'Consider: initial and subsequent prenatal visits including dating and risk assessment; prenatal labs and screening tests; fetal growth and maternal health monitoring; screening for gestational diabetes and preeclampsia; delivery plan development.', milestones: ['PC3','PC2','MK1'] };
 const EPA_WH6 = { id: 'wh6', text: 'Evaluate and manage early pregnancy complications', context: 'Consider: vaginal bleeding in early pregnancy (threatened, inevitable, incomplete, missed abortion); ectopic pregnancy diagnosis and management; quantitative hCG and early ultrasound interpretation; counseling patients about pregnancy loss with sensitivity.', milestones: ['PC1','ICS1','MK1'] };
 
@@ -125,7 +128,9 @@ const ROTATIONS_FM = {
       { id: 'afmc10', text: 'Provide preventive and wellness care for older adults', context: 'Consider: functional and cognitive screening; falls risk; advance care planning; screening and immunizations that fit life expectancy; caregiver support.', milestones: ['PC3','PC2'] },
       { id: 'afmc11', text: 'Optimize medication regimens, including deprescribing', context: 'Consider: medication reconciliation; polypharmacy review; Beers criteria and renal dosing; cost, access and adherence; shared decisions about stopping medications.', milestones: ['PC2','MK1'] },
       { id: 'afmc12', text: 'Evaluate and manage musculoskeletal complaints', context: 'Consider: focused musculoskeletal exam; red flags; imaging decisions; conservative management; referral to sports medicine, physical therapy or orthopedics.', milestones: ['PC4','MK2'] },
-      EPA_WH5,   // asked when "Prenatal care" is ticked; shared with Women's Health Clinic
+      EPA_WH1,   // well-woman visit; these four are shared with Women's Health Clinic
+      EPA_WH3,   // contraception and family planning
+      EPA_WH5,   // prenatal care
       EPA_WH6,
       { id: 'pp1', text: 'Conduct a comprehensive postpartum visit', context: 'Consider: physical recovery; follow-up of hypertension and gestational diabetes; warning signs; return to activity; infant feeding and sleep plans.', milestones: ['PC3','PC2'] },
       { id: 'pp2', text: 'Screen for and manage postpartum depression and anxiety', context: 'Consider: EPDS or PHQ-9; safety assessment; treatment options compatible with breastfeeding; referral pathways.', milestones: ['PC2','MK1','ICS1'] },
@@ -225,9 +230,9 @@ const ROTATIONS_FM = {
   },
   'Women\'s Health Clinic': {
     epas: [
-      { id: 'wh1', text: 'Provide comprehensive well-woman care', context: 'Consider: pelvic exams and Pap smears; clinical breast exams; age-appropriate cancer screening; STI screening and counseling; HPV immunization; USPSTF and ACOG guidelines; sexual health and reproductive planning.', milestones: ['PC3','PC5'] },
+      EPA_WH1,
       { id: 'wh2', text: 'Evaluate and manage common gynecologic complaints', context: 'Consider: abnormal uterine bleeding, vaginitis, pelvic pain, dysmenorrhea, menopause symptoms, urinary incontinence; appropriate diagnostic workup; evidence-based treatment; gynecologic referral indications.', milestones: ['PC2','MK1'] },
-      { id: 'wh3', text: 'Provide contraceptive management including LARC procedures', context: 'Consider: counseling on all contraceptive methods including efficacy, risks, and benefits; LARC insertion and removal; complication management; contraceptive myths; patient autonomy.', milestones: ['PC5','ICS1'] },
+      EPA_WH3,
       { id: 'wh4', text: 'Perform colposcopy and manage abnormal cervical cancer screening results', context: 'Consider: interpreting Pap smear and HPV co-testing results per ASCCP guidelines; colposcopy with directed biopsy; transformation zone identification; biopsy result follow-up and management counseling.', milestones: ['PC5','PBLI1'] },
       EPA_WH5,   // shared with Continuity Care Clinic - defined above ROTATIONS_FM
       EPA_WH6,
@@ -430,7 +435,10 @@ const PROGRAMS = {
     // med9), Sports Medicine Clinic added, and Continuity Care Clinic asks only
     // the EPAs for the types of care precepted (CASE_TYPES_FM, `case_types`),
     // including prenatal (wh5-6) and pediatric (opeds1-2, 4-8) care.
-    formVersion: '2026.4',
+    // 2026.5 (2026-10-06): Continuity Care Clinic gains two types of care that
+    // ask existing Women's Health EPAs - well-woman visit (wh1) and contraception
+    // and family planning (wh3). No EPA was added or reworded.
+    formVersion: '2026.5',
     // Length of training, in years. Used to derive a learner’s PGY from their
     // graduation year — see trainingYear(). The residency expanded from three
     // years to four and every class now on the roster is a four-year class; if a
@@ -618,8 +626,11 @@ const CASE_TYPES_FM = {
       // holds one detail, so at most one type per context may carry this.
       { key: 'procedure',   group: 'General',   label: 'Office procedure',                     epas: ['afmc4'],
         detail: { category: 'procedure', label: 'Which procedure?', hint: 'Pick from the list, or type a new one and it will be added for next time.' } },
-      { key: 'prenatal',    group: 'Pregnancy', label: 'Prenatal care',                        epas: ['wh5', 'wh6'] },
-      { key: 'postpartum',  group: 'Pregnancy', label: 'Postpartum care',                      epas: ['pp1', 'pp2', 'pp3', 'pp4'] },
+      // Added in 2026.5. The group was "Pregnancy" until then; it is a heading only.
+      { key: 'well_woman',    group: 'Women\'s health and pregnancy', label: 'Well-woman visit',                  epas: ['wh1'] },
+      { key: 'contraception', group: 'Women\'s health and pregnancy', label: 'Contraception and family planning', epas: ['wh3'] },
+      { key: 'prenatal',      group: 'Women\'s health and pregnancy', label: 'Prenatal care',                     epas: ['wh5', 'wh6'] },
+      { key: 'postpartum',    group: 'Women\'s health and pregnancy', label: 'Postpartum care',                   epas: ['pp1', 'pp2', 'pp3', 'pp4'] },
       { key: 'well_child',  group: 'Pediatric', label: 'Well-child visit',                     epas: ['opeds1', 'opeds5'] },
       { key: 'newborn',     group: 'Pediatric', label: 'Newborn visit',                        epas: ['opeds6'] },
       { key: 'peds_sick',   group: 'Pediatric', label: 'Pediatric acute or chronic care',      epas: ['opeds2', 'opeds7'] },
