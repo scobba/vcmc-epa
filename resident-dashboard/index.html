@@ -757,6 +757,57 @@
   .rd-note { font-size: 12.5px; color: var(--slate-light); line-height: 1.6; margin: 0 0 14px; max-width: 820px }
   .rd-num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums }
   .rd-obs { font-size: 11.5px; color: var(--slate-light); white-space: nowrap }
+  /* ── Core Outcomes ──────────────────────────────────────────────────
+     Three cell states, told apart by their text as well as their fill, in the
+     page's own blues and greys: solid navy = met, pale blue = partly, dashed
+     outline = not enough evidence. Nothing here is red - an unmet outcome in
+     October of PGY-1 is the expected state, not an alarm. */
+  .co-intro { font-size: 12.5px; color: var(--slate); line-height: 1.6; max-width: 940px; margin-bottom: 12px }
+  .co-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; font-size: 12px; color: var(--slate); margin-bottom: 12px }
+  .co-legend .k { display: inline-flex; align-items: center; gap: 7px }
+  .co-wrap { overflow-x: auto }
+  .co-grid { width: 100%; border-collapse: collapse; font-size: 12px }
+  .co-grid th, .co-grid td { padding: 4px 3px; text-align: center; border-bottom: 1px solid var(--border-light) }
+  .co-grid thead th { vertical-align: bottom; padding: 9px 3px 8px; min-width: 50px; background: var(--bg-soft); border-bottom: 1px solid var(--border); font-weight: 400; text-transform: none; letter-spacing: 0 }
+  .co-num { display: block; font-size: 13px; font-weight: 700; color: var(--navy) }
+  .co-short { display: block; font-size: 9.5px; line-height: 1.25; color: var(--slate) }
+  .co-grid .co-name { position: sticky; left: 0; z-index: 1; min-width: 158px; padding-left: 14px; text-align: left; background: var(--white); font-weight: 400; text-transform: none; letter-spacing: 0 }
+  .co-grid thead .co-name { background: var(--bg-soft); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate-light) }
+  .co-class td { padding: 14px 14px 6px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate); border-bottom: 1px solid var(--border) }
+  .co-namebtn { padding: 0; border: 0; background: none; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--navy); text-align: left; cursor: pointer }
+  .co-namebtn:hover { text-decoration: underline }
+  .co-evals { display: block; font-size: 10.5px; color: var(--slate-light) }
+  .co-cell { width: 100%; min-width: 42px; height: 28px; padding: 0 4px; font: inherit; font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; border: 1px solid transparent; cursor: pointer }
+  .co-met  { background: var(--navy); color: #fff; border-color: var(--navy) }
+  .co-prog { background: var(--teal-pale); color: var(--teal); border-color: #C9DFEE }
+  .co-none { background: var(--white); color: var(--slate); border: 1px dashed #C5CCD8; font-weight: 400 }
+  .co-unm  { background: var(--bg-soft); color: var(--slate); border-color: var(--border); font-weight: 400 }
+  button.co-cell:hover, button.co-cell:focus-visible { outline: 2px solid var(--navy-light); outline-offset: 1px }
+  button.co-cell.sel { outline: 2px solid var(--gold); outline-offset: 1px }
+  .co-key { display: inline-flex; align-items: center; justify-content: center; width: 46px; min-width: 46px; height: 22px; cursor: default }
+  .co-total { font-weight: 700; color: var(--navy); white-space: nowrap; font-variant-numeric: tabular-nums }
+  .co-detail { margin-top: 22px; padding: 20px 22px 12px; background: var(--white); border: 1px solid var(--border) }
+  .co-detail h3 { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 4px }
+  .co-sub { font-size: 12.5px; color: var(--slate); line-height: 1.55; margin-bottom: 14px }
+  .co-part { padding: 14px 0 8px; border-top: 1px solid var(--border-light) }
+  .co-part-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-bottom: 5px }
+  .co-part-name { font-size: 13.5px; font-weight: 700; color: var(--navy) }
+  .co-chip { display: inline-block; padding: 2px 9px; font-size: 11px; font-weight: 700; line-height: 1.5; border: 1px solid transparent }
+  .co-chip.co-none { border: 1px dashed #C5CCD8; font-weight: 600 }
+  .co-part-stat { font-size: 12px; color: var(--slate); font-variant-numeric: tabular-nums }
+  .co-why { font-size: 12.5px; color: var(--slate); line-height: 1.5; margin-bottom: 6px }
+  .co-part-epas { font-size: 12px; color: var(--slate-light); line-height: 1.5; margin-bottom: 8px }
+  .co-ev { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 8px }
+  .co-ev th { padding: 5px 8px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--slate-light); border-bottom: 1px solid var(--border) }
+  .co-ev td { padding: 6px 8px; vertical-align: top; border-bottom: 1px solid var(--border-light) }
+  .co-ov { padding: 10px 0 8px; border-top: 1px solid var(--border-light) }
+  .co-ov-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; width: 100%; padding: 0; border: 0; background: none; font: inherit; text-align: left; cursor: pointer }
+  .co-ov-head:hover .co-ov-title { text-decoration: underline }
+  .co-ov-n { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 22px; background: var(--bg-soft); border: 1px solid var(--border); font-size: 11px; font-weight: 700; color: var(--navy) }
+  .co-ov-title { font-size: 13.5px; font-weight: 700; color: var(--navy) }
+  .co-ov-parts { list-style: none; margin: 6px 0 0 34px; font-size: 12px; color: var(--slate); line-height: 1.7 }
+  .co-dot { display: inline-block; width: 9px; height: 9px; margin-right: 7px; border: 1px solid transparent; vertical-align: baseline }
+  .co-dot.co-none { border: 1px dashed #9AA5B5 }
   .rd-ct-head { font-size: 12.5px; font-weight: 700; color: var(--navy); margin: 4px 0 6px }
   .rd-ct-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px }
   .rd-ct { display: inline-flex; align-items: baseline; gap: 7px; padding: 5px 10px; font-size: 12px;
@@ -973,6 +1024,7 @@
     <button class="admin-tab active" onclick="switchAdminTab('milestones', this)">Milestone Summary</button>
     <button class="admin-tab" onclick="switchAdminTab('submissions', this)">All Submissions</button>
     <button class="admin-tab" onclick="switchAdminTab('residents', this)">By Resident</button>
+    <button class="admin-tab" id="tab-btn-outcomes" onclick="switchAdminTab('outcomes', this)">Core Outcomes</button>
     <button class="admin-tab" onclick="switchAdminTab('evaluators', this)">By Evaluator</button>
     <button class="admin-tab" onclick="switchAdminTab('procedures', this)">Procedures</button>
   </div>
@@ -1028,6 +1080,15 @@
     <div id="resident-detail-container"></div>
   </div>
 
+  <div id="admin-tab-outcomes" class="admin-tab-content" style="display:none">
+    <div class="filter-bar" style="margin-bottom:12px">
+      <select id="filter-co-class" onchange="CO_SEL = null; renderOutcomes()" aria-label="Class">
+        <option value="">All classes</option>
+      </select>
+    </div>
+    <div id="outcomes-container"></div>
+  </div>
+
   <div id="admin-tab-evaluators" class="admin-tab-content" style="display:none">
     <div class="filter-bar" style="flex-wrap:wrap;gap:10px;margin-bottom:12px">
       <select id="filter-eval-rotation" onchange="renderEvaluators()">
@@ -1081,7 +1142,7 @@
 </footer>
 
 <script src="../shared/text-matching.js?v=1"></script>
-<script src="../shared/definitions.js?v=15"></script>
+<script src="../shared/definitions.js?v=16"></script>
 <script src="../shared/faculty-roster.js?v=2"></script>
 <script src="../shared/detail-options.js?v=1"></script>
 <script>
@@ -1280,7 +1341,7 @@ let learnerById   = new Map();   // residents.id -> record
 let learnerRosterFailed = false;
 
 async function loadLearners() {
-  const url = `${SUPABASE_URL}/rest/v1/residents?select=id,name,class_year,training_level&program=eq.${currentProgram}&limit=2000`;
+  const url = `${SUPABASE_URL}/rest/v1/residents?select=id,name,class_year,training_level,active&program=eq.${currentProgram}&limit=2000`;
 
   // The session token first, then the anon key.
   //
@@ -1309,6 +1370,7 @@ async function loadLearners() {
         name:          r.name,
         classYear:     r.class_year,
         trainingLevel: r.training_level,
+        active:        r.active !== false,
       }));
       // An empty roster is a failure, not a state. RLS denies by returning
       // zero rows with HTTP 200 and no error, so response.ok cannot tell
@@ -1443,12 +1505,16 @@ async function switchProgram(key) {
    'filter-proc-resident','filter-rotation-milestones','filter-rotation-submissions',
    'filter-eval-rotation','filter-proc-rotation','filter-res-rotation',
    'search-submissions','filter-res-evaluator','filter-res-date-start','filter-res-date-end',
-   'filter-eval-date-start','filter-eval-date-end','filter-proc-date-start','filter-proc-date-end']
+   'filter-eval-date-start','filter-eval-date-end','filter-proc-date-start','filter-proc-date-end','filter-co-class']
     .forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
 
+  CO_SEL = null;
   await loadAdminData();              // relabels and repopulates
-  const open = document.querySelector('.admin-tab.active');
-  if (open) open.click();             // re-render whichever tab is showing
+  // Re-render whichever tab is showing - unless it is one this program does not
+  // have (Core Outcomes for the fellowship), in which case fall back to the first.
+  let open = document.querySelector('.admin-tab.active');
+  if (open && open.style.display === 'none') open = document.querySelector('.admin-tab');
+  if (open) open.click();
 }
 
 // Rewrites the user-visible strings that name a learner. Deliberately a short
@@ -1500,6 +1566,9 @@ async function loadAdminData() {
   const [subs] = await Promise.all([loadSubmissions(), loadFaculty(), loadDetailOptions(), loadLearners()]);
   allSubmissions = subs;
   relabelForProgram();
+  // Core Outcomes exists only for a program with a crosswalk (Family Medicine).
+  const coTab = document.getElementById('tab-btn-outcomes');
+  if (coTab) coTab.style.display = coreOutcomesFor(currentProgram).length ? '' : 'none';
   renderRosterWarning();
   populateFilterDropdowns();
   renderMilestones();
@@ -1540,6 +1609,7 @@ function switchAdminTab(name, btn) {
   document.getElementById('admin-tab-' + name).style.display = 'block';
   if (name === 'submissions') renderSubmissions();
   if (name === 'residents') renderResidentDetail();
+  if (name === 'outcomes') renderOutcomes();
   if (name === 'evaluators') { renderEvaluators(); renderReconcile(); }
   if (name === 'procedures') { renderProcedures(); renderDetailList(); }
 }
@@ -2026,6 +2096,290 @@ window.addEventListener('resize', () => {
     Object.keys(RD_LAST).forEach(id => rdDrawChart(id, RD_LAST[id]));
   }, 150);
 });
+
+// ══════════════════════════════════════════════════
+// CORE OUTCOMES
+//
+// Whether each learner's evaluations amount to enough evidence for each ABFM
+// core outcome. The crosswalk (which EPAs count toward which outcome) and the
+// rule both live in shared/definitions.js: coreOutcomesFor(), coreOutcomeRuleFor().
+//
+// This view SUGGESTS. The program director and the CCC attest, so nothing here
+// says "competent": a cell says the evidence threshold is met, partly met, or
+// that there is not enough evidence yet, and every cell opens to the scores
+// behind it so the suggestion can be overruled in either direction.
+//
+// Deliberately unaffected by the filters on other tabs. The rule has its own
+// window - the most recent N scores - and a date filter on top of it would
+// quietly change who has met what.
+// ══════════════════════════════════════════════════
+let CO_SEL = null;      // { learnerId, outcomeKey }; outcomeKey null = that learner's overview
+let CO_ROWS = [];       // the last computed grid, read by the detail panel
+
+const CO_STATE = {
+  met:          { label: 'Met',                 cls: 'co-met'  },
+  progressing:  { label: 'Progressing',         cls: 'co-prog' },
+  insufficient: { label: 'Not enough evidence', cls: 'co-none' },
+  unmeasured:   { label: 'Not measured',        cls: 'co-unm'  },
+};
+
+// Every numeric score in these evaluations, by EPA id. N/A is not a score.
+// Read through epaRows(), so a score is found under its id whether the row has
+// a stored snapshot or predates it.
+function coScoresByEpa(subs) {
+  const byEpa = new Map();
+  subs.forEach(sub => epaRows(sub).forEach(r => {
+    if (r.id == null || r.score === 'na' || r.score == null) return;
+    const value = Number(r.score);
+    if (!Number.isFinite(value)) return;
+    if (!byEpa.has(r.id)) byEpa.set(r.id, []);
+    byEpa.get(r.id).push({ value, sub, epaId: r.id, text: r.text });
+  }));
+  return byEpa;
+}
+
+// Newest first: by supervision date, then by when it was filed.
+const coWhen = e => (e.sub.dateStart || '') + '|' + (e.sub.timestamp || '');
+
+// One part of an outcome. The most recent `rule.recent` scores on its EPAs are
+// the evidence; attendings are counted as resolved people, so two spellings of
+// one attending are one rater. The exact average decides - it is compared
+// unrounded and shown to two decimals, so 3.47 reads as 3.47 and is visibly
+// short of 3.5.
+function coPart(part, byEpa, rule) {
+  const all = part.epas.flatMap(id => byEpa.get(id) || [])
+    .sort((a, b) => coWhen(b).localeCompare(coWhen(a)));
+  const counted = all.slice(0, rule.recent);
+  const raters  = new Set(counted.map(e => displayEvaluatorName(e.sub))).size;
+  const avg     = counted.length ? counted.reduce((s, e) => s + e.value, 0) / counted.length : null;
+  const state = !part.epas.length ? 'unmeasured'
+    : (counted.length < rule.minScores || raters < rule.minRaters) ? 'insufficient'
+    : avg >= rule.threshold ? 'met' : 'progressing';
+  const evals = new Set(counted.map(e => e.sub.id)).size;
+  return { part, counted, older: all.length - counted.length, n: counted.length, evals, raters, avg, state };
+}
+
+// An outcome is met when `need` of its parts are (all of them unless it says
+// otherwise). Short of that it is "progressing" once any part has enough
+// evidence to judge, and "insufficient" while none does.
+function coOutcome(outcome, byEpa, rule) {
+  const parts = outcome.parts.map(p => coPart(p, byEpa, rule));
+  const need  = outcome.need || parts.length;
+  const met   = parts.filter(p => p.state === 'met').length;
+  const judged = parts.some(p => p.state === 'met' || p.state === 'progressing');
+  return { outcome, parts, need, met, state: met >= need ? 'met' : judged ? 'progressing' : 'insufficient' };
+}
+
+// Active learners on the roster, the class closest to graduating first. A
+// learner with no evaluations is listed too: for an attestation, "nothing on
+// file" is the finding.
+function coLearners() {
+  return [...learnerById.values()].filter(r => r.active)
+    .sort((a, b) => (a.classYear || 9999) - (b.classYear || 9999) || a.name.localeCompare(b.name));
+}
+
+const coToday = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
+const coClassLabel = y => {
+  if (!y) return 'Class not recorded';
+  const pgy = trainingYear(currentProgram, y, coToday());
+  return `Class of ${y}` + (pgy ? ` · PGY-${pgy}` : '');
+};
+const coCellText = x => x.state === 'met' ? 'Met' : x.state === 'insufficient' ? '–' : `${x.met}/${x.need}`;
+const coCellSays = x => x.state === 'met' ? 'evidence threshold met'
+  : x.state === 'insufficient' ? 'not enough evidence yet'
+  : `${x.met} of ${x.need} parts met`;
+
+function renderOutcomes() {
+  const el = document.getElementById('outcomes-container');
+  if (!el) return;
+  const outcomes = coreOutcomesFor(currentProgram);
+  const rule = coreOutcomeRuleFor(currentProgram);
+
+  if (!outcomes.length || !rule) {
+    el.innerHTML = `<div class="empty-state"><p>Core outcomes are defined for the Family Medicine residency only.</p></div>`;
+    return;
+  }
+  if (learnerRosterFailed || !learnerById.size) {
+    el.innerHTML = `<div class="empty-state"><p>The ${learnerNoun(false).toLowerCase()} roster could not be loaded, so this view cannot say who should be listed. Reload the page to try again.</p></div>`;
+    return;
+  }
+
+  const everyone = coLearners();
+  const sel = document.getElementById('filter-co-class');
+  const cur = sel ? sel.value : '';
+  if (sel) {
+    const years = [...new Set(everyone.map(r => r.classYear).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">All classes</option>' +
+      years.map(y => `<option value="${y}" ${String(y) === cur ? 'selected' : ''}>${escFaculty(coClassLabel(y))}</option>`).join('');
+  }
+  const learners = everyone.filter(r => !cur || String(r.classYear) === cur);
+
+  // Evaluations by learner, resolved the way every other view resolves them.
+  const subsBy = new Map();
+  allSubmissions.forEach(s => {
+    const rec = learnerRecord(s);
+    if (!rec) return;
+    if (!subsBy.has(rec.id)) subsBy.set(rec.id, []);
+    subsBy.get(rec.id).push(s);
+  });
+
+  CO_ROWS = learners.map(rec => {
+    const subs = subsBy.get(rec.id) || [];
+    const res  = outcomes.map(o => coOutcome(o, coScoresByEpa(subs), rule));
+    return { rec, subs, res, met: res.filter(x => x.state === 'met').length };
+  });
+
+  const decided = new Date(rule.decided + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  let lastClass = null;
+  const body = CO_ROWS.map(row => {
+    const head = row.rec.classYear !== lastClass
+      ? `<tr class="co-class"><td colspan="${outcomes.length + 2}">${escFaculty(coClassLabel(row.rec.classYear))}</td></tr>` : '';
+    lastClass = row.rec.classYear;
+    const n = row.subs.length;
+    return head + `
+      <tr>
+        <th scope="row" class="co-name">
+          <button class="co-namebtn" onclick="coSelect(${row.rec.id}, null)">${escFaculty(row.rec.name)}</button>
+          <span class="co-evals">${n} evaluation${n === 1 ? '' : 's'}</span>
+        </th>
+        ${row.res.map(x => {
+          const on = CO_SEL && CO_SEL.learnerId === row.rec.id && CO_SEL.outcomeKey === x.outcome.key;
+          return `<td><button class="co-cell ${CO_STATE[x.state].cls}${on ? ' sel' : ''}"
+            onclick="coSelect(${row.rec.id}, '${x.outcome.key}')"
+            aria-label="${escFaculty(row.rec.name)}, outcome ${x.outcome.n}, ${escFaculty(x.outcome.short)}: ${coCellSays(x)}"
+            title="${escFaculty(x.outcome.short)}: ${coCellSays(x)}">${coCellText(x)}</button></td>`;
+        }).join('')}
+        <td class="co-total">${row.met} / ${outcomes.length}</td>
+      </tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <p class="co-intro"><strong>These are suggestions drawn from evaluations, not decisions.</strong> The program director
+      and the CCC attest. For each part of an outcome, the ${rule.recent} most recent scores on its linked EPAs are averaged;
+      the part is met at ${rule.threshold} or higher, from at least ${rule.minScores} scores by at least ${rule.minRaters}
+      different attendings. An outcome is met when all its parts are. Every evaluation on file counts, whatever
+      filters are set on other tabs. Rule decided ${decided}. Outcome 10, procedures, is required from 2027 and is
+      not shown here.</p>
+    <div class="co-legend">
+      <span class="k"><span class="co-cell co-met co-key">Met</span> evidence threshold met</span>
+      <span class="k"><span class="co-cell co-prog co-key">1/3</span> parts met so far</span>
+      <span class="k"><span class="co-cell co-none co-key">&ndash;</span> not enough evidence yet</span>
+      <span class="k">Select a cell for the scores behind it, or a name for that ${learnerNoun(false).toLowerCase()}'s summary.</span>
+    </div>
+    <div class="table-wrap co-wrap">
+      <table class="co-grid">
+        <thead><tr>
+          <th class="co-name">${learnerNoun(false)}</th>
+          ${outcomes.map(o => `<th title="${escFaculty(o.title)}"><span class="co-num">${o.n}</span><span class="co-short">${escFaculty(o.short)}</span></th>`).join('')}
+          <th><span class="co-short">Outcomes met</span></th>
+        </tr></thead>
+        <tbody>${body || `<tr><td colspan="${outcomes.length + 2}" style="padding:24px;color:var(--slate)">No active ${learnerNoun(true).toLowerCase()} in this class.</td></tr>`}</tbody>
+      </table>
+    </div>
+    <div id="co-detail"></div>`;
+
+  coRenderDetail();
+}
+
+function coSelect(learnerId, outcomeKey) {
+  CO_SEL = { learnerId, outcomeKey };
+  renderOutcomes();
+  const d = document.getElementById('co-detail');
+  if (d && d.firstElementChild) d.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// "average 3.60 from 7 scores in 4 evaluations by 3 attendings". The evaluation
+// count is shown because one evaluation can score several of a part's EPAs: seven
+// scores are not seven observations.
+function coPartStat(p, rule) {
+  if (!p.n) return 'No scores yet';
+  return `average ${p.avg.toFixed(2)} from ${p.n} score${p.n === 1 ? '' : 's'} in ${p.evals} evaluation${p.evals === 1 ? '' : 's'} by ${p.raters} attending${p.raters === 1 ? '' : 's'}`;
+}
+function coPartWhy(p, rule) {
+  if (p.state === 'insufficient') {
+    const need = [];
+    if (p.n < rule.minScores) need.push(`${rule.minScores - p.n} more score${rule.minScores - p.n === 1 ? '' : 's'}`);
+    if (p.raters < rule.minRaters) need.push(`a score from ${p.raters ? 'another' : 'an'} attending`);
+    return `Needs ${need.join(' and ')} before it can be judged (at least ${rule.minScores} scores from at least ${rule.minRaters} attendings).`;
+  }
+  if (p.state === 'progressing') return `Enough evidence to judge; the average is below ${rule.threshold}.`;
+  return '';
+}
+
+function coRenderDetail() {
+  const d = document.getElementById('co-detail');
+  if (!d) return;
+  const row = CO_SEL && CO_ROWS.find(r => r.rec.id === CO_SEL.learnerId);
+  if (!row) { d.innerHTML = ''; return; }
+  const rule = coreOutcomeRuleFor(currentProgram);
+  const name = escFaculty(row.rec.name);
+  const chip = state => `<span class="co-chip ${CO_STATE[state].cls}">${CO_STATE[state].label}</span>`;
+
+  // A learner's summary: every outcome, each part's state, one click to the evidence.
+  if (!CO_SEL.outcomeKey) {
+    d.innerHTML = `
+      <div class="co-detail">
+        <h3>${name}</h3>
+        <p class="co-sub">${escFaculty(coClassLabel(row.rec.classYear))} &middot; ${row.subs.length} evaluation${row.subs.length === 1 ? '' : 's'} on file &middot;
+          evidence threshold met for ${row.met} of ${row.res.length} outcomes. Select an outcome for the scores behind it.</p>
+        ${row.res.map(x => `
+          <div class="co-ov">
+            <button class="co-ov-head" onclick="coSelect(${row.rec.id}, '${x.outcome.key}')">
+              <span class="co-ov-n">${x.outcome.n}</span>
+              <span class="co-ov-title">${escFaculty(x.outcome.short)}</span>
+              ${chip(x.state)}
+              ${x.state !== 'met' && x.parts.length > 1 ? `<span class="co-part-stat">${x.met} of ${x.need} parts met</span>` : ''}
+            </button>
+            <ul class="co-ov-parts">
+              ${x.parts.map(p => `<li><span class="co-dot ${CO_STATE[p.state].cls}"></span>${escFaculty(p.part.label)}:
+                <strong>${CO_STATE[p.state].label}</strong> &middot; ${coPartStat(p, rule)}</li>`).join('')}
+            </ul>
+          </div>`).join('')}
+      </div>`;
+    return;
+  }
+
+  const x = row.res.find(r => r.outcome.key === CO_SEL.outcomeKey);
+  if (!x) { d.innerHTML = ''; return; }
+  const needNote = x.outcome.need && x.outcome.need < x.parts.length
+    ? `Met when ${x.outcome.need} of its ${x.parts.length} parts are.` : x.parts.length > 1 ? 'Met when every part is.' : '';
+
+  d.innerHTML = `
+    <div class="co-detail">
+      <h3>${name} &mdash; Outcome ${x.outcome.n}: ${escFaculty(x.outcome.short)}</h3>
+      <p class="co-sub">${escFaculty(x.outcome.title)}. ${needNote}
+        <button class="linkbtn" onclick="coSelect(${row.rec.id}, null)">All outcomes for ${name}</button></p>
+      ${x.parts.map(p => `
+        <div class="co-part">
+          <div class="co-part-head">
+            <span class="co-part-name">${escFaculty(p.part.label)}</span>
+            ${chip(p.state)}
+            <span class="co-part-stat">${coPartStat(p, rule)}</span>
+          </div>
+          ${coPartWhy(p, rule) ? `<div class="co-why">${coPartWhy(p, rule)}</div>` : ''}
+          <div class="co-part-epas">EPAs that count: ${p.part.epas.map(id => {
+            const epa = epaById(currentProgram, id);
+            return escFaculty(epa ? epa.text : id);
+          }).join('; ')}.</div>
+          ${p.n ? `
+            <table class="co-ev">
+              <thead><tr><th>Date</th><th>Clinical context</th><th>EPA</th><th>Score</th><th>Attending</th><th></th></tr></thead>
+              <tbody>
+                ${p.counted.map(e => `
+                  <tr>
+                    <td style="white-space:nowrap">${rdDate(e.sub.dateStart)}</td>
+                    <td>${escFaculty(e.sub.rotation)}</td>
+                    <td>${escFaculty(e.text)}</td>
+                    <td><span class="avg-chip score-${rdStep(e.value)}" title="${escFaculty(SCALE_LABELS[e.value] || '')}">${e.value}</span></td>
+                    <td>${escFaculty(displayEvaluatorName(e.sub))}</td>
+                    <td><button class="linkbtn" onclick="openModal('${String(e.sub.id).replace(/'/g, '')}')">evaluation</button></td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+            ${p.older ? `<div class="co-part-epas">${p.older} older score${p.older === 1 ? ' is' : 's are'} on file and not counted: only the ${rule.recent} most recent are.</div>` : ''}` : ''}
+        </div>`).join('')}
+    </div>`;
+}
 
 // ── Types of care precepted ──
 // A context listed in CASE_TYPES (definitions.js) records which types of care

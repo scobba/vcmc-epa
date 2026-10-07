@@ -79,12 +79,13 @@ const MILESTONE_DEFS_FM = {
 // needs a different EPA with a new id.
 //
 // These Women's Health Clinic EPAs are also asked in Continuity Care Clinic, when
-// the preceptor ticks well-woman (wh1), contraception (wh3) or prenatal care
+// the preceptor ticks well-woman (wh1, wh7), contraception (wh3) or prenatal care
 // (wh5, wh6).
 const EPA_WH1 = { id: 'wh1', text: 'Provide comprehensive well-woman care', context: 'Consider: pelvic exams and Pap smears; clinical breast exams; age-appropriate cancer screening; STI screening and counseling; HPV immunization; USPSTF and ACOG guidelines; sexual health and reproductive planning.', milestones: ['PC3','PC5'] };
 const EPA_WH3 = { id: 'wh3', text: 'Provide contraceptive management including LARC procedures', context: 'Consider: counseling on all contraceptive methods including efficacy, risks, and benefits; LARC insertion and removal; complication management; contraceptive myths; patient autonomy.', milestones: ['PC5','ICS1'] };
 const EPA_WH5 = { id: 'wh5', text: 'Provide routine prenatal care', context: 'Consider: initial and subsequent prenatal visits including dating and risk assessment; prenatal labs and screening tests; fetal growth and maternal health monitoring; screening for gestational diabetes and preeclampsia; delivery plan development.', milestones: ['PC3','PC2','MK1'] };
 const EPA_WH6 = { id: 'wh6', text: 'Evaluate and manage early pregnancy complications', context: 'Consider: vaginal bleeding in early pregnancy (threatened, inevitable, incomplete, missed abortion); ectopic pregnancy diagnosis and management; quantitative hCG and early ultrasound interpretation; counseling patients about pregnancy loss with sensitivity.', milestones: ['PC1','ICS1','MK1'] };
+const EPA_WH7 = { id: 'wh7', text: 'Counsel patients on menopause management and hormone therapy', context: 'Consider: menopausal symptom assessment; HRT risks and benefits per current evidence; non-hormonal alternatives; osteoporosis and cardiovascular risk screening; sexual health concerns; shared decision-making.', milestones: ['PC2','PBLI1','ICS1'] };
 
 //
 // The Outpatient Pediatrics EPAs below are also asked in Continuity Care Clinic
@@ -128,7 +129,8 @@ const ROTATIONS_FM = {
       { id: 'afmc10', text: 'Provide preventive and wellness care for older adults', context: 'Consider: functional and cognitive screening; falls risk; advance care planning; screening and immunizations that fit life expectancy; caregiver support.', milestones: ['PC3','PC2'] },
       { id: 'afmc11', text: 'Optimize medication regimens, including deprescribing', context: 'Consider: medication reconciliation; polypharmacy review; Beers criteria and renal dosing; cost, access and adherence; shared decisions about stopping medications.', milestones: ['PC2','MK1'] },
       { id: 'afmc12', text: 'Evaluate and manage musculoskeletal complaints', context: 'Consider: focused musculoskeletal exam; red flags; imaging decisions; conservative management; referral to sports medicine, physical therapy or orthopedics.', milestones: ['PC4','MK2'] },
-      EPA_WH1,   // well-woman visit; these four are shared with Women's Health Clinic
+      EPA_WH1,   // well-woman visit; these five are shared with Women's Health Clinic
+      EPA_WH7,   // menopause and hormone therapy, asked with the well-woman visit
       EPA_WH3,   // contraception and family planning
       EPA_WH5,   // prenatal care
       EPA_WH6,
@@ -236,7 +238,7 @@ const ROTATIONS_FM = {
       { id: 'wh4', text: 'Perform colposcopy and manage abnormal cervical cancer screening results', context: 'Consider: interpreting Pap smear and HPV co-testing results per ASCCP guidelines; colposcopy with directed biopsy; transformation zone identification; biopsy result follow-up and management counseling.', milestones: ['PC5','PBLI1'] },
       EPA_WH5,   // shared with Continuity Care Clinic - defined above ROTATIONS_FM
       EPA_WH6,
-      { id: 'wh7', text: 'Counsel patients on menopause management and hormone therapy', context: 'Consider: menopausal symptom assessment; HRT risks and benefits per current evidence; non-hormonal alternatives; osteoporosis and cardiovascular risk screening; sexual health concerns; shared decision-making.', milestones: ['PC2','PBLI1','ICS1'] },
+      EPA_WH7,
     ]
   },
   // ── Added 2026-08-25: six rotations, 40 EPAs, from VCMC_EPA_New_Rotations.md ──
@@ -436,8 +438,8 @@ const PROGRAMS = {
     // the EPAs for the types of care precepted (CASE_TYPES_FM, `case_types`),
     // including prenatal (wh5-6) and pediatric (opeds1-2, 4-8) care.
     // 2026.5 (2026-10-06): Continuity Care Clinic gains two types of care that
-    // ask existing Women's Health EPAs - well-woman visit (wh1) and contraception
-    // and family planning (wh3). No EPA was added or reworded.
+    // ask existing Women's Health EPAs - well-woman visit (wh1, wh7) and
+    // contraception and family planning (wh3). No EPA was added or reworded.
     formVersion: '2026.5',
     // Length of training, in years. Used to derive a learner’s PGY from their
     // graduation year — see trainingYear(). The residency expanded from three
@@ -627,7 +629,7 @@ const CASE_TYPES_FM = {
       { key: 'procedure',   group: 'General',   label: 'Office procedure',                     epas: ['afmc4'],
         detail: { category: 'procedure', label: 'Which procedure?', hint: 'Pick from the list, or type a new one and it will be added for next time.' } },
       // Added in 2026.5. The group was "Pregnancy" until then; it is a heading only.
-      { key: 'well_woman',    group: 'Women\'s health and pregnancy', label: 'Well-woman visit',                  epas: ['wh1'] },
+      { key: 'well_woman',    group: 'Women\'s health and pregnancy', label: 'Well-woman visit',                  epas: ['wh1', 'wh7'] },
       { key: 'contraception', group: 'Women\'s health and pregnancy', label: 'Contraception and family planning', epas: ['wh3'] },
       { key: 'prenatal',      group: 'Women\'s health and pregnancy', label: 'Prenatal care',                     epas: ['wh5', 'wh6'] },
       { key: 'postpartum',    group: 'Women\'s health and pregnancy', label: 'Postpartum care',                   epas: ['pp1', 'pp2', 'pp3', 'pp4'] },
@@ -641,12 +643,133 @@ const CASE_TYPES_FM = {
 };
 const CASE_TYPES_AM = {};
 
+// ── ABFM core outcomes ───────────────────────────────────────────────────────
+//
+// Which EPAs count as evidence toward each ABFM core outcome a Family Medicine
+// program director must attest to, and the rule for "enough". The crosswalk was
+// approved by the program director and the rule decided on 2026-10-06. The
+// dashboard SUGGESTS from this; the PD and the CCC attest.
+//
+// - An outcome is split into parts so one strong area cannot cover for a
+//   missing one. It is met when all its parts are, or `need` of them (13).
+// - Evidence is by EPA id, wherever the EPA was asked - an EPA shared between
+//   contexts counts the same from either.
+// - Outcome 10 (procedures) is required from 2027 and is judged per procedure,
+//   not by this rule. It is deliberately absent.
+// - Display only: nothing is stored from this, so editing it needs no
+//   formVersion bump. It does change what the dashboard says about people, so
+//   change it only on a CCC decision, and say when in the comment above.
+const CORE_OUTCOME_RULE_FM = {
+  recent:     10,    // the most recent N scores on a part's EPAs are averaged
+  minScores:  3,     // fewer than this is "not enough evidence"
+  minRaters:  2,     // from at least this many different attendings
+  threshold:  3.5,   // average at or above this is "met" - a starting point
+  decided:    '2026-10-06',
+};
+
+const CORE_OUTCOMES_FM = [
+  { key: 'o1', n: 1, short: 'Personal physician',
+    title: 'First-contact, comprehensive and continuing care: chronic disease, prevention and panel management',
+    parts: [
+      { key: 'o1a', label: 'Continuity and chronic disease', epas: ['afmc1', 'afmc6', 'afmc8'] },
+      { key: 'o1b', label: 'Routine preventive care',        epas: ['afmc2'] },
+      { key: 'o1c', label: 'Panel and patient management',   epas: ['afmc7'] },
+    ] },
+  { key: 'o2', n: 2, short: 'Acute illness and injury',
+    title: 'Acute illness and injury at all ages, in the emergency department or hospital',
+    parts: [
+      { key: 'o2a', label: 'Adults, ED or hospital',   epas: ['med1', 'er1', 'er3', 'icu1', 'surg1'] },
+      { key: 'o2b', label: 'Children, ED or hospital', epas: ['ipeds1', 'ipeds2'] },
+    ] },
+  { key: 'o3', n: 3, short: 'Care of children',
+    title: 'Comprehensive care of children: the acutely ill child and routine preventive care',
+    parts: [
+      { key: 'o3a', label: 'Acutely ill child',       epas: ['ipeds2', 'opeds2'] },
+      { key: 'o3b', label: 'Routine preventive care', epas: ['opeds1', 'opeds5', 'opeds6'] },
+    ] },
+  { key: 'o4', n: 4, short: 'Communication',
+    title: 'Effective communication and constructive relationships with patients, teams and consultants',
+    parts: [
+      { key: 'o4a', label: 'With patients and families', epas: ['med5', 'afmc8', 'er6', 'ipeds3'] },
+      { key: 'o4b', label: 'With clinical teams',        epas: ['med3', 'prof3', 'ipeds6'] },
+      { key: 'o4c', label: 'With consultants',           epas: ['er7', 'ipsub4', 'opsub4'] },
+    ] },
+  { key: 'o5', n: 5, short: 'Professionalism',
+    title: 'Professionalism and trustworthiness: compassion, integrity and respect',
+    parts: [
+      { key: 'o5a', label: 'Professional behavior, compassion, integrity, respect', epas: ['prof1', 'strm2', 'pall6'] },
+    ] },
+  { key: 'o6', n: 6, short: 'Women, elderly, end of life',
+    title: 'Personal physician for women, older adults and patients at the end of life',
+    parts: [
+      { key: 'o6a', label: 'Women',       epas: ['wh1', 'wh2', 'wh3', 'wh7'] },
+      { key: 'o6b', label: 'Elderly',     epas: ['afmc10', 'afmc11'] },
+      { key: 'o6c', label: 'End of life', epas: ['pall3', 'pall5', 'pall7', 'icu5'] },
+    ] },
+  { key: 'o7', n: 7, short: 'Low-risk pregnancy',
+    title: 'Early pregnancy, prenatal care, and postpartum care including breastfeeding',
+    parts: [
+      { key: 'o7a', label: 'Early pregnancy',                                  epas: ['wh6'] },
+      { key: 'o7b', label: 'Prenatal care and medical problems in pregnancy',  epas: ['wh5'] },
+      { key: 'o7c', label: 'Postpartum care and breastfeeding',                epas: ['pp1', 'pp2', 'pp3', 'pp4'] },
+    ] },
+  { key: 'o8', n: 8, short: 'Mental health',
+    title: 'Common mental health problems at all ages',
+    parts: [
+      { key: 'o8a', label: 'Adults',                   epas: ['afmc9', 'addm1', 'addm7', 'strm5'] },
+      { key: 'o8b', label: 'Children and adolescents', epas: ['opeds8', 'opeds4'] },
+    ] },
+  { key: 'o9', n: 9, short: 'Lifelong learning',
+    title: 'Lifelong learning and self-reflection',
+    parts: [
+      { key: 'o9a', label: 'Self-reflection and feedback', epas: ['prof2', 'schol5'] },
+      { key: 'o9b', label: 'Learning from the evidence',   epas: ['afmc5', 'schol3'] },
+    ] },
+  { key: 'o11', n: 11, short: 'MSK, medications, navigation',
+    title: 'Musculoskeletal health, appropriate medication use, and navigating the health system',
+    parts: [
+      { key: 'o11a', label: 'Musculoskeletal health',              epas: ['afmc12', 'sport1', 'sport2', 'sport3', 'sport4', 'sport5'] },
+      { key: 'o11b', label: 'Appropriate medication use',          epas: ['afmc11', 'med2', 'addm4'] },
+      { key: 'o11c', label: 'Navigating a complex health system',  epas: ['afmc6', 'strm6', 'comm6', 'prof4'] },
+    ] },
+  { key: 'o12', n: 12, short: 'Preventive care',
+    title: 'Prevention that improves wellness and detects illness early, at all ages',
+    parts: [
+      { key: 'o12a', label: 'Adults',   epas: ['afmc2', 'afmc7', 'wh1'] },
+      { key: 'o12b', label: 'Children', epas: ['opeds1', 'opeds5'] },
+    ] },
+  // About balancing priorities ACROSS settings, so two of the three settings
+  // meet it; requiring all three would add only a scheduling constraint.
+  { key: 'o13', n: 13, short: 'Priorities of care', need: 2,
+    title: 'Setting priorities of care across office, emergency and hospital settings',
+    parts: [
+      { key: 'o13a', label: 'Office and urgent care', epas: ['uc3', 'uc4'] },
+      { key: 'o13b', label: 'Emergency',              epas: ['er2', 'er5'] },
+      { key: 'o13c', label: 'Hospital',               epas: ['med2', 'icu5', 'pall3'] },
+    ] },
+  { key: 'o14', n: 14, short: 'Undifferentiated and chronic',
+    title: 'Undifferentiated symptoms, chronic conditions and multiple comorbidities',
+    parts: [
+      { key: 'o14a', label: 'Undifferentiated symptoms',                      epas: ['afmc3', 'uc1', 'er1'] },
+      { key: 'o14b', label: 'Chronic conditions and multiple comorbidities',  epas: ['afmc1', 'opsub1', 'strm3'] },
+    ] },
+  { key: 'o15', n: 15, short: 'Teams and populations',
+    title: 'Leading and working in teams that improve outcomes for populations',
+    parts: [
+      { key: 'o15a', label: 'Lead and work in care teams',       epas: ['med9', 'med3', 'icu6', 'prof3', 'ipeds6'] },
+      { key: 'o15b', label: 'Improve outcomes for populations',  epas: ['afmc7', 'schol2', 'comm3', 'comm6'] },
+    ] },
+];
+
 const MILESTONE_DEFS_BY_PROGRAM  = { fm: MILESTONE_DEFS_FM,  am: MILESTONE_DEFS_AM };
 const ROTATIONS_BY_PROGRAM       = { fm: ROTATIONS_FM,       am: ROTATIONS_AM };
 const ROTATION_DETAIL_BY_PROGRAM = { fm: ROTATION_DETAIL_FM, am: ROTATION_DETAIL_AM };
 const CONTEXT_GROUPS_BY_PROGRAM  = { fm: CONTEXT_GROUPS_FM,  am: CONTEXT_GROUPS_AM };
 const CONTEXT_ALIASES_BY_PROGRAM = { fm: CONTEXT_ALIASES_FM, am: CONTEXT_ALIASES_AM };
 const CASE_TYPES_BY_PROGRAM      = { fm: CASE_TYPES_FM,      am: CASE_TYPES_AM };
+// The fellowship has no ABFM outcomes: an empty list and no rule.
+const CORE_OUTCOMES_BY_PROGRAM     = { fm: CORE_OUTCOMES_FM,     am: [] };
+const CORE_OUTCOME_RULE_BY_PROGRAM = { fm: CORE_OUTCOME_RULE_FM, am: null };
 
 // ── Accessors ────────────────────────────────────────────────────────────────
 // Every one of these takes the program first and refuses to guess. Throwing is
@@ -784,6 +907,35 @@ function contextDetailLabel(program, contextName) {
   const cfg = CASE_TYPES_BY_PROGRAM[assertProgram(program)][contextName];
   const t = cfg && cfg.types.find(x => x.detail);
   return t ? t.detail.label : 'Detail';
+}
+
+// One EPA definition by id, from whichever of the program's contexts defines it
+// (a shared EPA is the same object in each). Retired EPAs included. Null if the
+// id is unknown.
+function epaById(program, id) {
+  for (const r of Object.values(rotationsFor(program))) {
+    const epa = r.epas.find(e => e.id === id);
+    if (epa) return epa;
+  }
+  return null;
+}
+
+// The program's core outcomes and the rule for meeting one; [] and null for a
+// program that has none. An EPA id the crosswalk names but no context defines
+// is reported once and left in place - it simply never gathers evidence.
+let coreOutcomesChecked = false;
+function coreOutcomesFor(program) {
+  const outcomes = CORE_OUTCOMES_BY_PROGRAM[assertProgram(program)] || [];
+  if (!coreOutcomesChecked && outcomes.length) {
+    coreOutcomesChecked = true;
+    outcomes.forEach(o => o.parts.forEach(p => p.epas.forEach(id => {
+      if (!epaById(program, id)) console.warn(`CORE_OUTCOMES: ${p.key} names "${id}", which is not a ${program} EPA`);
+    })));
+  }
+  return outcomes;
+}
+function coreOutcomeRuleFor(program) {
+  return CORE_OUTCOME_RULE_BY_PROGRAM[assertProgram(program)] || null;
 }
 
 // A stored case-type key's label, for any key ever defined (retired included),
