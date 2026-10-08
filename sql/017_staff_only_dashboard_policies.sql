@@ -1,0 +1,62 @@
+-- 017_staff_only_dashboard_policies.sql
+-- Project: ubqecdyhgejqoweltagl
+--
+-- A RECORD OF WHAT WAS RUN, NOT A SCRIPT. The statements were applied by hand in
+-- the Supabase SQL editor on 2026-10-08. Policy bodies are deliberately not in
+-- this repo (see CLAUDE.md, "What may go in sql/"), so this file names the
+-- policies that changed and why, and nothing here is executable.
+--
+-- WHY
+--   Three policies granted their access to the `authenticated` role as a
+--   whole. That was correct while every account was program staff. It stopped
+--   being correct on 2026-09-24, when sql/015 and the resident rollout gave 45
+--   residents accounts of their own: "any signed-in user" now meant residents
+--   too.
+--
+--     faculty_submissions  SELECT  authenticated_read_submissions
+--         Any signed-in account could read every anonymous evaluation of an
+--         attending, narrative included - through the API, or simply by
+--         signing in to the faculty dashboard.
+--     faculty              UPDATE  "authenticated can merge faculty"
+--         Any signed-in account could rename, merge or deactivate roster rows.
+--     detail_options       UPDATE  "auth can merge options"
+--         The same, for the procedure and subspecialty lists.
+--
+--   015 narrowed epa_submissions for exactly this reason and did not look at
+--   the other tables. This closes the rest.
+--
+-- WHAT CHANGED
+--   Each of the three policies now applies to program staff only - the same
+--   test epa_submissions' staff policy uses (membership of program_staff, via
+--   the security-definer helper created in 015). The two UPDATE policies carry
+--   the same test as their WITH CHECK. No policy was added or dropped, and no
+--   grant changed.
+--
+-- WHAT DID NOT CHANGE, ON PURPOSE
+--   - The anonymous INSERT policies the forms use.
+--   - SELECT on faculty, detail_options and residents for `authenticated`:
+--     all three are readable anonymously by design, because the anonymous
+--     forms need them, so narrowing the signed-in read would protect nothing.
+--   - epa_submissions (already correct since 015).
+--
+-- CONSEQUENCE TO REMEMBER
+--   program_staff is now the single list that grants BOTH dashboards. Creating
+--   an auth account is not enough: a new dashboard user needs a program_staff
+--   row, or the dashboards load and show nothing.
+--
+--   The general lesson: a policy written as "to authenticated using (true)"
+--   means "every resident" in this project. Any new table a dashboard reads
+--   needs the staff test from the start.
+--
+-- VERIFIED 2026-10-08, the way 015 describes - impersonating inside a
+-- transaction that rolls back:
+--     as a linked resident:  faculty_submissions rows visible = 0
+--     as program staff:      faculty_submissions rows visible = 15 (all)
+--
+-- TO RE-CHECK LATER (read-only; lists roles and commands, and the conditions):
+--     select tablename, policyname, roles, cmd, qual
+--       from pg_policies where schemaname = 'public'
+--      order by tablename, policyname;
+--   Every row whose roles include `authenticated` should either be a read of a
+--   table that is public anyway, or carry the staff test or the resident's-own
+--   test.
