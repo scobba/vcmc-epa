@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>EPA Mapping Check — VCMC Family Medicine Residency</title>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     NOTHING ON THIS PAGE CAN SAVE.
+     This runs first, before any other script loads: every request that is not a
+     plain read is answered here with a fake success and never leaves the
+     browser. The check drives the REAL evaluation form engine, whose submit
+     path ends in a POST to production - so this guard is the reason it is safe
+     to run, and it must stay the first script in the document.
+     ══════════════════════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+  const realFetch = window.fetch.bind(window);
+  window.__intercepted = [];
+  window.fetch = function (url, opts) {
+    const method = ((opts && opts.method) || 'GET').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD') {
+      window.__intercepted.push({ url: String(url), method: method, body: opts && opts.body });
+      const el = document.getElementById('intercept-count');
+      if (el) el.textContent = window.__intercepted.length;
+      return Promise.resolve(new Response('[]', { status: 201, headers: { 'Content-Type': 'application/json' } }));
+    }
+    return realFetch(url, opts);
+  };
+  if (navigator.sendBeacon) navigator.sendBeacon = function () { return false; };
+  window.XMLHttpRequest = function () { throw new Error('XMLHttpRequest is disabled on the mapping check page'); };
+})();
+</script>
+
+<style>
+  :root {
+    --navy: #1A2744; --navy-light: #344878; --slate: #4A5568; --slate-light: #6B778A;
+    --border: #E2E6ED; --border-light: #EEF1F5; --bg-soft: #F8F9FB; --white: #FFFFFF;
+    --teal: #1A5C8A; --teal-pale: #EBF4FA; --gold: #B8901E;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0 }
+  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: var(--white); color: var(--navy); font-size: 14px; line-height: 1.55 }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 24px 80px }
+  header.top { border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px }
+  header.top .t { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase }
+  header.top nav a { font-size: 12px; color: var(--teal); margin-left: 14px }
+  header.top nav a.on { color: var(--navy); font-weight: 700; text-decoration: none }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px }
+  h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate); margin: 34px 0 10px }
+  h3 { font-size: 15px; font-weight: 700; margin: 22px 0 8px }
+  p.lead { color: var(--slate); max-width: 820px; margin-bottom: 14px }
+  .safe { display: inline-flex; gap: 8px; align-items: center; font-size: 12.5px; color: var(--slate); background: var(--bg-soft); border: 1px solid var(--border); padding: 7px 12px; margin-bottom: 16px }
+  .safe strong { color: var(--navy) }
+  button.run { font: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 11px 20px; background: var(--navy); color: #fff; border: 0; cursor: pointer }
+  button.run:disabled { background: var(--slate-light); cursor: default }
+  .status { font-size: 13px; color: var(--slate); margin: 12px 0 0; min-height: 20px }
+  .verdict { margin-top: 18px; padding: 16px 18px; border: 1px solid var(--border) }
+  .verdict.ok { border-left: 4px solid var(--navy) }
+  .verdict.bad { border-left: 4px solid var(--gold); background: #FFFBF0 }
+  .verdict .big { font-size: 17px; font-weight: 700; margin-bottom: 6px }
+  .verdict ul { margin: 8px 0 0 20px; color: var(--slate) }
+  .stats { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px }
+  .stat { border: 1px solid var(--border); padding: 8px 12px; min-width: 120px }
+  .stat .n { font-size: 20px; font-weight: 700 }
+  .stat .l { font-size: 11px; color: var(--slate); text-transform: uppercase; letter-spacing: 0.06em }
+  .checks { margin: 12px 0 0 20px; color: var(--slate); font-size: 13px }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 8px }
+  th { text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--slate); background: var(--bg-soft); padding: 7px 8px; border-bottom: 1px solid var(--border) }
+  td { padding: 7px 8px; border-bottom: 1px solid var(--border-light); vertical-align: top }
+  td.id { white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums }
+  td .sub { display: block; color: var(--slate-light); font-size: 11.5px; margin-top: 2px }
+  .none { color: var(--slate-light); font-style: italic }
+  .grp { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--slate-light); margin: 30px 0 4px }
+  .muted { color: var(--slate-light) }
+  #engine { display: none }
+  @media print {
+    header.top nav, button.run, .safe, .status { display: none }
+    .wrap { padding: 0 }
+    h3 { break-after: avoid }
+    tr { break-inside: avoid }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="t">VCMC EPA Evaluations &middot; Mapping Check</div>
+  <nav aria-label="Program">
+    <a href="?program=fm" id="nav-fm">Family Medicine</a>
+    <a href="?program=am" id="nav-am">Addiction Medicine Fellowship</a>
+  </nav>
+</header>
+
+<div class="wrap">
+  <h1>EPA mapping check</h1>
+  <p class="lead">Run this after any change to the EPAs, the types of care or the core outcomes crosswalk. It fills in every
+    clinical context through the real evaluation form, scoring every EPA, and checks that each one is shown, saved and
+    mapped to its milestones exactly as defined; then it runs those evaluations through the dashboard's Core Outcomes
+    calculation. It takes a few seconds.</p>
+  <div class="safe">&#128274; <span><strong>Nothing is saved.</strong> Every attempt to save is stopped in this browser before it is sent &mdash; stopped so far: <strong id="intercept-count">0</strong>.</span></div>
+  <div><button class="run" id="run-btn" disabled onclick="runCheck()">Loading&hellip;</button></div>
+  <div class="status" id="status" role="status"></div>
+  <div id="verdict"></div>
+
+  <h2>What everything is linked to</h2>
+  <p class="lead">Read straight from the definitions the form uses, so it is always current. The check above proves the system
+    does what this table says; whether each link is clinically right is for the CCC to judge from it.</p>
+  <div id="review"></div>
+</div>
+
+<!-- The evaluation form engine needs its page shell. Hidden: the check drives it. -->
+<div id="engine" aria-hidden="true">
+  <button class="nav-btn active">Home</button><button class="nav-btn" id="nav-form-btn">New Evaluation</button>
+  <div id="view-landing" class="view active"><div id="form-content-landing"></div></div>
+  <div id="view-form" class="view"><div id="form-content"></div></div>
+  <div id="detail-dup-modal"><strong id="detail-dup-typed"></strong><div id="detail-dup-existing"></div><span id="detail-dup-label"></span></div>
+  <div id="eval-dup-modal"><strong id="eval-dup-typed"></strong><div id="eval-dup-existing"></div></div>
+</div>
+
+<script src="../shared/text-matching.js?v=1"></script>
+<script src="../shared/definitions.js?v=18"></script>
+<script src="../shared/faculty-roster.js?v=2"></script>
+<script src="../shared/detail-options.js?v=1"></script>
+<script src="../shared/core-outcomes.js?v=1"></script>
+<script>
+// The program comes from the address (?program=am), because the form engine
+// reads PROGRAM once, as it loads. Anything unrecognised falls back to fm.
+const SUPABASE_URL  = 'https://ubqecdyhgejqoweltagl.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicWVjZHloZ2VqcW93ZWx0YWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzODAyMzAsImV4cCI6MjA5OTk1NjIzMH0.prOyo9Kw8072k5z_HLca4PJu80WaoaW3THAq5rcRz8E';
+const PROGRAM = (() => { const p = new URLSearchParams(location.search).get('program'); return p && PROGRAMS[p] ? p : 'fm'; })();
+</script>
+<script src="../shared/epa-form.js?v=9"></script>
+<script>
+// ══════════════════════════════════════════════════
+// THE CHECK
+//
+// Three layers, each reported separately:
+//   1. The tables - every milestone code exists, every crosswalk EPA exists and
+//      is active, an EPA asked in two contexts is one object.
+//   2. The form - every clinical context filled in through the real engine with
+//      every type of care ticked and every EPA scored 4; what it would have
+//      saved is compared with the definitions: the EPAs asked, the wording and
+//      milestones frozen into the snapshot, and the milestone averages.
+//   3. Core outcomes - those evaluations, for an invented learner, through the
+//      same coOutcome() the dashboard uses: every crosswalk EPA must be asked
+//      on some form, every area must receive evidence, every average must be 4.
+// ══════════════════════════════════════════════════
+document.getElementById('nav-' + PROGRAM).classList.add('on');
+document.title = `EPA Mapping Check — ${programInfo(PROGRAM).label}`;
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const setStatus = t => { document.getElementById('status').textContent = t; };
+let ALERTS = [];
+window.alert = m => { ALERTS.push(String(m)); };
+
+// Each EPA's core outcome links, as "4 Communication - With patients and families".
+function outcomeLinks() {
+  const map = new Map();
+  coreOutcomesFor(PROGRAM).forEach(o => o.parts.forEach(p => p.epas.forEach(id => {
+    if (!map.has(id)) map.set(id, []);
+    map.get(id).push(`${o.n} ${o.short} — ${p.label}`);
+  })));
+  return map;
+}
+
+// ── The review table ──
+function renderReview() {
+  const defs = milestoneDefs(PROGRAM);
+  const links = outcomeLinks();
+  const hasOutcomes = coreOutcomesFor(PROGRAM).length > 0;
+  let html = `<p class="muted" style="font-size:12.5px">${esc(programInfo(PROGRAM).label)} &middot; form version ${esc(formVersionFor(PROGRAM))} &middot; active EPAs only (retired ones still label older evaluations but are not asked).</p>`;
+  contextGroupsFor(PROGRAM).forEach(g => {
+    if (g.name) html += `<div class="grp">${esc(g.name)}</div>`;
+    g.contexts.forEach(ctx => {
+      const cfg = caseTypesFor(PROGRAM, ctx);
+      const typeOf = new Map();
+      if (cfg) {
+        cfg.always.forEach(e => typeOf.set(e.id, 'Every visit'));
+        cfg.types.forEach(t => t.epas.forEach(e => typeOf.set(e.id, t.label)));
+      }
+      const epas = activeEpas(PROGRAM, ctx);
+      html += `<h3>${esc(ctx)} <span class="muted" style="font-weight:400;font-size:13px">&middot; ${epas.length} EPAs</span></h3>
+        <table><thead><tr><th style="width:62px">EPA</th><th>I trust this ${esc(programInfo(PROGRAM).learner)} to&hellip;</th>
+          ${cfg ? '<th style="width:150px">Type of care</th>' : ''}<th style="width:250px">Milestones</th>${hasOutcomes ? '<th style="width:250px">Core outcomes</th>' : ''}</tr></thead><tbody>
+        ${epas.map(e => `<tr>
+          <td class="id">${esc(e.id)}</td>
+          <td>${esc(e.text)}</td>
+          ${cfg ? `<td>${esc(typeOf.get(e.id) || '—')}</td>` : ''}
+          <td>${e.milestones.map(m => `${esc(m)} <span class="sub" style="display:inline">${esc(defs[m] || '?')}</span>`).join('<br>')}</td>
+          ${hasOutcomes ? `<td>${(links.get(e.id) || []).map(esc).join('<br>') || '<span class="none">none</span>'}</td>` : ''}
+        </tr>`).join('')}
+        </tbody></table>`;
+    });
+  });
+  document.getElementById('review').innerHTML = html;
+}
+
+// Fill in one clinical context through the real form and return what it would
+// have saved, or a problem.
+async function fillAndSubmit(ctx, evaluator) {
+  goHome(); selectRotationForm(ctx); await sleep(40);
+  document.querySelectorAll('#form-content input[name="case-type"]').forEach(b => { b.checked = true; b.dispatchEvent(new Event('change', { bubbles: true })); });
+  const asked = askedEpas(ctx);
+  const shown = [...document.querySelectorAll('#form-content .epa-question')].filter(q => !q.closest('.epa-section') || !q.closest('.epa-section').hidden).map(q => q.dataset.epa);
+  const sel = document.getElementById('field-resident'); if (sel.options.length > 1) sel.selectedIndex = 1;
+  document.getElementById('field-evaluator-name').value = evaluator;
+  document.getElementById('field-date-start').value = todayLocalISO();
+  document.getElementById('field-narrative').value = 'MAPPING CHECK - intercepted in the browser, never sent';
+  const det = document.getElementById('field-rotation-detail');
+  if (det) { const cfg = detailConfigFor(PROGRAM, ctx, asked.caseTypes); det.value = ((pickableDetailOptions(cfg.category)[0]) || {}).name || 'Mapping check'; }
+  shown.forEach(id => { const r = document.getElementById(`epa-${id}-4`); if (r) r.checked = true; });
+  const before = window.__intercepted.length; ALERTS = [];
+  await submitForm(ctx);
+  for (let i = 0; i < 40; i++) {                                   // up to 2 s for the save path
+    if (window.__intercepted.slice(before).some(p => p.url.includes('/epa_submissions'))) break;
+    if (ALERTS.length) break;
+    await sleep(50);
+  }
+  ['detail-dup-modal', 'eval-dup-modal'].forEach(id => document.getElementById(id).classList.remove('open'));
+  const post = window.__intercepted.slice(before).find(p => p.url.includes('/epa_submissions'));
+  return { ctx, asked: asked.epas.map(e => e.id), shown, caseTypes: asked.caseTypes, row: post ? JSON.parse(post.body) : null, alerts: ALERTS.slice() };
+}
+
+async function runCheck() {
+  const btn = document.getElementById('run-btn'); btn.disabled = true; btn.textContent = 'Checking…';
+  const problems = [], notes = [];
+  const add = (layer, msg) => problems.push(`${layer}: ${msg}`);
+  const codes = new Set(Object.keys(milestoneDefs(PROGRAM)));
+  const rots = rotationsFor(PROGRAM);
+
+  // 1. The tables
+  setStatus('Checking the definitions…');
+  const objById = new Map();
+  Object.values(rots).forEach(r => r.epas.forEach(e => {
+    if (objById.has(e.id) && objById.get(e.id) !== e) add('Definitions', `EPA ${e.id} is defined twice with different content`);
+    objById.set(e.id, e);
+    if (!e.milestones || !e.milestones.length) add('Definitions', `${e.id} maps to no milestone`);
+    (e.milestones || []).forEach(m => { if (!codes.has(m)) add('Definitions', `${e.id} maps to ${m}, which is not a ${PROGRAM.toUpperCase()} milestone`); });
+  }));
+  const outcomes = coreOutcomesFor(PROGRAM);
+  outcomes.forEach(o => o.parts.forEach(p => p.epas.forEach(id => {
+    const e = epaById(PROGRAM, id);
+    if (!e) add('Crosswalk', `outcome ${o.n} (${p.label}) names ${id}, which is not an EPA`);
+    else if (e.retired) add('Crosswalk', `outcome ${o.n} (${p.label}) names ${id}, which is retired`);
+  })));
+
+  // 2. The form
+  const fac = pickableFaculty().map(f => f.name);
+  if (fac.length < 2) notes.push('The faculty roster did not load, so the attending names below are invented; nothing changes, as no save leaves the page.');
+  const raters = fac.length >= 2 ? fac.slice(0, 2) : ['Mapping Check A', 'Mapping Check B'];
+  const results = [];
+  for (const [i, ctx] of rotationNamesFor(PROGRAM).entries()) {
+    setStatus(`Filling in ${ctx} (${i + 1} of ${rotationNamesFor(PROGRAM).length})…`);
+    const r = await fillAndSubmit(ctx, raters[i % 2]);
+    results.push(r);
+    if (!r.row) { add(ctx, `the form did not produce an evaluation${r.alerts.length ? ' — it said: ' + r.alerts.join('; ') : ''}`); continue; }
+    const sortJ = a => JSON.stringify([...a].sort());
+    if (sortJ(r.shown) !== sortJ(r.asked)) add(ctx, 'the EPAs on screen differ from the EPAs configured for it');
+    if (sortJ(Object.keys(r.row.scores)) !== sortJ(r.shown)) add(ctx, 'the EPAs saved differ from the EPAs on screen');
+    (r.row.scores_detail || []).forEach(d => {
+      const e = objById.get(d.id);
+      if (!e) add(ctx, `saved an unknown EPA ${d.id}`);
+      else if (e.text !== d.text) add(ctx, `${d.id} saved with different wording from its definition`);
+      else if (JSON.stringify(e.milestones) !== JSON.stringify(d.milestones)) add(ctx, `${d.id} saved with different milestones from its definition`);
+    });
+    const expect = [...new Set(r.shown.flatMap(id => objById.get(id).milestones))];
+    if (sortJ(Object.keys(r.row.milestone_scores)) !== sortJ(expect)) add(ctx, `milestones saved (${Object.keys(r.row.milestone_scores).sort().join(', ')}) differ from those its EPAs map to (${expect.sort().join(', ')})`);
+    Object.entries(r.row.milestone_scores).forEach(([m, v]) => { if (v !== 4) add(ctx, `${m} averaged ${v} from scores that were all 4`); });
+    if (r.row.program !== PROGRAM) add(ctx, `saved under program ${r.row.program}`);
+    if (r.row.form_version !== formVersionFor(PROGRAM)) add(ctx, `saved form version ${r.row.form_version}, expected ${formVersionFor(PROGRAM)}`);
+  }
+  goHome();
+  const saved = results.filter(r => r.row);
+  const epasAsked = new Set(saved.flatMap(r => Object.keys(r.row.scores)));
+  const activeIds = new Set(Object.keys(rots).flatMap(c => activeEpas(PROGRAM, c).map(e => e.id)));
+  activeIds.forEach(id => { if (!epasAsked.has(id)) add('Form', `${id} is active but no form asked it`); });
+  const reached = new Set(saved.flatMap(r => Object.keys(r.row.milestone_scores)));
+  codes.forEach(m => { if (!reached.has(m)) notes.push(`Milestone ${m} (${milestoneDefs(PROGRAM)[m]}) is fed by no active EPA.`); });
+
+  // 3. Core outcomes, through the dashboard's own arithmetic
+  let outcomeStates = [];
+  const rule = coreOutcomeRuleFor(PROGRAM);
+  if (outcomes.length && rule) {
+    setStatus('Running the evaluations through the Core Outcomes calculation…');
+    const subs = saved.map((r, i) => ({ id: 'check-' + i, rotation: r.ctx, program: PROGRAM, dateStart: todayLocalISO(),
+      timestamp: new Date(Date.now() - i * 60000).toISOString(), scoresDetail: r.row.scores_detail, evaluatorName: r.row.evaluator_name }));
+    const byEpa = coScoresByEpa(subs, s => s.scoresDetail.map(d => ({ id: d.id, text: d.text, score: d.score })));
+    outcomes.forEach(o => {
+      const x = coOutcome(o, byEpa, rule, s => s.evaluatorName);
+      o.parts.forEach(p => p.epas.forEach(id => { if (!epasAsked.has(id)) add(`Outcome ${o.n}`, `${id} counts toward "${p.label}" but no form asks it`); }));
+      x.parts.forEach(p => { if (!p.onFile) add(`Outcome ${o.n}`, `"${p.part.label}" received no evidence`); });
+      if (x.evals && Math.abs(x.avg - 4) > 1e-9) add(`Outcome ${o.n}`, `averaged ${x.avg} from scores that were all 4`);
+      outcomeStates.push(x);
+    });
+  }
+
+  // Report
+  const nCtx = rotationNamesFor(PROGRAM).length;
+  const ok = problems.length === 0;
+  document.getElementById('verdict').innerHTML = `
+    <div class="verdict ${ok ? 'ok' : 'bad'}">
+      <div class="big">${ok ? 'Everything maps as defined.' : `${problems.length} problem${problems.length === 1 ? '' : 's'} found.`}</div>
+      ${ok ? '' : `<ul>${problems.map(p => `<li>${esc(p)}</li>`).join('')}</ul>`}
+      <div class="stats">
+        <div class="stat"><div class="n">${saved.length} / ${nCtx}</div><div class="l">contexts filled in</div></div>
+        <div class="stat"><div class="n">${epasAsked.size} / ${activeIds.size}</div><div class="l">EPAs asked and saved</div></div>
+        <div class="stat"><div class="n">${reached.size} / ${codes.size}</div><div class="l">milestones reached</div></div>
+        ${outcomes.length ? `<div class="stat"><div class="n">${outcomes.reduce((n, o) => n + o.parts.length, 0)}</div><div class="l">outcome areas checked</div></div>` : ''}
+        <div class="stat"><div class="n">${window.__intercepted.length}</div><div class="l">saves stopped</div></div>
+      </div>
+      <ul class="checks">
+        <li>Each context showed exactly the EPAs configured for it${PROGRAM === 'fm' ? ', with every type of care ticked in Continuity Care Clinic' : ''}.</li>
+        <li>Each EPA was saved with its own wording and milestones, and the milestone averages came out at 4 from scores of 4.</li>
+        ${outcomes.length ? `<li>Every EPA in the core outcomes crosswalk is asked on some form, every area received evidence, and every outcome averaged 4 &mdash; using the dashboard's own calculation.</li>` : '<li>This program has no core outcomes, so that layer is skipped.</li>'}
+        ${notes.map(n => `<li>${esc(n)}</li>`).join('')}
+      </ul>
+      <p class="muted" style="font-size:12px;margin-top:10px">Run ${esc(new Date().toLocaleString('en-US'))} &middot; form version ${esc(formVersionFor(PROGRAM))}. Nothing was saved.</p>
+    </div>`;
+  setStatus('');
+  btn.disabled = false; btn.textContent = 'Run the check again';
+  document.getElementById('verdict').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Ready once the rosters the form needs have loaded.
+renderReview();
+(async () => {
+  for (let i = 0; i < 100 && !(residentsLoaded && facultyLoaded && detailOptionsLoaded); i++) await sleep(100);
+  const btn = document.getElementById('run-btn');
+  btn.disabled = false; btn.textContent = 'Run the check';
+})();
+</script>
+</body>
+</html>

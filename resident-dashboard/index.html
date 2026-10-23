@@ -1152,6 +1152,7 @@
 <script src="../shared/definitions.js?v=18"></script>
 <script src="../shared/faculty-roster.js?v=2"></script>
 <script src="../shared/detail-options.js?v=1"></script>
+<script src="../shared/core-outcomes.js?v=1"></script>
 <script>
 // Fail visibly rather than silently. Without the shared definitions this page
 // would render its frame and simply show nothing to work with, which reads as
@@ -2136,59 +2137,8 @@ const CO_STATE = {
   unmeasured:   { label: 'Not measured',        cls: 'co-unm'  },
 };
 
-// Every numeric score in these evaluations, by EPA id. N/A is not a score.
-// Read through epaRows(), so a score is found under its id whether the row has
-// a stored snapshot or predates it.
-function coScoresByEpa(subs) {
-  const byEpa = new Map();
-  subs.forEach(sub => epaRows(sub).forEach(r => {
-    if (r.id == null || r.score === 'na' || r.score == null) return;
-    const value = Number(r.score);
-    if (!Number.isFinite(value)) return;
-    if (!byEpa.has(r.id)) byEpa.set(r.id, []);
-    byEpa.get(r.id).push({ value, sub, epaId: r.id, text: r.text });
-  }));
-  return byEpa;
-}
-
-// Newest first: by supervision date, then by when it was filed.
-const coWhen = sub => (sub.dateStart || '') + '|' + (sub.timestamp || '');
-
-// One outcome, its EPAs pooled. An evaluation is evidence only if it scored at
-// least one of them - an evaluation where they were all N/A observed none of
-// it. Attendings are counted as resolved people, so two spellings of one
-// attending are one rater. The exact average decides - compared unrounded and
-// shown to two decimals, so 3.47 reads as 3.47 and is visibly short of 3.5.
-function coOutcome(outcome, byEpa, rule) {
-  const partOf = new Map();                       // EPA id -> the first part listing it
-  outcome.parts.forEach(p => p.epas.forEach(id => { if (!partOf.has(id)) partOf.set(id, p); }));
-
-  const bySub = new Map();
-  [...partOf.keys()].forEach(id => (byEpa.get(id) || []).forEach(e => {
-    if (!bySub.has(e.sub.id)) bySub.set(e.sub.id, { sub: e.sub, scores: [] });
-    bySub.get(e.sub.id).scores.push(e);
-  }));
-  const onFile  = [...bySub.values()].sort((a, b) => coWhen(b.sub).localeCompare(coWhen(a.sub)));
-  const win     = onFile.slice(0, rule.recentEvals);
-  const counted = win.flatMap(w => w.scores);
-  const raters  = new Set(win.map(w => displayEvaluatorName(w.sub))).size;
-  const avg     = counted.length ? counted.reduce((s, e) => s + e.value, 0) / counted.length : null;
-  const state = !partOf.size ? 'unmeasured'
-    : (win.length < rule.minEvals || raters < rule.minRaters) ? 'insufficient'
-    : avg >= rule.threshold ? 'met' : 'progressing';
-
-  // Which areas the evidence covers: scores per part inside the counted
-  // evaluations, and on file at all.
-  const allScores = onFile.flatMap(w => w.scores);
-  const parts = outcome.parts.map(p => ({
-    part:     p,
-    inWindow: counted.filter(e => partOf.get(e.epaId) === p).length,
-    onFile:   allScores.filter(e => partOf.get(e.epaId) === p).length,
-  }));
-
-  return { outcome, win, counted, evals: win.length, older: onFile.length - win.length,
-           raters, avg, state, parts, partOf };
-}
+// coScoresByEpa(), coWhen and coOutcome() live in shared/core-outcomes.js, so the
+// mapping check runs the same arithmetic as this tab.
 
 // Active learners on the roster, the class closest to graduating first. A
 // learner with no evaluations is listed too: for an attestation, "nothing on
@@ -2245,8 +2195,8 @@ function renderOutcomes() {
 
   CO_ROWS = learners.map(rec => {
     const subs  = subsBy.get(rec.id) || [];
-    const byEpa = coScoresByEpa(subs);
-    const res   = outcomes.map(o => coOutcome(o, byEpa, rule));
+    const byEpa = coScoresByEpa(subs, epaRows);
+    const res   = outcomes.map(o => coOutcome(o, byEpa, rule, displayEvaluatorName));
     return { rec, subs, res, met: res.filter(x => x.state === 'met').length };
   });
 
