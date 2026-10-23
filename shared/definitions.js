@@ -345,6 +345,21 @@ const ROTATIONS_FM = {
       { id: 'sport5', text: 'Perform a pre-participation physical evaluation', context: 'Consider: cardiac and concussion history; focused exam; clearance decisions; communicating with families, schools and coaches.', milestones: ['PC3','ICS3'] },
     ]
   },
+  // Added 2026-10-22 (formVersion 2026.6), written with and approved by
+  // Anthony Walls, the program's HIV specialist, for the residents' HIV clinic
+  // experience. Its own heading in the picker (CONTEXT_GROUPS_FM), not one of the
+  // specialty clinics.
+  'HIV Clinic': {
+    epas: [
+      { id: 'hiv1', text: 'Evaluate and manage a patient with new or acute HIV infection', context: 'Consider: recognizing acute retroviral syndrome; confirmatory testing; baseline labs; rapid ART start; linkage to care and partner services.', milestones: ['PC1','MK1','MK2'] },
+      { id: 'hiv2', text: 'Initiate and manage antiretroviral therapy', context: 'Consider: regimen choice per guidelines; drug interactions; adherence assessment and support; monitoring viral load and CD4; recognizing virologic failure and resistance; side effects.', milestones: ['PC2','MK1','MK2'] },
+      { id: 'hiv3', text: 'Prevent, recognize and manage opportunistic infections', context: 'Consider: opportunistic infection prophylaxis (PJP, toxoplasmosis, cocci, etc.); recognizing opportunistic infections; immune reconstitution syndrome; when to admit or consult.', milestones: ['PC1','PC2','MK1'] },
+      { id: 'hiv4', text: 'Provide enhanced primary care and screening for people living with HIV', context: 'Consider: anal and cervical cancer screening; TB, STI and hepatitis screening; vaccines; cardiovascular risk and statins; bone health; aging with HIV.', milestones: ['PC3','MK1'] },
+      { id: 'hiv5', text: 'Provide HIV and STI prevention: testing, PrEP and PEP', context: 'Consider: routine opt-out testing; PrEP eligibility, initiation and monitoring, oral and long-acting; PEP within 72 hours; DoxyPEP; U=U counseling; sexual health history.', milestones: ['PC3','ICS1','MK1'] },
+      { id: 'hiv6', text: 'Practice trauma-informed, patient-centered communication with people living with HIV', context: 'Consider: disclosure and confidentiality; stigma, including internalized stigma; screening for trauma and violence; non-judgmental discussion of substance use and mental health; shared decisions about treatment; affirming language.', milestones: ['ICS1','PROF1'] },
+      { id: 'hiv7', text: 'Coordinate care and address barriers to staying in HIV care', context: 'Consider: Ryan White and ADAP; case management; insurance and medication access; housing, food and transportation; re-engaging patients lost to care.', milestones: ['SBP2','SBP3'] },
+    ]
+  },
 
 };
 
@@ -440,7 +455,8 @@ const PROGRAMS = {
     // 2026.5 (2026-10-06): Continuity Care Clinic gains two types of care that
     // ask existing Women's Health EPAs - well-woman visit (wh1, wh7) and
     // contraception and family planning (wh3). No EPA was added or reworded.
-    formVersion: '2026.5',
+    // 2026.6 (2026-10-22): HIV Clinic added with seven EPAs (hiv1-hiv7).
+    formVersion: '2026.6',
     // Length of training, in years. Used to derive a learner’s PGY from their
     // graduation year — see trainingYear(). The residency expanded from three
     // years to four and every class now on the roster is a four-year class; if a
@@ -567,6 +583,7 @@ const ROTATION_DETAIL_AM = {};
 // program with no entry gets one unheaded list.
 const CONTEXT_GROUPS_FM = [
   { name: 'Continuity Clinic', contexts: ['Continuity Care Clinic'] },
+  { name: 'HIV Care', contexts: ['HIV Clinic'] },
   { name: 'Inpatient', contexts: ['Inpatient Medicine', 'ICU', 'Inpatient Pediatrics', 'Labor & Delivery',
       'Inpatient Surgery', 'Inpatient Palliative Care', 'Inpatient Subspecialty Consultation'] },
   { name: 'Emergency & Urgent Care', contexts: ['Emergency Department', 'Urgent Care'] },
@@ -595,6 +612,7 @@ const CONTEXT_ALIASES_FM = {
   'Addiction Medicine':            ['addiction', 'SUD', 'MAT', 'MOUD'],
   'Procedural Care':               ['procedure', 'procedures clinic'],
   'Sports Medicine Clinic':        ['sports', 'sports med', 'MSK', 'musculoskeletal', 'ortho'],
+  'HIV Clinic':                    ['HIV', 'ID', 'infectious disease', 'PrEP', 'PEP', 'STI'],
   'Backpack / Street Medicine':    ['street', 'backpack', 'homeless', 'outreach'],
   'Scholarly & Quality Improvement Activity': ['QI', 'research', 'scholarship', 'journal club'],
 };
@@ -647,7 +665,8 @@ const CASE_TYPES_AM = {};
 //
 // Which EPAs count as evidence toward each ABFM core outcome a Family Medicine
 // program director must attest to, and the rule for "enough". The crosswalk was
-// approved by the program director on 2026-10-06; the rule was decided that day
+// approved by the program director on 2026-10-06; the HIV Clinic EPAs were
+// added to it on 2026-10-22 (hiv2, hiv4-7); the rule was decided that day
 // and revised on 2026-10-22. The dashboard SUGGESTS from this; the PD and the
 // CCC attest.
 //
@@ -698,7 +717,7 @@ const CORE_OUTCOMES_FM = [
   { key: 'o4', n: 4, short: 'Communication',
     title: 'Effective communication and constructive relationships with patients, teams and consultants',
     parts: [
-      { key: 'o4a', label: 'With patients and families', epas: ['med5', 'afmc8', 'er6', 'ipeds3'] },
+      { key: 'o4a', label: 'With patients and families', epas: ['med5', 'afmc8', 'er6', 'ipeds3', 'hiv6'] },
       { key: 'o4b', label: 'With clinical teams',        epas: ['med3', 'prof3', 'ipeds6'] },
       { key: 'o4c', label: 'With consultants',           epas: ['er7', 'ipsub4', 'opsub4'] },
     ] },
@@ -738,12 +757,12 @@ const CORE_OUTCOMES_FM = [
     parts: [
       { key: 'o11a', label: 'Musculoskeletal health',              epas: ['afmc12', 'sport1', 'sport2', 'sport3', 'sport4', 'sport5'] },
       { key: 'o11b', label: 'Appropriate medication use',          epas: ['afmc11', 'med2', 'addm4'] },
-      { key: 'o11c', label: 'Navigating a complex health system',  epas: ['afmc6', 'strm6', 'comm6', 'prof4'] },
+      { key: 'o11c', label: 'Navigating a complex health system',  epas: ['afmc6', 'strm6', 'comm6', 'prof4', 'hiv7'] },
     ] },
   { key: 'o12', n: 12, short: 'Preventive care',
     title: 'Prevention that improves wellness and detects illness early, at all ages',
     parts: [
-      { key: 'o12a', label: 'Adults',   epas: ['afmc2', 'afmc7', 'wh1'] },
+      { key: 'o12a', label: 'Adults',   epas: ['afmc2', 'afmc7', 'wh1', 'hiv4', 'hiv5'] },
       { key: 'o12b', label: 'Children', epas: ['opeds1', 'opeds5'] },
     ] },
   { key: 'o13', n: 13, short: 'Priorities of care',
@@ -757,7 +776,7 @@ const CORE_OUTCOMES_FM = [
     title: 'Undifferentiated symptoms, chronic conditions and multiple comorbidities',
     parts: [
       { key: 'o14a', label: 'Undifferentiated symptoms',                      epas: ['afmc3', 'uc1', 'er1'] },
-      { key: 'o14b', label: 'Chronic conditions and multiple comorbidities',  epas: ['afmc1', 'opsub1', 'strm3'] },
+      { key: 'o14b', label: 'Chronic conditions and multiple comorbidities',  epas: ['afmc1', 'opsub1', 'strm3', 'hiv2'] },
     ] },
   { key: 'o15', n: 15, short: 'Teams and populations',
     title: 'Leading and working in teams that improve outcomes for populations',
