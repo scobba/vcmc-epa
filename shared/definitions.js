@@ -647,11 +647,19 @@ const CASE_TYPES_AM = {};
 //
 // Which EPAs count as evidence toward each ABFM core outcome a Family Medicine
 // program director must attest to, and the rule for "enough". The crosswalk was
-// approved by the program director and the rule decided on 2026-10-06. The
-// dashboard SUGGESTS from this; the PD and the CCC attest.
+// approved by the program director on 2026-10-06; the rule was decided that day
+// and revised on 2026-10-22. The dashboard SUGGESTS from this; the PD and the
+// CCC attest.
 //
-// - An outcome is split into parts so one strong area cannot cover for a
-//   missing one. It is met when all its parts are, or `need` of them (13).
+// - The unit of evidence is the EVALUATION. An outcome's evidence is its most
+//   recent `recentEvals` evaluations that scored any of its EPAs, and every
+//   score those evaluations gave its EPAs is pooled into one average.
+// - An outcome's EPAs are pooled across its parts (since 2026-10-22). The parts
+//   remain so the dashboard can show which areas the evidence covers, but they
+//   no longer have to be met one by one - so a resident can meet outcome 2 on
+//   adult evidence alone, and the CCC reads the parts to see that.
+//   Until 2026-10-22 the rule was: per part, the 10 most recent SCORES, at
+//   least 3 scores from 2 attendings, and an outcome met when every part was.
 // - Evidence is by EPA id, wherever the EPA was asked - an EPA shared between
 //   contexts counts the same from either.
 // - Outcome 10 (procedures) is required from 2027 and is judged per procedure,
@@ -660,11 +668,11 @@ const CASE_TYPES_AM = {};
 //   formVersion bump. It does change what the dashboard says about people, so
 //   change it only on a CCC decision, and say when in the comment above.
 const CORE_OUTCOME_RULE_FM = {
-  recent:     10,    // the most recent N scores on a part's EPAs are averaged
-  minScores:  3,     // fewer than this is "not enough evidence"
-  minRaters:  2,     // from at least this many different attendings
-  threshold:  3.5,   // average at or above this is "met" - a starting point
-  decided:    '2026-10-06',
+  recentEvals: 5,     // the most recent N evaluations that scored any of an outcome's EPAs
+  minEvals:    3,     // fewer evaluations than this is "not enough evidence"
+  minRaters:   2,     // from at least this many different attendings
+  threshold:   3.5,   // pooled average at or above this is "met" - a starting point
+  decided:     '2026-10-22',
 };
 
 const CORE_OUTCOMES_FM = [
@@ -738,9 +746,7 @@ const CORE_OUTCOMES_FM = [
       { key: 'o12a', label: 'Adults',   epas: ['afmc2', 'afmc7', 'wh1'] },
       { key: 'o12b', label: 'Children', epas: ['opeds1', 'opeds5'] },
     ] },
-  // About balancing priorities ACROSS settings, so two of the three settings
-  // meet it; requiring all three would add only a scheduling constraint.
-  { key: 'o13', n: 13, short: 'Priorities of care', need: 2,
+  { key: 'o13', n: 13, short: 'Priorities of care',
     title: 'Setting priorities of care across office, emergency and hospital settings',
     parts: [
       { key: 'o13a', label: 'Office and urgent care', epas: ['uc3', 'uc4'] },
