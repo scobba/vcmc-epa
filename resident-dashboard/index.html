@@ -786,6 +786,10 @@
   button.co-cell.sel { outline: 2px solid var(--gold); outline-offset: 1px }
   .co-key { display: inline-flex; align-items: center; justify-content: center; width: 46px; min-width: 46px; height: 22px; cursor: default }
   .co-total { font-weight: 700; color: var(--navy); white-space: nowrap; font-variant-numeric: tabular-nums }
+  .co-sum { display: inline-block; margin-top: 3px; padding: 1px 7px; font-size: 10px; font-weight: 700; line-height: 1.6; border: 1px solid transparent; white-space: nowrap }
+  .co-sum-meeting { background: var(--navy); color: #fff }
+  .co-sum-below   { background: var(--teal-pale); color: var(--teal); border-color: #C9DFEE }
+  .co-sum-thin    { background: var(--white); color: var(--slate); border: 1px dashed #C5CCD8; font-weight: 600 }
   .co-detail { margin-top: 22px; padding: 20px 22px 12px; background: var(--white); border: 1px solid var(--border) }
   .co-detail h3 { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 4px }
   .co-sub { font-size: 12.5px; color: var(--slate); line-height: 1.55; margin-bottom: 14px }
@@ -2137,6 +2141,34 @@ const CO_STATE = {
   unmeasured:   { label: 'Not measured',        cls: 'co-unm'  },
 };
 
+// ── Reading a row as a whole (added 2026-11-07, at the program's request) ──
+//
+// Two numbers per learner, kept apart on purpose: how much evidence there is
+// (outcomes JUDGED - met or progressing, i.e. enough evidence to say either way)
+// and what it says (the average across the judged outcomes). A single "outcomes
+// met per evaluation" ratio was considered and rejected: below 3 evaluations
+// nothing can be met, so it scores a learner with one evaluation the same as one
+// with eighteen; and with 14 outcomes as a ceiling, every further evaluation
+// lowers it. The summary label is a reading aid, not a judgement - starting
+// thresholds, display only, nothing stored; change them on a CCC decision.
+const CO_SUMMARY = {
+  minJudged:    3,     // fewer judged outcomes than this: not enough evidence yet
+  meetingShare: 0.5,   // at least this share of judged outcomes met: meeting on most
+};
+const CO_SUMMARY_GROUPS = {
+  thin:    { label: 'Not enough evidence yet', cls: 'co-sum-thin'    },
+  meeting: { label: 'Meeting on most',         cls: 'co-sum-meeting' },
+  below:   { label: 'Below on most',           cls: 'co-sum-below'   },
+};
+function coSummarise(row) {
+  const judged = row.res.filter(x => x.state === 'met' || x.state === 'progressing');
+  row.judged    = judged.length;
+  row.avgJudged = judged.length ? judged.reduce((s, x) => s + x.avg, 0) / judged.length : null;
+  row.group = judged.length < CO_SUMMARY.minJudged ? 'thin'
+    : row.met / judged.length >= CO_SUMMARY.meetingShare ? 'meeting' : 'below';
+  return row;
+}
+
 // coScoresByEpa(), coWhen and coOutcome() live in shared/core-outcomes.js, so the
 // mapping check runs the same arithmetic as this tab.
 
@@ -2197,14 +2229,14 @@ function renderOutcomes() {
     const subs  = subsBy.get(rec.id) || [];
     const byEpa = coScoresByEpa(subs, epaRows);
     const res   = outcomes.map(o => coOutcome(o, byEpa, rule, displayEvaluatorName));
-    return { rec, subs, res, met: res.filter(x => x.state === 'met').length };
+    return coSummarise({ rec, subs, res, met: res.filter(x => x.state === 'met').length });
   });
 
   const decided = new Date(rule.decided + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   let lastClass = null;
   const body = CO_ROWS.map(row => {
     const head = row.rec.classYear !== lastClass
-      ? `<tr class="co-class"><td colspan="${outcomes.length + 2}">${escFaculty(coClassLabel(row.rec.classYear))}</td></tr>` : '';
+      ? `<tr class="co-class"><td colspan="${outcomes.length + 3}">${escFaculty(coClassLabel(row.rec.classYear))}</td></tr>` : '';
     lastClass = row.rec.classYear;
     const n = row.subs.length;
     return head + `
@@ -2212,6 +2244,7 @@ function renderOutcomes() {
         <th scope="row" class="co-name">
           <button class="co-namebtn" onclick="coSelect(${row.rec.id}, null)">${escFaculty(row.rec.name)}</button>
           <span class="co-evals">${n} evaluation${n === 1 ? '' : 's'}</span>
+          <span class="co-sum ${CO_SUMMARY_GROUPS[row.group].cls}">${CO_SUMMARY_GROUPS[row.group].label}</span>
         </th>
         ${row.res.map(x => {
           const on = CO_SEL && CO_SEL.learnerId === row.rec.id && CO_SEL.outcomeKey === x.outcome.key;
@@ -2220,7 +2253,8 @@ function renderOutcomes() {
             aria-label="${escFaculty(row.rec.name)}, outcome ${x.outcome.n}, ${escFaculty(x.outcome.short)}: ${coCellSays(x, rule)}"
             title="${escFaculty(x.outcome.short)}: ${coCellSays(x, rule)}">${coCellText(x)}</button></td>`;
         }).join('')}
-        <td class="co-total">${row.met} / ${outcomes.length}</td>
+        <td class="co-total" title="${row.met} met of ${row.judged} with enough evidence to judge">${row.met} / ${row.judged}</td>
+        <td class="co-total" title="Average across the outcomes with enough evidence to judge">${row.avgJudged == null ? '&ndash;' : row.avgJudged.toFixed(2)}</td>
       </tr>`;
   }).join('');
 
@@ -2232,6 +2266,14 @@ function renderOutcomes() {
       attendings. The areas within an outcome are not judged separately, so check the detail to see which ones the
       evidence covers. Every evaluation on file counts, whatever filters are set on other tabs. Rule as revised
       ${decided}. Outcome 10, procedures, is required from 2027 and is not shown here.</p>
+    <p class="co-intro"><strong>Reading a ${learnerNoun(false).toLowerCase()}'s row as a whole.</strong> An outcome is <em>judged</em> once it has
+      enough evidence to say met or not. <em>Met / judged</em> counts the met outcomes against the judged ones, and
+      <em>Avg</em> is the average across the judged outcomes &mdash; together they separate how much evidence there is from
+      what it says, which a count of outcomes met per evaluation cannot. The label under each name summarises them:
+      fewer than ${CO_SUMMARY.minJudged} judged outcomes is <em>not enough evidence yet</em> (the action is more evaluations);
+      otherwise <em>meeting on most</em> when at least ${Math.round(CO_SUMMARY.meetingShare * 100)}% of the judged outcomes are met,
+      and <em>below on most</em> when fewer are. Compare within a class, and look at the attendings behind a high or low
+      average before acting on it.</p>
     <div class="co-legend">
       <span class="k"><span class="co-cell co-met co-key">Met</span> evidence threshold met</span>
       <span class="k"><span class="co-cell co-prog co-key">3.17</span> enough evidence; average below ${rule.threshold}</span>
@@ -2243,9 +2285,10 @@ function renderOutcomes() {
         <thead><tr>
           <th class="co-name">${learnerNoun(false)}</th>
           ${outcomes.map(o => `<th title="${escFaculty(o.title)}"><span class="co-num">${o.n}</span><span class="co-short">${escFaculty(o.short)}</span></th>`).join('')}
-          <th><span class="co-short">Outcomes met</span></th>
+          <th title="Outcomes met, of those with enough evidence to judge"><span class="co-short">Met / judged</span></th>
+          <th title="Average across the outcomes with enough evidence to judge"><span class="co-short">Avg (judged)</span></th>
         </tr></thead>
-        <tbody>${body || `<tr><td colspan="${outcomes.length + 2}" style="padding:24px;color:var(--slate)">No active ${learnerNoun(true).toLowerCase()} in this class.</td></tr>`}</tbody>
+        <tbody>${body || `<tr><td colspan="${outcomes.length + 3}" style="padding:24px;color:var(--slate)">No active ${learnerNoun(true).toLowerCase()} in this class.</td></tr>`}</tbody>
       </table>
     </div>
     <div id="co-detail"></div>`;
@@ -2298,7 +2341,8 @@ function coRenderDetail() {
       <div class="co-detail">
         <h3>${name}</h3>
         <p class="co-sub">${escFaculty(coClassLabel(row.rec.classYear))} &middot; ${row.subs.length} evaluation${row.subs.length === 1 ? '' : 's'} on file &middot;
-          evidence threshold met for ${row.met} of ${row.res.length} outcomes. Select an outcome for the evaluations behind it.</p>
+          evidence threshold met for ${row.met} of ${row.res.length} outcomes; ${row.judged} have enough evidence to judge${row.avgJudged == null ? '' : `, averaging ${row.avgJudged.toFixed(2)}`} &middot;
+          <span class="co-sum ${CO_SUMMARY_GROUPS[row.group].cls}">${CO_SUMMARY_GROUPS[row.group].label}</span>. Select an outcome for the evaluations behind it.</p>
         ${row.res.map(x => `
           <div class="co-ov">
             <button class="co-ov-head" onclick="coSelect(${row.rec.id}, '${x.outcome.key}')">
