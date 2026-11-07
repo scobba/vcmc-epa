@@ -219,6 +219,7 @@
   }
   .auth-message.error { color: #B91C1C; background: #FEF2F2; border: 1px solid #FECACA; }
   .auth-message.success { color: #15803D; background: #F0FBF4; border: 1px solid #BBF7D0; }
+  .auth-message.notice { color: var(--navy); background: var(--bg-soft); border: 1px solid var(--border); }
   .auth-hint {
     font-size: 11px;
     color: var(--slate-light);
@@ -465,10 +466,63 @@ async function checkAuth() {
   }
 }
 
-function showDashboard() {
+// ── Staff only ──
+// Being signed in is not enough: residents have accounts too (sql/015). Since
+// sql/017 RLS already keeps them from reading faculty evaluations, so this page
+// would show them nothing - an empty dashboard rather than a clear answer. The
+// page asks the database the same question the staff RLS policy asks,
+// is_program_staff(), and opens only on a yes. Same gate as the program
+// dashboard (resident-dashboard/), kept identical on purpose.
+//
+// Fails closed: if the check cannot be made, the dashboard stays hidden and
+// says so. The function is executable by `authenticated` and refuses `anon`.
+async function isProgramStaff() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/is_program_staff`, {
+    method: 'POST',
+    headers: { ...(await getAuthHeader()), 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) === true;
+}
+
+async function showDashboard() {
+  let staff;
+  try {
+    staff = await isProgramStaff();
+  } catch (e) {
+    console.error('Could not confirm program-staff access:', e);
+    refuseDashboard('We couldn’t confirm your access just now. Please reload the page; if this keeps happening, contact the program office.');
+    return;
+  }
+  if (!staff) {
+    refuseDashboard('This dashboard is for program staff. Residents can see their own evaluations at eval.venturafamilymed.org/my-evaluations/.');
+    return;
+  }
+  document.getElementById('auth-message').style.display = 'none';
+  document.getElementById('auth-switch')?.remove();
   document.getElementById('auth-gate').style.display = 'none';
   document.getElementById('dashboard-content').style.display = 'block';
   loadAdminData();
+}
+
+// Keeps the dashboard hidden and explains why, in a neutral style (residents
+// see this). The session is left alone: it is shared with the residents' own
+// page on this site, and signing them out here would sign them out there too.
+function refuseDashboard(text) {
+  document.getElementById('dashboard-content').style.display = 'none';
+  document.getElementById('auth-gate').style.display = 'flex';
+  showAuthMessage(text, 'notice');
+  const btn = document.getElementById('auth-btn');
+  btn.disabled = false;
+  btn.textContent = 'Sign In';
+  if (!document.getElementById('auth-switch')) {
+    const p = document.createElement('p');
+    p.id = 'auth-switch';
+    p.style.cssText = 'margin-top:12px;font-size:12px;text-align:center';
+    p.innerHTML = '<a href="#" onclick="signOut(); this.parentNode.remove(); return false;">Sign in as someone else</a>';
+    document.getElementById('auth-message').after(p);
+  }
 }
 
 async function signOut() {
